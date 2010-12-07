@@ -9,7 +9,8 @@ object UGens {
       val dir  = new File( args( 1 ))
       val xml  = XML.load( UGens.getClass.getResourceAsStream( "standard-ugens.xml" ))
 //      create( xml, dir )
-      new CodeSynthesizer
+      val synth = new CodeSynthesizer
+      synth.perform( xml, dir )
    }
 
    private def create( xml: Node, dir: File ) {
