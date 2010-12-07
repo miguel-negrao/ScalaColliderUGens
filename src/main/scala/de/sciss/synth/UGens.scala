@@ -11,6 +11,7 @@ object UGens {
 //      create( xml, dir )
       val synth = new CodeSynthesizer
       synth.perform( xml, dir )
+      System.exit( 0 )
    }
 
    private def create( xml: Node, dir: File ) {
