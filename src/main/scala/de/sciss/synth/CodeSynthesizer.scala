@@ -7,8 +7,9 @@ import tools.refactoring.util.CompilerProvider
 import xml.Node
 import java.io.File
 import collection.breakOut
+import net.virtualvoid.string.MyNodePrinter
 
-class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider {
+class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider with MyNodePrinter {
 
    override val defaultIndentationStep = "   "
 
@@ -16,15 +17,17 @@ class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider {
    
    def perform( xml: Node, dir: File ) {
 
-//      val testAst = treeFrom( "case class Schnucki( hallo: Int )" )
-//      ↓(matchingChildren(transform {
-//         case t: Template => t.body.foreach {
-//            case d: DefDef => println( "Jo, defdef( name = " + d.name+ ", name " + d.name + " ) = " + d )
-//            case _ =>
-//         }
-//         t
-//         case x => x
-//      })) apply testAst
+      val testAst = treeFrom( "class Schnucki( hallo: Int )" )
+      ↓(matchingChildren(transform {
+         case t: Template => t.body.foreach {
+            case d: DefDef =>
+//               println( "Jo, defdef( name = " + d.name+ ", name " + d.hasSymbol + " ) = " + d )
+               println( printer( d ))
+            case _ =>
+         }
+         t
+         case x => x
+      })) apply testAst
 
       (xml \ "file") foreach { node =>
          val name       = (node \ "@name").text
@@ -105,33 +108,41 @@ class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider {
                )
             )
 
-            val caseClassConstrArgs = args map { uArgInfo =>
+            val caseClassConstrArgs0 = args map { uArgInfo =>
                ValDef(
-                  Modifiers( Flags.PARAM ),
+                  Modifiers( Flags.PARAM | Flags.PARAMACCESSOR ),
                   uArgInfo.arg.name,
                   Ident( uArgInfo.arg.typ ),
                   EmptyTree
                )
             }
+            val caseClassConstrArgs = ValDef(
+                  Modifiers( Flags.PARAM | Flags.PARAMACCESSOR ),
+                  "rate",
+                  Ident( "Rate" ),
+                  EmptyTree
+               ) :: caseClassConstrArgs0
 
             val caseClassConstr = DefDef(
-               NoMods, // withPosition (Flags.PARAMACCESSOR | Flags.CASEACCESSOR, NoPosition),
+               // these modifiers get eaten up, i don't know why..........
+               Modifiers( Flags.METHOD ),    // NoMods withPosition (Flags.METHOD, NoPosition),
                nme.CONSTRUCTOR,
                Nil,
                caseClassConstrArgs :: Nil,
                TypeTree(),   // cheeze... how to do this?
-               {
-                  val superPos = NoPosition // XXX
-                  val superRef: Tree = atPos(superPos) {
-                    Select(Super(nme.EMPTY.toTypeName, nme.EMPTY.toTypeName), nme.CONSTRUCTOR)
-                  }
-                  val argss: List[ List[ Tree ]] = Nil // XXX
-                  val superCall = (superRef /: argss) (Apply)
-                  Block( /*lvdefs ::: */ List(superCall), Literal(()))
-               }
+               Block( Apply( Select( Super( "", "" ), nme.CONSTRUCTOR ), Nil ) :: Nil, Literal( Constant() ))
+//               {
+//                  val superPos = NoPosition // XXX
+//                  val superRef: Tree = atPos(superPos) {
+//                    Select(Super(nme.EMPTY.toTypeName, nme.EMPTY.toTypeName), nme.CONSTRUCTOR)
+//                  }
+//                  val argss: List[ List[ Tree ]] = Nil // XXX
+//                  val superCall = (superRef /: argss) (Apply)
+//                  Block( /*lvdefs ::: */ List(superCall), Literal(()))
+//               }
             )
 
-            val caseClassDefX = ClassDef(
+            val caseClassDef = ClassDef(
                NoMods withPosition (Flags.CASE, NoPosition), // Modifiers( Flags.CASEACCESSOR ),
                name,
                Nil,
@@ -142,7 +153,7 @@ class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider {
                )
             )
 
-            val caseClassDef = ClassDef(
+            val caseClassDefX = ClassDef(
                NoMods withPosition (Flags.CASE, NoPosition), // Modifiers( Flags.CASEACCESSOR ),
                name,
                Nil,
@@ -158,6 +169,7 @@ class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider {
             )
 
             println( "JUHU " + caseClassConstr.symbol.isConstructor )
+            println( printer( caseClassConstr ))
 
             /* Ident( "\n" ) :: */ objectDef :: caseClassDef :: Nil  // how to prepend a blank line??
 
