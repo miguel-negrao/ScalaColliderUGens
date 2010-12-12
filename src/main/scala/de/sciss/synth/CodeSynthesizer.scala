@@ -17,17 +17,17 @@ class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider wit
    
    def perform( xml: Node, dir: File ) {
 
-      val testAst = treeFrom( "class Schnucki( hallo: Int )" )
-      ↓(matchingChildren(transform {
-         case t: Template => t.body.foreach {
-            case d: DefDef =>
-//               println( "Jo, defdef( name = " + d.name+ ", name " + d.hasSymbol + " ) = " + d )
-               println( printer( d ))
-            case _ =>
-         }
-         t
-         case x => x
-      })) apply testAst
+//      val testAst = treeFrom( "class Schnucki( hallo: Int )" )
+//      ↓(matchingChildren(transform {
+//         case t: Template => t.body.foreach {
+//            case d: DefDef =>
+////               println( "Jo, defdef( name = " + d.name+ ", name " + d.hasSymbol + " ) = " + d )
+//               println( printer( d ))
+//            case _ =>
+//         }
+//         t
+//         case x => x
+//      })) apply testAst
 
       (xml \ "file") foreach { node =>
          val name       = (node \ "@name").text
@@ -110,66 +110,62 @@ class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider wit
 
             val caseClassConstrArgs0 = args map { uArgInfo =>
                ValDef(
-                  Modifiers( Flags.PARAM | Flags.PARAMACCESSOR ),
+                  Modifiers( Flags.PARAMACCESSOR ),
                   uArgInfo.arg.name,
                   Ident( uArgInfo.arg.typ ),
                   EmptyTree
                )
             }
             val caseClassConstrArgs = ValDef(
-                  Modifiers( Flags.PARAM | Flags.PARAMACCESSOR ),
+                  Modifiers( Flags.PARAMACCESSOR ),
                   "rate",
                   Ident( "Rate" ),
                   EmptyTree
                ) :: caseClassConstrArgs0
 
-            val caseClassConstr = DefDef(
-               // these modifiers get eaten up, i don't know why..........
-               Modifiers( Flags.METHOD ),    // NoMods withPosition (Flags.METHOD, NoPosition),
-               nme.CONSTRUCTOR,
-               Nil,
-               caseClassConstrArgs :: Nil,
-               TypeTree(),   // cheeze... how to do this?
-               Block( Apply( Select( Super( "", "" ), nme.CONSTRUCTOR ), Nil ) :: Nil, Literal( Constant() ))
-//               {
-//                  val superPos = NoPosition // XXX
-//                  val superRef: Tree = atPos(superPos) {
-//                    Select(Super(nme.EMPTY.toTypeName, nme.EMPTY.toTypeName), nme.CONSTRUCTOR)
-//                  }
-//                  val argss: List[ List[ Tree ]] = Nil // XXX
-//                  val superCall = (superRef /: argss) (Apply)
-//                  Block( /*lvdefs ::: */ List(superCall), Literal(()))
-//               }
-            )
+//            val caseClassConstr = DefDef(
+//               // these modifiers get eaten up, i don't know why..........
+//               NoMods withPosition (Flags.CASE, NoPosition),
+//               nme.CONSTRUCTOR,
+//               Nil,
+//               caseClassConstrArgs :: Nil,
+//               TypeTree(),   // cheeze... how to do this?
+//               Block( Apply( Select( Super( "", "" ), nme.CONSTRUCTOR ), Nil ) :: Nil, Literal( Constant() ))
+////               {
+////                  val superPos = NoPosition // XXX
+////                  val superRef: Tree = atPos(superPos) {
+////                    Select(Super(nme.EMPTY.toTypeName, nme.EMPTY.toTypeName), nme.CONSTRUCTOR)
+////                  }
+////                  val argss: List[ List[ Tree ]] = Nil // XXX
+////                  val superCall = (superRef /: argss) (Apply)
+////                  Block( /*lvdefs ::: */ List(superCall), Literal(()))
+////               }
+//            )
+
+//            val caseClassDef = ClassDef(
+//               NoMods withPosition (Flags.CASE, NoPosition), // Modifiers( Flags.CASEACCESSOR ),
+//               name,
+//               Nil,
+//               Template(
+//                  EmptyTree :: Nil,       // parents
+//                  emptyValDef,            // self
+//                  caseClassConstr :: Nil  // body
+//               )
+//            )
 
             val caseClassDef = ClassDef(
                NoMods withPosition (Flags.CASE, NoPosition), // Modifiers( Flags.CASEACCESSOR ),
                name,
                Nil,
                Template(
-                  EmptyTree :: Nil,       // parents
-                  emptyValDef,            // self
-                  caseClassConstr :: Nil  // body
-               )
-            )
-
-            val caseClassDefX = ClassDef(
-               NoMods withPosition (Flags.CASE, NoPosition), // Modifiers( Flags.CASEACCESSOR ),
-               name,
-               Nil,
-               Template(
                   EmptyTree :: Nil,
                   emptyValDef,
-                  Modifiers( Flags.CASE ),
-                  caseClassConstrArgs :: Nil,
-                  Nil, // argss
-                  Nil, // body: List[Tree]
-                  NoPosition   // superPos
+                  caseClassConstrArgs
                )
             )
 
-            println( "JUHU " + caseClassConstr.symbol.isConstructor )
-            println( printer( caseClassConstr ))
+//            println( "JUHU " + caseClassConstr.symbol.isConstructor )
+//            println( printer( caseClassConstr ))
 
             /* Ident( "\n" ) :: */ objectDef :: caseClassDef :: Nil  // how to prepend a blank line??
 
