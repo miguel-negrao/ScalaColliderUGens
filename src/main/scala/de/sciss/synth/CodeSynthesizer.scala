@@ -17,7 +17,8 @@ class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider wit
    
    def perform( xml: Node, dir: File ) {
 
-//      val testAst = treeFrom( "class Schnucki( hallo: Int )" )
+      val testAst = treeFrom( "trait GE; class Schnucki extends GE" )
+      println( printer( testAst ))
 //      ↓(matchingChildren(transform {
 //         case t: Template => t.body.foreach {
 //            case d: DefDef =>
@@ -28,6 +29,19 @@ class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider wit
 //         t
 //         case x => x
 //      })) apply testAst
+
+//      val traitGE = ClassDef(
+//         NoMods withPosition (Flags.TRAIT, NoPosition), // Modifiers( Flags.CASEACCESSOR ),
+//         "GE",
+//         Nil,
+//         Template(
+//            EmptyTree :: Nil,
+//            emptyValDef,
+//            Nil
+//         )
+//      )
+
+      val traitGE = TypeDef( Modifiers( Flags.TRAIT ), "GE", Nil, EmptyTree )
 
       (xml \ "file") foreach { node =>
          val name       = (node \ "@name").text
@@ -156,13 +170,17 @@ class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider wit
             val caseClassDef = ClassDef(
                NoMods withPosition (Flags.CASE, NoPosition), // Modifiers( Flags.CASEACCESSOR ),
                name,
-               Nil,
+               Nil,  // tparams
                Template(
-                  EmptyTree :: Nil,
+                  traitGE :: Nil,
                   emptyValDef,
                   caseClassConstrArgs
                )
             )
+//            caseClassDef.setSymbol( new tools.nsc.symtab.Symbols.Symbol( NoSymbol, NoPosition, new Name( 0, 0 )))
+
+//            global.docComment( caseClassDef.symbol, "Jo chuck", NoPosition )
+//            global.docComments += caseClassDef.symbol -> DocComment( "/** Kuuka */", NoPosition )
 
 //            println( "JUHU " + caseClassConstr.symbol.isConstructor )
 //            println( printer( caseClassConstr ))
@@ -173,7 +191,7 @@ class CodeSynthesizer extends Refactoring with Tracing with CompilerProvider wit
          })( breakOut )
 
          val packageDef = PackageDef( Select( Select( Select( Ident( "de" ), "sciss" ), "synth" ), "ugen" ),
-            ugens )
+            /* DocDef( DocComment( "/** Kuuka */", NoPosition ), EmptyTree ) :: */ ugens )
          println( createText( packageDef ))
 //         println( createText( ugens.head ))
       }
