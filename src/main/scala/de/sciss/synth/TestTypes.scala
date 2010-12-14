@@ -66,26 +66,28 @@ object TestTypes {
    case class SinOscUGen[ R <: Rate ]( freq: UGenIn[ _ <: Rate ])
    extends SingleOutUGen[ R ]( freq :: Nil )
 
-//   object Line {
-//      def kr( start: GE[ _ <: Rate ], end: GE[ _ <: Rate ], dur: GE[ _ <: Rate ], doneAction: GE[ _ <: Rate ]) =
-//         apply[ control.type ]( start, end, dur, doneAction )
-//   }
-//   case class Line[ R <: Rate ]( start: GE[ _ <: Rate ], end: GE[ _ <: Rate ], dur: GE[ _ <: Rate ], doneAction: GE[ _ <: Rate ])
-//   extends GE[ R ] with HasDoneFlag {
-//      def expand: IIdxSeq[ LineUGen[ R ]] = {
-//         val startE: IIdxSeq[ UGenIn[ _ <: Rate ]] = start.expand
-//         val endE: IIdxSeq[ UGenIn[ _ <: Rate ]]   = end.expand
-//         val durE: IIdxSeq[ UGenIn[ _ <: Rate ]]   = dur.expand
-//         val doneE: IIdxSeq[ UGenIn[ _ <: Rate ]]  = doneAction.expand
-//         val numExp  = math.max( math.max( math.max( startE.size, endE.size ), durE.size ), doneE.size )
-//         IIdxSeq.tabulate( numExp )( i =>
-//            LineUGen[ R ]( startE( i % numExp ), endE( i % numExp ), durE( i % numExp ), doneE( i % numExp )))
-//      }
-//   }
-//   case class LineUGen[ R <: Rate ]( start: UGenIn[ _ <: Rate ], end: UGenIn[ _ <: Rate ],
-//                                     dur: UGenIn[ _ <: Rate ], doneAction: UGenIn[ _ <: Rate ])
-//   extends SingleOutUGen[ R ]( List( start, end,  dur, doneAction )) with HasDoneFlag
-//
+   object Line {
+      def kr( start: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]], end: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]],
+              dur: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]], doneAction: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]]) =
+         apply[ control.type ]( start, end, dur, doneAction )
+   }
+   case class Line[ R <: Rate ]( start: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]], end: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]],
+                                 dur: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]], doneAction: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]])
+   extends GE[ R, LineUGen[ R ]] with HasDoneFlag {
+      def expand: IIdxSeq[ LineUGen[ R ]] = {
+         val startE: IIdxSeq[ UGenIn[ _ <: Rate ]] = start.expand
+         val endE: IIdxSeq[ UGenIn[ _ <: Rate ]]   = end.expand
+         val durE: IIdxSeq[ UGenIn[ _ <: Rate ]]   = dur.expand
+         val doneE: IIdxSeq[ UGenIn[ _ <: Rate ]]  = doneAction.expand
+         val numExp  = math.max( math.max( math.max( startE.size, endE.size ), durE.size ), doneE.size )
+         IIdxSeq.tabulate( numExp )( i =>
+            LineUGen[ R ]( startE( i % numExp ), endE( i % numExp ), durE( i % numExp ), doneE( i % numExp )))
+      }
+   }
+   case class LineUGen[ R <: Rate ]( start: UGenIn[ _ <: Rate ], end: UGenIn[ _ <: Rate ],
+                                     dur: UGenIn[ _ <: Rate ], doneAction: UGenIn[ _ <: Rate ])
+   extends SingleOutUGen[ R ]( List( start, end,  dur, doneAction )) with HasDoneFlag
+
 //   object ZeroCrossing {
 //      def ar( in: GE[ audio.type ])   = apply[ audio.type ](   in )
 //      def kr( in: GE[ control.type ]) = apply[ control.type ]( in )
@@ -133,25 +135,26 @@ object TestTypes {
 //                                      loop: UGenIn[ _ <: Rate ], interp: UGenIn[ _ <: Rate ])
 //   extends SingleOutUGen[ R ]( List( buf, phase, loop, interp )) // XXX not SingleOut
 //
-//   object Done {
-//      def kr( src: GE[ _ <: Rate ] with HasDoneFlag ) = apply( src )
-//   }
-//   case class Done( src: GE[ _ <: Rate ] with HasDoneFlag )
-//   extends GE[ control.type ] {
-//      def expand: IIdxSeq[ DoneUGen ] = {
-//         val srcE : IIdxSeq[ UGenIn[ _ <: Rate ] with HasDoneFlag ] = src.expand
-//         val numExp = srcE.size
-//         IIdxSeq.tabulate( numExp )( i => DoneUGen( srcE( i % numExp )))
-//      }
-//   }
-//   case class DoneUGen( src: UGenIn[ _ <: Rate ] with HasDoneFlag )
-//   extends SingleOutUGen[ control.type ]( src :: Nil )
+   object Done {
+      def kr( src: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ] with HasDoneFlag ]) = apply( src )
+   }
+   case class Done( src: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ] with HasDoneFlag ])
+   extends GE[ control.type, DoneUGen ] {
+      def expand: IIdxSeq[ DoneUGen ] = {
+         val srcE : IIdxSeq[ UGenIn[ _ <: Rate ] with HasDoneFlag ] = src.expand
+         val numExp = srcE.size
+         IIdxSeq.tabulate( numExp )( i => DoneUGen( srcE( i % numExp )))
+      }
+   }
+   case class DoneUGen( src: UGenIn[ _ <: Rate ] with HasDoneFlag )
+   extends SingleOutUGen[ control.type ]( src :: Nil )
 
    case class Constant( v: Float ) extends UGenIn[ scalar.type ]
 
    implicit def floatToGE( f: Float ) = Constant( f )
 
    def test {
+//      Done.kr( SinOsc.kr)
 //      val zero = ZeroCrossing.kr( SinOsc.ar( 441 ))
 //      val disk = DiskOut.ar( 0, ZeroCrossing.ar( SinOsc.ar( 441 )))
 //      BufRd.kr[ audio.type ]( 1, 0, SinOsc.ar( 441 ), 0, 1 )   // ugly!!!
