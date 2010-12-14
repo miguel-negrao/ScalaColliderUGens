@@ -1,0 +1,131 @@
+trait Expands[+T] { def expand : Seq[T] }
+
+trait UGenIn
+trait UGenInWithDoneFlag extends UGenIn
+trait GE extends Expands[UGenIn]
+type GEWithDoneFlag = GE with Expands[UGenInWithDoneFlag]
+
+object Done {
+    def kr( src: GEWithDoneFlag ) : Done = apply( src )
+}
+case class Done( src: GEWithDoneFlag ) extends GE with Expands[DoneUGen] {
+    def expand = src.expand.map( DoneUGen( _ ))
+}
+case class DoneUGen( src: UGenInWithDoneFlag ) extends UGenIn
+
+////////////////////
+
+
+trait Expands[+T] { def expand : Seq[T] }
+
+trait UGenIn
+trait SingleOutUGen extends UGenIn
+case class Constant( value: Float ) extends UGenIn
+trait UGenInWithDoneFlag extends UGenIn
+trait GE extends Expands[UGenIn]
+type GEWithDoneFlag = GE with Expands[UGenInWithDoneFlag]
+
+object Done {
+    def kr( src: GEWithDoneFlag ) : Done = apply( src )
+}
+case class Done( src: GEWithDoneFlag ) extends GE with Expands[DoneUGen] {
+    def expand = src.expand.map( DoneUGen( _ ))
+}
+case class DoneUGen( src: UGenInWithDoneFlag ) extends SingleOutUGen
+
+object Line {
+    def kr( start: GE, end: GE, dur: GE, doneAction: GE ) : Line = apply( start, end, dur, doneAction )
+}
+case class Line( start: GE, end: GE, dur: GE, doneAction: GE )
+extends GE with Expands[LineUGen] {
+    def expand = start.expand.zip(end.expand.zip(dur.expand.zip(doneAction.expand))).map { tup =>
+        val (startU, (endU, (durU, doneActionU))) = tup
+        LineUGen( startU, endU, durU, doneActionU )
+    }
+}
+case class LineUGen( start: UGenIn, end: UGenIn, dur: UGenIn, doneAction: UGenIn )
+extends SingleOutUGen with UGenInWithDoneFlag
+
+////////////////////////////////////////////
+
+trait Expands[+T] { def expand : Seq[T] }
+
+trait UGenIn extends GE { def expand = this :: Nil }
+trait SingleOutUGen extends UGenIn
+case class Constant( value: Float ) extends UGenIn
+trait UGenInWithDoneFlag extends UGenIn
+trait GE extends Expands[UGenIn]
+type GEWithDoneFlag = GE with Expands[UGenInWithDoneFlag]
+
+object Done {
+    def kr( src: GEWithDoneFlag ) : Done = apply( src )
+}
+case class Done( src: GEWithDoneFlag ) extends GE with Expands[DoneUGen] {
+    def expand = src.expand.map( DoneUGen( _ ))
+}
+case class DoneUGen( src: UGenInWithDoneFlag ) extends SingleOutUGen
+
+object Line {
+    def kr( start: GE, end: GE, dur: GE, doneAction: GE ) : Line = apply( start, end, dur, doneAction )
+}
+case class Line( start: GE, end: GE, dur: GE, doneAction: GE )
+extends GE with Expands[LineUGen] {
+    def expand = start.expand.zip(end.expand.zip(dur.expand.zip(doneAction.expand))).map { tup =>
+        val (startU, (endU, (durU, doneActionU))) = tup
+        LineUGen( startU, endU, durU, doneActionU )
+    }
+}
+case class LineUGen( start: UGenIn, end: UGenIn, dur: UGenIn, doneAction: UGenIn )
+extends SingleOutUGen with UGenInWithDoneFlag
+
+implicit def floatToConstant( f: Float ) = Constant( f )
+
+Done.kr(Line.kr( 0, 1, 33, 0 ))
+
+object SinOsc {
+    def kr( freq: GE, phase: GE ) : SinOsc = apply( freq, phase )
+}
+case class SinOsc( freq: GE, phase: GE )
+extends GE with Expands[SinOscUGen] {
+    def expand = freq.expand.zip(phase.expand).map { tup =>
+        val (freqU, phaseU) = tup
+        SinOscUGen( freqU, phaseU )
+    }
+}
+case class SinOscUGen( freq: UGenIn, phase: UGenIn )
+extends SingleOutUGen
+
+Done.kr(SinOsc.kr( 441, 0 )) // --> does not compile
+
+////////////////////////////////
+problem: matching for Expands[T] wegen type erasure of T
+
+////////////////////////////////
+checkInputs:
+- force some args to be audio-rate when ugen is calculating at audio-rate (AbstractOut)
+  // not _force_ but refuse, so this could be a typecheck
+- in particular the first argument (e.g. AmpComp)
+- or fixed num of args (BiPanB2)
+- or other argument (BufRd)
+- Demand : checkSameRateAsFirstInput (trig)
+- special cases : Peak (erlaubt rate == control und in == audio, aber nicht rate == audio und in == control)
+- fixed rates for args, e.g. T2K
+
+impossible cases : Duty
+	checkInputs {
+		^if(inputs.at(0).rate === \demand) {
+			if (inputs.at(1).rate !== \demand and: { inputs.at(1).rate !== \scalar } and:
+				{ inputs.at(1).rate !== rate }) {
+ 				("reset input is not" + rate + "rate: " + inputs.at(1) + inputs.at(1).rate);
+ 			}
+		} {
+			this.checkValidInputs
+		}
+	}
+
+/////////////////////
+die frage ist: machen Seq[UGenIn] Sinn, deren rates verschieden sind?
+--> denkbar fuer combo scalar / control? e.g. SinOsc.ar( 441 :: 441 + WhiteNoise.kr(10) :: Nil ) ?
+--> denn overloading funktioniert nicht mit default args
+--> in den beispielen kommt das praktisch nicht vor ; auch problematisch fuer
+  visuelle repraesentation
