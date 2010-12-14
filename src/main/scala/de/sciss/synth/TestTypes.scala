@@ -10,12 +10,12 @@ object TestTypes {
    case object audio    extends Rate
    case object demand   extends Rate
 
-   trait Expands[ A ] {
-      def expand: IIdxSeq[ A ]
+   trait Expands[ +R ] {
+      def expand: IIdxSeq[ R ]
    }
 
-   sealed trait GE[ R <: Rate, U <: UGenIn[ _ <: Rate ]] extends Expands[ U ] {
-      type rate = R
+   sealed trait GE[ +U <: AnyUGenIn ] extends Expands[ U ] {
+//      type rate = R
    }
 
    sealed trait HasDoneFlag
@@ -24,11 +24,13 @@ object TestTypes {
 //      def expand: IIdxSeq[ UGenIn with AudioRated ]
 //   }
 
-   sealed trait UGenIn[ R <: Rate ] extends GE[ R, UGenIn[ R ]] {
+   sealed trait UGenIn[ R <: Rate ] extends GE[ UGenIn[ R ]] {
       def expand: IIdxSeq[ UGenIn[ R ]] = IIdxSeq( this )
    }
 
-   abstract class SingleOutUGen[ R <: Rate ]( inputs: Seq[ UGenIn[ _ <: Rate ]]) extends UGenIn[ R ]
+   type AnyUGenIn = UGenIn[ _ <: Rate ]
+
+   abstract class SingleOutUGen[ R <: Rate ]( inputs: Seq[ AnyUGenIn ]) extends UGenIn[ R ]
 
 //   trait ScalarRated { def rate = scalar }
 //   trait AudioRated  { def rate = audio }
@@ -52,40 +54,38 @@ object TestTypes {
 //   extends SingleOutUGen[ audio.type ]( buf +: multi )
 
    object SinOsc {
-      def ar( freq: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]]) = apply[ audio.type ](   freq )
-      def kr( freq: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]]) = apply[ control.type ]( freq )
+      def ar( freq: GE[ AnyUGenIn ]) = apply[ audio.type ](   freq )
+      def kr( freq: GE[ AnyUGenIn ]) = apply[ control.type ]( freq )
    }
-   case class SinOsc[ R <: Rate ]( freq: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]])
-   extends GE[ R, SinOscUGen[ R ]] {
+   case class SinOsc[ R <: Rate ]( freq: GE[ AnyUGenIn ])
+   extends GE[ SinOscUGen[ R ]] {
       def expand: IIdxSeq[ SinOscUGen[ R ]] = {
-         val freqE : IIdxSeq[ UGenIn[ _ <: Rate ]]   = freq.expand // why the explicit type???
+         val freqE : IIdxSeq[ AnyUGenIn ]   = freq.expand // why the explicit type???
          val numExp  = freqE.size
          IIdxSeq.tabulate( numExp )( i => SinOscUGen[ R ]( freqE( i )))
       }
    }
-   case class SinOscUGen[ R <: Rate ]( freq: UGenIn[ _ <: Rate ])
+   case class SinOscUGen[ R <: Rate ]( freq: AnyUGenIn )
    extends SingleOutUGen[ R ]( freq :: Nil )
 
    object Line {
-      def kr( start: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]], end: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]],
-              dur: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]], doneAction: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]]) =
+      def kr( start: GE[ AnyUGenIn ], end: GE[ AnyUGenIn ], dur: GE[ AnyUGenIn ], doneAction: GE[ AnyUGenIn ]) =
          apply[ control.type ]( start, end, dur, doneAction )
    }
-   case class Line[ R <: Rate ]( start: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]], end: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]],
-                                 dur: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]], doneAction: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]])
-   extends GE[ R, LineUGen[ R ]] with HasDoneFlag {
+   case class Line[ R <: Rate ]( start: GE[ AnyUGenIn ], end: GE[ AnyUGenIn ],
+                                 dur: GE[ AnyUGenIn ], doneAction: GE[ AnyUGenIn ])
+   extends GE[ LineUGen[ R ]] with HasDoneFlag {
       def expand: IIdxSeq[ LineUGen[ R ]] = {
-         val startE: IIdxSeq[ UGenIn[ _ <: Rate ]] = start.expand
-         val endE: IIdxSeq[ UGenIn[ _ <: Rate ]]   = end.expand
-         val durE: IIdxSeq[ UGenIn[ _ <: Rate ]]   = dur.expand
-         val doneE: IIdxSeq[ UGenIn[ _ <: Rate ]]  = doneAction.expand
+         val startE: IIdxSeq[ AnyUGenIn ] = start.expand
+         val endE: IIdxSeq[ AnyUGenIn ]   = end.expand
+         val durE: IIdxSeq[ AnyUGenIn ]   = dur.expand
+         val doneE: IIdxSeq[ AnyUGenIn ]  = doneAction.expand
          val numExp  = math.max( math.max( math.max( startE.size, endE.size ), durE.size ), doneE.size )
          IIdxSeq.tabulate( numExp )( i =>
             LineUGen[ R ]( startE( i % numExp ), endE( i % numExp ), durE( i % numExp ), doneE( i % numExp )))
       }
    }
-   case class LineUGen[ R <: Rate ]( start: UGenIn[ _ <: Rate ], end: UGenIn[ _ <: Rate ],
-                                     dur: UGenIn[ _ <: Rate ], doneAction: UGenIn[ _ <: Rate ])
+   case class LineUGen[ R <: Rate ]( start: AnyUGenIn, end: AnyUGenIn, dur: AnyUGenIn, doneAction: AnyUGenIn )
    extends SingleOutUGen[ R ]( List( start, end,  dur, doneAction )) with HasDoneFlag
 
 //   object ZeroCrossing {
@@ -136,17 +136,17 @@ object TestTypes {
 //   extends SingleOutUGen[ R ]( List( buf, phase, loop, interp )) // XXX not SingleOut
 //
    object Done {
-      def kr( src: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ] with HasDoneFlag ]) = apply( src )
+      def kr( src: GE[ AnyUGenIn with HasDoneFlag ]) = apply( src )
    }
-   case class Done( src: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ] with HasDoneFlag ])
-   extends GE[ control.type, DoneUGen ] {
+   case class Done( src: GE[ AnyUGenIn with HasDoneFlag ])
+   extends GE[ DoneUGen ] {
       def expand: IIdxSeq[ DoneUGen ] = {
          val srcE : IIdxSeq[ UGenIn[ _ <: Rate ] with HasDoneFlag ] = src.expand
          val numExp = srcE.size
          IIdxSeq.tabulate( numExp )( i => DoneUGen( srcE( i % numExp )))
       }
    }
-   case class DoneUGen( src: UGenIn[ _ <: Rate ] with HasDoneFlag )
+   case class DoneUGen( src: AnyUGenIn with HasDoneFlag )
    extends SingleOutUGen[ control.type ]( src :: Nil )
 
    case class Constant( v: Float ) extends UGenIn[ scalar.type ]
@@ -154,7 +154,7 @@ object TestTypes {
    implicit def floatToGE( f: Float ) = Constant( f )
 
    def test {
-//      Done.kr( SinOsc.kr)
+      Done.kr( Line.kr( 0, 1, 2, 3 ))
 //      val zero = ZeroCrossing.kr( SinOsc.ar( 441 ))
 //      val disk = DiskOut.ar( 0, ZeroCrossing.ar( SinOsc.ar( 441 )))
 //      BufRd.kr[ audio.type ]( 1, 0, SinOsc.ar( 441 ), 0, 1 )   // ugly!!!
