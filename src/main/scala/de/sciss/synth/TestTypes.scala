@@ -96,36 +96,36 @@ object TestTypes {
    case class ZeroCrossingUGen[ R <: Rate ]( in: UGenIn[ R ])
    extends SingleOutUGen[ R ]( in :: Nil )
 
-   sealed trait EnsureEqualRatesIfAudio[ A, B ]
-   private class EnsureEqualRatesIfAudioImpl[ A, B ] extends EnsureEqualRatesIfAudio[ A, B ]
-   implicit def ensureEqualRateIfAudio1[ B ] : EnsureEqualRatesIfAudio[ scalar.type, B ]        = new EnsureEqualRatesIfAudioImpl[ scalar.type, B ]
-   implicit def ensureEqualRateIfAudio2[ B ] : EnsureEqualRatesIfAudio[ control.type, B ]       = new EnsureEqualRatesIfAudioImpl[ control.type, B ]
-   implicit def ensureEqualRateIfAudio3[ B ] : EnsureEqualRatesIfAudio[ demand.type, B ]        = new EnsureEqualRatesIfAudioImpl[ demand.type, B ]
-   implicit val ensureEqualRateIfAudio4      : EnsureEqualRatesIfAudio[ audio.type, audio.type ]= new EnsureEqualRatesIfAudioImpl[ audio.type, audio.type ] 
+//   sealed trait EnsureEqualRatesIfAudio[ A, B ]
+//   private class EnsureEqualRatesIfAudioImpl[ A, B ] extends EnsureEqualRatesIfAudio[ A, B ]
+//   implicit def ensureEqualRateIfAudio1[ B ] : EnsureEqualRatesIfAudio[ scalar.type, B ]        = new EnsureEqualRatesIfAudioImpl[ scalar.type, B ]
+//   implicit def ensureEqualRateIfAudio2[ B ] : EnsureEqualRatesIfAudio[ control.type, B ]       = new EnsureEqualRatesIfAudioImpl[ control.type, B ]
+//   implicit def ensureEqualRateIfAudio3[ B ] : EnsureEqualRatesIfAudio[ demand.type, B ]        = new EnsureEqualRatesIfAudioImpl[ demand.type, B ]
+//   implicit val ensureEqualRateIfAudio4      : EnsureEqualRatesIfAudio[ audio.type, audio.type ]= new EnsureEqualRatesIfAudioImpl[ audio.type, audio.type ]
 
    object BufRd {
       def ar( numChannels: Int, buf: GE[ _ <: Rate ], phase: GE[ audio.type ], loop: GE[ _ <: Rate ], interp: GE[ _ <: Rate ]) =
-         apply[ audio.type, audio.type ]( numChannels, buf, phase, loop, interp )
+         apply[ audio.type ]( numChannels, buf, phase, loop, interp )
 
-      def kr[ S <: Rate ]( numChannels: Int, buf: GE[ _ <: Rate ], phase: GE[ S ], loop: GE[ _ <: Rate ], interp: GE[ _ <: Rate ]) =
-         apply[ control.type, S ]( numChannels, buf, phase, loop, interp )
+      def kr( numChannels: Int, buf: GE[ _ <: Rate ], phase: GE[ _ <: Rate ], loop: GE[ _ <: Rate ], interp: GE[ _ <: Rate ]) =
+         apply[ control.type ]( numChannels, buf, phase, loop, interp )
    }
    // XXX can we enforce at this stage that for R == audio.type, phase must be audio.type??
-   case class BufRd[ R <: Rate, S <: Rate ]( numChannels: Int, buf: GE[ _ <: Rate ], phase: GE[ S ],
-                                  loop: GE[ _ <: Rate ], interp: GE[ _ <: Rate ])( implicit ensure: EnsureEqualRatesIfAudio[ R, S ])
+   case class BufRd[ R <: Rate ]( numChannels: Int, buf: GE[ _ <: Rate ], phase: GE[ _ <: Rate ],
+                                  loop: GE[ _ <: Rate ], interp: GE[ _ <: Rate ])
    extends GE[ R ] {
-      def expand: IIdxSeq[ BufRdUGen[ R, S ]] = {
+      def expand: IIdxSeq[ BufRdUGen[ R ]] = {
          val bufE:      IIdxSeq[ UGenIn[ _ <: Rate ]] = buf.expand
-         val phaseE:    IIdxSeq[ UGenIn[ S ]]         = phase.expand
+         val phaseE:    IIdxSeq[ UGenIn[ _ <: Rate ]] = phase.expand
          val loopE:     IIdxSeq[ UGenIn[ _ <: Rate ]] = loop.expand
          val interpE:   IIdxSeq[ UGenIn[ _ <: Rate ]] = interp.expand
          val numExp  = math.max( math.max( math.max( bufE.size, phaseE.size ), loopE.size ), interpE.size )
          IIdxSeq.tabulate( numExp )( i =>
-            BufRdUGen[ R, S ]( bufE( i % numExp ), phaseE( i % numExp ), loopE( i % numExp ), interpE( i % numExp )))
+            BufRdUGen[ R ]( bufE( i % numExp ), phaseE( i % numExp ), loopE( i % numExp ), interpE( i % numExp )))
       }
    }
-   case class BufRdUGen[ R <: Rate, S <: Rate ]( buf: UGenIn[ _ <: Rate ], phase: UGenIn[ S ],
-                                                 loop: UGenIn[ _ <: Rate ], interp: UGenIn[ _ <: Rate ])
+   case class BufRdUGen[ R <: Rate ]( buf: UGenIn[ _ <: Rate ], phase: UGenIn[ _ <: Rate ],
+                                      loop: UGenIn[ _ <: Rate ], interp: UGenIn[ _ <: Rate ])
    extends SingleOutUGen[ R ]( List( buf, phase, loop, interp )) // XXX not SingleOut
 
    case class Constant( v: Float ) extends UGenIn[ scalar.type ]
@@ -135,9 +135,9 @@ object TestTypes {
    def test {
 //      val zero = ZeroCrossing.kr( SinOsc.ar( 441 ))
       val disk = DiskOut.ar( 0, ZeroCrossing.ar( SinOsc.ar( 441 )))
-      BufRd.kr[ audio.type ]( 1, 0, SinOsc.ar( 441 ), 0, 1 )   // ugly!!!
+//      BufRd.kr[ audio.type ]( 1, 0, SinOsc.ar( 441 ), 0, 1 )   // ugly!!!
       BufRd.ar( 1, 0, SinOsc.ar( 441 ), 0, 1 )
-      BufRd[ audio.type, audio.type ]( 1, 0, SinOsc.ar( 441 ), 0, 1 )
+//      BufRd[ audio.type, audio.type ]( 1, 0, SinOsc.ar( 441 ), 0, 1 )
 //      BufRd[ audio.type, control.type ]( 1, 0, SinOsc.kr( 441 ), 0, 1 )
       disk.rate match {
          case `audio` => println( "Jo chuck" )

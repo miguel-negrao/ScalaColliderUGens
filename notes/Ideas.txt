@@ -123,6 +123,25 @@ impossible cases : Duty
 		}
 	}
 
+but also almost impossible : BufRd
+	checkInputs {
+ 		if (rate == 'audio' and: {inputs.at(1).rate != 'audio'}, {
+ 			^("phase input is not audio rate: " + inputs.at(1) + inputs.at(1).rate);
+ 		});
+ 		^this.checkValidInputs
+ 	}
+// --> this is easy to ensure in the 'ar' and 'kr' methods, but not in 'apply'.
+// the only possibility for 'apply' would be an implicit ensurance argument that is
+   sealed trait EnsureEqualRatesIfAudio[ A, B ]
+   private class EnsureEqualRatesIfAudioImpl[ A, B ] extends EnsureEqualRatesIfAudio[ A, B ]
+   implicit def ensureEqualRateIfAudio1[ B ] : EnsureEqualRatesIfAudio[ scalar.type, B ]        = new EnsureEqualRatesIfAudioImpl[ scalar.type, B ]
+   implicit def ensureEqualRateIfAudio2[ B ] : EnsureEqualRatesIfAudio[ control.type, B ]       = new EnsureEqualRatesIfAudioImpl[ control.type, B ]
+   implicit def ensureEqualRateIfAudio3[ B ] : EnsureEqualRatesIfAudio[ demand.type, B ]        = new EnsureEqualRatesIfAudioImpl[ demand.type, B ]
+   implicit val ensureEqualRateIfAudio4      : EnsureEqualRatesIfAudio[ audio.type, audio.type ]= new EnsureEqualRatesIfAudioImpl[ audio.type, audio.type ] 
+; this is already pretty ugly, but becomes even more ugly when scalac fails to infer type parameters:
+      BufRd.kr[ audio.type ]( 1, 0, SinOsc.ar( 441 ), 0, 1 )   // ugly!!!
+; .... oh dear. that is, in this case we might fall back to runtime checks
+
 /////////////////////
 die frage ist: machen Seq[UGenIn] Sinn, deren rates verschieden sind?
 --> denkbar fuer combo scalar / control? e.g. SinOsc.ar( 441 :: 441 + WhiteNoise.kr(10) :: Nil ) ?
