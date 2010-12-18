@@ -18,17 +18,17 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="scala-compiler-2.8.1" level="application" />
+    <orderEntry type="library" name="scala-library-2.8.1" level="application" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib_managed/scala_2.8.0/compile/org.scala-refactoring.library-0.2.0-SNAPSHOT.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib_managed/scala_2.8.1/compile/org.scala-refactoring.library-0.3.0-SNAPSHOT.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="scala-compiler-2.8.1" level="application" />
-    <orderEntry type="library" name="scala-library-2.8.1" level="application" />
   </component>
 </module>
 

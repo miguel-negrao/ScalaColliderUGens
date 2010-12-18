@@ -5,13 +5,13 @@ import java.io.{FileOutputStream, BufferedWriter, OutputStreamWriter, File}
 
 object UGens {
    def main( args: Array[ String ]) {
-//      require( args.size == 2 && args( 0 ) == "-d" )
-//      val dir  = new File( args( 1 ))
-//      val xml  = XML.load( UGens.getClass.getResourceAsStream( "standard-ugens.xml" ))
-////      create( xml, dir )
-//      val synth = new CodeSynthesizer
-//      synth.perform( xml, dir )
-TestTypes.test
+      require( args.size == 2 && args( 0 ) == "-d" )
+      val dir  = new File( args( 1 ))
+      val xml  = XML.load( UGens.getClass.getResourceAsStream( "standard-ugens.xml" ))
+//      create( xml, dir )
+      val synth = new CodeSynthesizer
+      synth.perform( xml, dir )
+//TestTypes.test
       System.exit( 0 )
    }
 
