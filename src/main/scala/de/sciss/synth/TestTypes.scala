@@ -10,12 +10,23 @@ object TestTypes {
    case object audio    extends Rate
    case object demand   extends Rate
 
-   trait Expands[ +R ] {
-      def expand: IIdxSeq[ R ]
+//   trait Expands[ +R ] {
+//      def expand: IIdxSeq[ R ]
+//   }
+
+   sealed trait GE[ +U <: AnyUGenIn ] /* extends Expands[ U ] */ {
+//      type rate = R
+      def expand: IIdxSeq[ U ]
    }
 
-   sealed trait GE[ +U <: AnyUGenIn ] extends Expands[ U ] {
-//      type rate = R
+   sealed trait MultiGE[ +U <: AnyUGenIn ] {
+      def expand: IIdxSeq[ GE[ U ]]
+   }
+
+   case class UGenInSeq[ +U <: AnyUGenIn ]( elems: IIdxSeq[ U ]) extends IIdxSeq[ U ] with GE[ U ] {
+      def expand = this
+      def apply( idx: Int ) = elems( idx )
+      def length : Int = elems.length
    }
 
    sealed trait HasDoneFlag
@@ -35,23 +46,23 @@ object TestTypes {
 //   trait ScalarRated { def rate = scalar }
 //   trait AudioRated  { def rate = audio }
 
-//   object DiskOut {
-//      def ar( buf: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]], multi: GE[ audio.type, _ <: UGenIn[ audio.type ]]) : DiskOut = apply( buf, multi )
-//   }
-//
-//   case class DiskOut( buf: GE[ _ <: Rate, _ <: UGenIn[ _ <: Rate ]], multi: GE[ audio.type, _ <: UGenIn[ audio.type ]])
-//   extends GE[ audio.type, DiskOutUGen ] {
+   object DiskOut {
+      def ar( buf: GE[ AnyUGenIn ], multi: MultiGE[ UGenIn[ audio.type ]]) : DiskOut = apply( buf, multi )
+   }
+
+   case class DiskOut( buf: GE[ AnyUGenIn ], multi: MultiGE[ UGenIn[ audio.type ]])
+   extends GE[ DiskOutUGen ] {
 //      def rate: audio.type = audio
-//      def expand: IIdxSeq[ DiskOutUGen ] = {
-//         val bufE :   IIdxSeq[ UGenIn[ _ <: Rate ]] = buf.expand
-//         val multiE = multi.expand
-//         val numExp  = bufE.size // math.max( bufE.size, multiE.size )
-//         IIdxSeq.tabulate( numExp )( i => DiskOutUGen( bufE( i ), multiE ))
-//      }
-//   }
-//
-//   case class DiskOutUGen( buf: UGenIn[ _ <: Rate ], multi: Seq[ UGenIn[ audio.type ]])
-//   extends SingleOutUGen[ audio.type ]( buf +: multi )
+      def expand: IIdxSeq[ DiskOutUGen ] = {
+         val bufE :   IIdxSeq[ AnyUGenIn ] = buf.expand
+         val multiE  = multi.expand
+         val numExp  = math.max( bufE.size, multiE.size )
+         IIdxSeq.tabulate( numExp )( i => DiskOutUGen( bufE( i % numExp ), multiE( i % numExp ).expand ))
+      }
+   }
+
+   case class DiskOutUGen( buf: UGenIn[ _ <: Rate ], multi: Seq[ UGenIn[ audio.type ]])
+   extends SingleOutUGen[ audio.type ]( buf +: multi )
 
    object SinOsc {
       def ar( freq: GE[ AnyUGenIn ]) = apply[ audio.type ](   freq )
@@ -151,10 +162,44 @@ object TestTypes {
 
    case class Constant( v: Float ) extends UGenIn[ scalar.type ]
 
+   object Expand {
+      def none[ U <: AnyUGenIn ]( ge: GE[ U ]) = new MultiGE[ U ] {
+         def expand = IIdxSeq( ge )
+      }
+      def apply[ U <: AnyUGenIn ]( ge: GE[ U ], step: Int = 1 ) = new MultiGE[ U ] {
+         def expand = {
+            val exp     = ge.expand
+            val flatCh  = exp.size
+            val numCh   = flatCh / step
+            IIdxSeq.tabulate( numCh ) { idx => UGenInSeq( exp.slice( idx * step, math.min( (idx + 1) * step, flatCh )))}
+         }
+      }
+      def iterate[ U <: AnyUGenIn ]( ge: GE[ U ], n: Int )( f: GE[ U ] => GE[ U ]) = new MultiGE[ U ] {
+         def expand = IIdxSeq.iterate( ge, n )( f )
+      }
+      def tabulate[ U <: AnyUGenIn ]( n: Int )( f: Int => GE[ U ]) = new MultiGE[ U ] {
+         def expand = IIdxSeq.tabulate( n )( f )
+      }
+      def fill[ U <: AnyUGenIn ]( n: Int )( elem: => GE[ U ]) = new MultiGE[ U ] {
+         def expand = IIdxSeq.fill( n )( elem )
+      }
+   }
+
    implicit def floatToGE( f: Float ) = Constant( f )
+   implicit def defaultExpand[ U <: AnyUGenIn ]( ge: GE[ U ]) = Expand.none( ge )
+//   implicit def seqOfGEToGE[ T <% GE[ AnyUGenIn ]]( seq: Seq[ T ]) = UGenInSeq( seq.toIndexedSeq )
+//   implicit def seqOfGEToGE( x: Seq[ GE ]) : GE = {
+//      val outputs: IIdxSeq[ UGenIn ] = x.flatMap( _.outputs )( breakOut )
+//      outputs match {
+//         case IIdxSeq( mono ) => mono
+//         case _               => new UGenInSeq( outputs )
+//      }
+//   }
 
    def test {
       Done.kr( Line.kr( 0, 1, 2, 3 ))
+      DiskOut.ar( 0, SinOsc.ar( 441 ))
+      DiskOut.ar( 0, Expand( SinOsc.ar( 441 )))
 //      val zero = ZeroCrossing.kr( SinOsc.ar( 441 ))
 //      val disk = DiskOut.ar( 0, ZeroCrossing.ar( SinOsc.ar( 441 )))
 //      BufRd.kr[ audio.type ]( 1, 0, SinOsc.ar( 441 ), 0, 1 )   // ugly!!!

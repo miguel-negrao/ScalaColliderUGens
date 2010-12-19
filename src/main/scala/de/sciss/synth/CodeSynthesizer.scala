@@ -209,7 +209,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          })( breakOut )
 
          val packageDef = PackageDef( Select( Select( Select( Ident( "de" ), "sciss" ), "synth" ), "ugen" ),
-            /* DocDef( DocComment( "/** Kuuka */", NoPosition ), EmptyTree ) :: */ ugens )
+            DocDef( DocComment( "/** Kuuka */", NoPosition ), EmptyTree ) :: ugens )
          println( createText( packageDef ))
 //         println( createText( ugens.head ))
       }
