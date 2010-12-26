@@ -10,6 +10,9 @@ object TestTypes {
    case object audio    extends Rate
    case object demand   extends Rate
 
+   implicit def doubleToGE( d: Double ) = Constant( d.toFloat )
+   implicit def floatToGE( f: Float ) = Constant( f )
+
 //   trait Expands[ +R ] {
 //      def expand: IIdxSeq[ R ]
 //   }
@@ -65,19 +68,23 @@ object TestTypes {
    extends SingleOutUGen[ audio.type ]( buf +: multi )
 
    object SinOsc {
-      def ar( freq: GE[ AnyUGenIn ]) = apply[ audio.type ](   freq )
-      def kr( freq: GE[ AnyUGenIn ]) = apply[ control.type ]( freq )
+      def ar: SinOsc[audio.type] = ar( )
+      def kr: SinOsc[control.type] = kr( )
+      def ar(freq: GE[AnyUGenIn] = 440.0, phase: GE[AnyUGenIn] = 0.0) = apply[audio.type](freq, phase)
+      def kr(freq: GE[AnyUGenIn] = 440.0, phase: GE[AnyUGenIn] = 0.0) = apply[control.type](freq, phase)
    }
-   case class SinOsc[ R <: Rate ]( freq: GE[ AnyUGenIn ])
-   extends GE[ SinOscUGen[ R ]] {
-      def expand: IIdxSeq[ SinOscUGen[ R ]] = {
-         val freqE : IIdxSeq[ AnyUGenIn ]   = freq.expand // why the explicit type???
-         val numExp  = freqE.size
-         IIdxSeq.tabulate( numExp )( i => SinOscUGen[ R ]( freqE( i )))
+   case class SinOsc[R <: Rate](freq: GE[AnyUGenIn], phase: GE[AnyUGenIn]) extends GE[SinOscUGen[R]] {
+      def expand = {
+         val _freq = freq.expand
+         val _phase = phase.expand
+         val _sz_freq = _freq.size
+         val _sz_phase = _phase.size
+         val _exp_ = max(_sz_freq, _sz_phase)
+         IIdxSeq.tabulate(_exp_)(i => SinOscUGen(_freq(i.%(_sz_freq)), _phase(i.%(_sz_phase))))
       }
    }
-   case class SinOscUGen[ R <: Rate ]( freq: AnyUGenIn )
-   extends SingleOutUGen[ R ]( freq :: Nil )
+   case class SinOscUGen[ R <: Rate ]( freq: AnyUGenIn, phase: AnyUGenIn )
+   extends SingleOutUGen[ R ]( List( freq, phase ))
 
    object Line {
       def kr( start: GE[ AnyUGenIn ], end: GE[ AnyUGenIn ], dur: GE[ AnyUGenIn ], doneAction: GE[ AnyUGenIn ]) =
@@ -205,7 +212,6 @@ object TestTypes {
       }
    }
 
-   implicit def floatToGE( f: Float ) = Constant( f )
    implicit def defaultExpand[ U <: AnyUGenIn ]( ge: GE[ U ]) = Expand.none( ge )
 //   implicit def seqOfGEToGE[ T <% GE[ AnyUGenIn ]]( seq: Seq[ T ]) = UGenInSeq( seq.toIndexedSeq )
 //   implicit def seqOfGEToGE( x: Seq[ GE ]) : GE = {
@@ -220,6 +226,8 @@ object TestTypes {
       Done.kr( Line.kr( 0, 1, 2, 3 ))
       DiskOut.ar( 0, SinOsc.ar( 441 ))
       DiskOut.ar( 0, Expand( SinOsc.ar( 441 )))
+      val sin = SinOsc.ar( 441 )
+      val sinUs: IIdxSeq[ SinOscUGen[ _ ]] = sin.expand
 //      val zero = ZeroCrossing.kr( SinOsc.ar( 441 ))
 //      val disk = DiskOut.ar( 0, ZeroCrossing.ar( SinOsc.ar( 441 )))
 //      BufRd.kr[ audio.type ]( 1, 0, SinOsc.ar( 441 ), 0, 1 )   // ugly!!!

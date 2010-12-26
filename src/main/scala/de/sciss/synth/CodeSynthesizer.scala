@@ -105,17 +105,38 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
 //            val methodBody = Block( Select( Ident( "freq" ), "toString" ) :: Nil, EmptyTree )
 //            val methodBody = Select( Ident( "freq" ), "toString" ))
-            val objectMethodDefs = rates map { rateInfo =>
-               val methodBody = Apply( Ident( "apply" ), Ident( rateInfo.name ) :: args.map( i => Ident( i.arg.name )))
+            val objectMethodDefs0 = rates map { rateInfo =>
+               val methodBody = Apply( (if( impliedRate.isDefined ) {
+                  Ident( "apply" )
+               } else {
+                  TypeApply( Ident( "apply" ), Ident( rateInfo.name + ".type" ) :: Nil )
+               }), args.map( i => Ident( i.arg.name )))
                DefDef(
                   NoMods withPosition (Flags.METHOD, NoPosition),
                   rateInfo.methodName,
                   Nil,        // tparams
                   objectMethodArgs :: Nil,    // vparamss
-                  TypeTree( methodBody.tpe ), // tpt -- empty for testing
+                  TypeTree( NoType ), // tpt -- empty for testing
                   methodBody // rhs
                )
             }
+
+            val allDefaults = args.forall( _.arg.default.isDefined )
+            val objectMethodDefs = if( allDefaults ) {
+               rates.map( rateInfo => {
+                  val methodBody = Apply( Ident( rateInfo.methodName ), Ident( " " ) :: Nil )  // XXX how to get ar() with the parentheses?
+                  DefDef(
+                     NoMods withPosition (Flags.METHOD, NoPosition),
+                     rateInfo.methodName,
+                     Nil,        // tparams
+                     Nil,        // vparamss
+                     TypeDef( NoMods, name, if( impliedRate.isDefined ) Nil else {
+                        TypeDef( NoMods, rateInfo.name + ".type", Nil, EmptyTree ) :: Nil
+                     }, EmptyTree ),
+                     methodBody // rhs
+                  )
+               }) ++ objectMethodDefs0
+            } else objectMethodDefs0
 
             val objectDef = ModuleDef(
                NoMods,
@@ -127,8 +148,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                )
             )
 
-            val caseClassConstrArgs0 = args map { uArgInfo => (NoMods, uArgInfo.arg.name + ": " + uArgInfo.arg.typ, EmptyTree) }
-            val caseClassConstrArgs  = (NoMods, "rate: Rate", EmptyTree) :: caseClassConstrArgs0
+            val caseClassConstrArgs = args map { uArgInfo => (NoMods, uArgInfo.arg.name + ": " + uArgInfo.arg.typ, EmptyTree) }
+//            val caseClassConstrArgs  = (NoMods, "rate: Rate", EmptyTree) :: caseClassConstrArgs0
 
             val caseClassExpandDef = {
 //               val bufE    = buf.expand
@@ -141,24 +162,40 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                    expArgs.map( a => ValDef( NoMods, "_sz_" + a.arg.name, TypeTree( NoType ), Select( Ident( "_" + a.arg.name ), "size" ))) ++ (
                      ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "max" ), expArgs.map( a => Ident( "_sz_" + a.arg.name )))) ::
                      Apply( Apply( Select( Ident( "IIdxSeq" ), "tabulate" ), Ident( "_exp_" ) :: Nil ),
-                        Function( ValDef( NoMods, "i", TypeTree( NoType ), EmptyTree ) :: Nil,
-                           Apply( Ident( name + "UGen" ), expArgs.map( a => Apply( Ident( "_" + a.arg.name ),
-                              Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.arg.name ) :: Nil ) :: Nil )))) :: Nil ) :: Nil
+                        Function( ValDef( Modifiers( Flags.PARAM ), "i", TypeTree( NoType ), EmptyTree ) :: Nil,
+                           Apply( Ident( name + "UGen" ), expArgs map { a =>
+                              val apply = Apply( Ident( "_" + a.arg.name ),
+                                 Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.arg.name ) :: Nil ) :: Nil )
+                              if( a.multi ) Select( apply, "expand" ) else apply
+                           })
+                        ) :: Nil
+                     ) :: Nil
                   )): _*
                )
 //                  Apply( Ident( "apply" ), Ident( rateInfo.name ) :: args.map( i => Ident( i.arg.name )))
                DefDef(
                   NoMods withPosition (Flags.METHOD, NoPosition),
                   "expand",
-                  Nil,        // tparams
+                  Nil, // tparams
                   Nil,        // vparamss
                   TypeTree( NoType ), // tpt -- empty for testing
                   methodBody // rhs
                )
             }
 
-            val caseClassDef = mkCaseClass( NoMods, name, Nil, caseClassConstrArgs, caseClassExpandDef :: Nil,
-               TypeDef( NoMods, "GE", TypeDef( NoMods, name + "UGen", Nil, EmptyTree ) :: Nil, EmptyTree ) :: Nil )
+            val caseClassDef = mkCaseClass(
+               NoMods,
+               name,
+               // hmmmm... is this the cleanest way to define R <: Rate?
+
+//               if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R", Nil, TypeBoundsTree( EmptyTree, TypeDef( NoMods, "Rate", Nil, EmptyTree ))) :: Nil), // tparams
+               if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R <: Rate", Nil, EmptyTree ) :: Nil), // tparams
+               caseClassConstrArgs,
+               caseClassExpandDef :: Nil,
+               TypeDef( NoMods, "GE", TypeDef( NoMods, name + "UGen",
+                  if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R", Nil, EmptyTree ) :: Nil),
+                  EmptyTree ) :: Nil, EmptyTree ) :: Nil
+            )
 
 
 //            caseClassDef.setSymbol( new tools.nsc.symtab.Symbols.Symbol( NoSymbol, NoPosition, new Name( 0, 0 )))
@@ -173,6 +210,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
 //            println( outputText )
          })( breakOut )
+
+         // XXX add UGen class
 
          val packageDef = PackageDef( Select( Select( Select( Ident( "de" ), "sciss" ), "synth" ), "ugen" ),
             Import( Select( Ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, "IIdxSeq", -1 ) :: Nil ) ::

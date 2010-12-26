@@ -119,4 +119,28 @@
             <see>ugen.PlayBuf</see>
         </ugen>
     </file>
+    <file name="Osc">
+        <ugen name="SinOsc">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="freq" default="440">
+                <doc>
+                    frequency in Hertz.
+                </doc>
+            </arg>
+            <arg name="phase" default="0">
+                <doc>
+                    phase offset or modulator in radians.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    Sinusoidal (sine tone) oscillator.
+                    This is the same as `Osc` except that it uses a built-in interpolating sine table of 8192 entries.
+                </text>
+                <see>ugen.Osc</see>
+                <see>ugen.FSinOsc</see>
+            </doc>
+        </ugen>
+    </file>
 </ugens>
