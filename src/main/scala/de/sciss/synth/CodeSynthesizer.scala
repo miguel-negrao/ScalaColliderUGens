@@ -81,17 +81,20 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //               val vParam     = ValDef( Modifiers( Flags.PARAM ), name, TypeTree( typ /* selectedValue.tpt.tpe */ ), EmptyTree ) :: Nil
 //               vParam
             })( breakOut )
-//            val outputs       = (node \ "outputs").headOption match {
-//               case Some( n ) => (n \ "@num").text match {
-//                  case "0" => ZeroOutputs
-//                  case t   => MultiOutput( t )
-//               }
-//               case None      => SingleOutput
-//            }
+
+            val outputs       = (node \ "outputs").headOption match {
+               case Some( n ) => (n \ "@num").text match {
+                  case "0" => ZeroOutputs
+                  case t   => MultiOutput( t )
+               }
+               case None      => SingleOutput
+            }
 
 //            val trnsAst    = ↓( matchingChildren( trns )) apply ast
 //            val changes    = refactor( trnsAst.toList )
 //            val outputText = Change.applyChanges( changes, inputText )
+
+            val ugenName = name + "UGen"
 
             val objectMethodArgs = args map { uArgInfo =>
                ValDef(
@@ -105,12 +108,13 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
 //            val methodBody = Block( Select( Ident( "freq" ), "toString" ) :: Nil, EmptyTree )
 //            val methodBody = Select( Ident( "freq" ), "toString" ))
-            val objectMethodDefs0 = rates map { rateInfo =>
-               val methodBody = Apply( (if( impliedRate.isDefined ) {
-                  Ident( "apply" )
+            val objectMethodDefs0 = rates.map( rateInfo => {
+               val args0 = args.map( i => Ident( i.arg.name ))
+               val methodBody = if( impliedRate.isDefined ) {
+                  Apply( Ident( "apply" ), args0 )
                } else {
-                  TypeApply( Ident( "apply" ), Ident( rateInfo.name + ".type" ) :: Nil )
-               }), args.map( i => Ident( i.arg.name )))
+                  Apply( TypeApply( Ident( "apply" ), Ident( rateInfo.typ ) :: Nil ), Ident( rateInfo.name ) :: args0 )
+               }
                DefDef(
                   NoMods withPosition (Flags.METHOD, NoPosition),
                   rateInfo.methodName,
@@ -119,7 +123,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   TypeTree( NoType ), // tpt -- empty for testing
                   methodBody // rhs
                )
-            }
+            })
 
             val allDefaults = args.forall( _.arg.default.isDefined )
             val objectMethodDefs = if( allDefaults ) {
@@ -131,7 +135,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      Nil,        // tparams
                      Nil,        // vparamss
                      TypeDef( NoMods, name, if( impliedRate.isDefined ) Nil else {
-                        TypeDef( NoMods, rateInfo.name + ".type", Nil, EmptyTree ) :: Nil
+                        TypeDef( NoMods, rateInfo.typ, Nil, EmptyTree ) :: Nil
                      }, EmptyTree ),
                      methodBody // rhs
                   )
@@ -148,8 +152,12 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                )
             )
 
-            val caseClassConstrArgs = args map { uArgInfo => (NoMods, uArgInfo.arg.name + ": " + uArgInfo.arg.typ, EmptyTree) }
-//            val caseClassConstrArgs  = (NoMods, "rate: Rate", EmptyTree) :: caseClassConstrArgs0
+            val caseClassConstrArgs  = {
+               val args0 = args map { uArgInfo => (NoMods, uArgInfo.arg.name + ": " + uArgInfo.arg.typ, EmptyTree) }
+               if( impliedRate.isDefined ) args0 else {
+                  (NoMods, "rate: R", EmptyTree) :: args0
+               }
+            }
 
             val caseClassExpandDef = {
 //               val bufE    = buf.expand
@@ -163,10 +171,15 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "max" ), expArgs.map( a => Ident( "_sz_" + a.arg.name )))) ::
                      Apply( Apply( Select( Ident( "IIdxSeq" ), "tabulate" ), Ident( "_exp_" ) :: Nil ),
                         Function( ValDef( Modifiers( Flags.PARAM ), "i", TypeTree( NoType ), EmptyTree ) :: Nil,
-                           Apply( Ident( name + "UGen" ), expArgs map { a =>
-                              val apply = Apply( Ident( "_" + a.arg.name ),
-                                 Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.arg.name ) :: Nil ) :: Nil )
-                              if( a.multi ) Select( apply, "expand" ) else apply
+                           Apply( Ident( ugenName ), {
+                              val args0 = args.map( a => {
+                                 if( a.isGE ) {
+                                    val apply = Apply( Ident( "_" + a.arg.name ),
+                                       Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.arg.name ) :: Nil ) :: Nil )
+                                    if( a.multi ) Select( apply, "expand" ) else apply
+                                 } else Ident( a.arg.name )
+                              })
+                              if( impliedRate.isDefined ) args0 else (Ident( "rate" ) :: args0)
                            })
                         ) :: Nil
                      ) :: Nil
@@ -183,20 +196,21 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                )
             }
 
+            // hmmmm... is this the cleanest way to define R <: Rate?
+//            if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R", Nil, TypeBoundsTree( EmptyTree, TypeDef( NoMods, "Rate", Nil, EmptyTree ))) :: Nil), // tparams
+            val caseClassTypeParam = if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R <: Rate", Nil, EmptyTree ) :: Nil)
+
             val caseClassDef = mkCaseClass(
                NoMods,
                name,
-               // hmmmm... is this the cleanest way to define R <: Rate?
 
-//               if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R", Nil, TypeBoundsTree( EmptyTree, TypeDef( NoMods, "Rate", Nil, EmptyTree ))) :: Nil), // tparams
-               if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R <: Rate", Nil, EmptyTree ) :: Nil), // tparams
+               caseClassTypeParam, // tparams
                caseClassConstrArgs,
                caseClassExpandDef :: Nil,
-               TypeDef( NoMods, "GE", TypeDef( NoMods, name + "UGen",
+               TypeDef( NoMods, "GE", TypeDef( NoMods, ugenName,
                   if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R", Nil, EmptyTree ) :: Nil),
                   EmptyTree ) :: Nil, EmptyTree ) :: Nil
             )
-
 
 //            caseClassDef.setSymbol( new tools.nsc.symtab.Symbols.Symbol( NoSymbol, NoPosition, new Name( 0, 0 )))
 
@@ -206,7 +220,33 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //            println( "JUHU " + caseClassConstr.symbol.isConstructor )
 //            println( printer( caseClassConstr ))
 
-            /* DocDef( DocComment( "\n", NoPosition ), EmptyTree ) :: */ objectDef :: caseClassDef :: Nil  // how to prepend a blank line??
+//            case class SinOscUGen[ R <: Rate ]( freq: AnyUGenIn, phase: AnyUGenIn )
+//            extends SingleOutUGen[ R ]( List( freq, phase ))
+
+            val ugenCaseClassConstrArgs = {
+               val args0 = args map { uArgInfo =>
+                  (NoMods, uArgInfo.arg.name + ": " + (if( uArgInfo.isGE ) {
+                     uArgInfo.arg.typ.tuples.head._2.head
+                  } else uArgInfo.arg.typ), EmptyTree)
+               }
+               if( impliedRate.isDefined ) args0 else {
+                  (NoMods, "rate: R", EmptyTree) :: args0
+               }
+            }
+
+            val ugenCaseClassDef = mkCaseClass(
+               NoMods,
+               ugenName,
+               caseClassTypeParam, // tparams
+               ugenCaseClassConstrArgs,
+               Nil,
+               TypeDef( NoMods, outputs.typ, if( outputs != SingleOutput ) Nil else {
+                  TypeDef( NoMods, { val t: String /* fucking shit */ = impliedRate.map( _.typ ).getOrElse( "R" ); t }, Nil, EmptyTree ) :: Nil },
+                  EmptyTree ) :: Nil,
+               superArgs = Apply( Ident( "IIdxSeq" ), args.collect { case a if( a.isGE ) => Ident( a.arg.name )}) :: Nil
+            )
+
+            objectDef :: caseClassDef :: ugenCaseClassDef :: Nil  // how to prepend a blank line??
 
 //            println( outputText )
          })( breakOut )
@@ -225,7 +265,10 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
    private def getBoolAttr( n: Node, name: String, default: Boolean = false ) =
       (n \ ("@" + name)).headOption.map( _.text.toBoolean ).getOrElse( default )
 
-   private case class RateInfo( name: String, methodName: String, implied: Boolean )
+   private case class RateInfo( name: String, methodName: String, implied: Boolean ) {
+      def typ = name + ".type"
+      def traitTyp = name.capitalize + "Rated"
+   }
 //   private object TypeInfo {
 //      def toString( typ: Seq[ TypeInfo ]) : String = {
 //         typ.map( t => t.name + (t.params match {
@@ -255,5 +298,18 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          case Some( ("MultiGE", _) )   => true
          case _                        => false
       }
+   }
+
+   private abstract sealed class Outputs {
+      def typ: String
+   }
+   private case object ZeroOutputs extends Outputs {
+      val typ = "ZeroOutUGen"
+   }
+   private case object SingleOutput extends Outputs {
+      val typ = "SingleOutUGen"
+   }
+   private case class MultiOutput( num: String ) extends Outputs {
+      val typ = "MultiOutUGen"
    }
 }
