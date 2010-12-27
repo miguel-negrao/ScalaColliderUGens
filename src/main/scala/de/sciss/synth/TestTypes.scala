@@ -97,6 +97,20 @@ object TestTypes {
 //      final def outputs: IIdxSeq[ UGenIn ] = Vector.empty
    }
 
+   object DiskIn {
+      def ar(numChannels: Int, buf: GE[AnyUGenIn], loop: GE[AnyUGenIn] = 0.0) = apply(numChannels, buf, loop)
+   }
+   case class DiskIn(numChannels: Int, buf: GE[AnyUGenIn], loop: GE[AnyUGenIn]) extends GE[DiskInUGen] {
+      def expand = {
+         val _buf = buf.expand
+         val _loop = loop.expand
+         val _sz_buf = _buf.size
+         val _sz_loop = _loop.size
+         val _exp_ = max(_sz_buf, _sz_loop)
+         IIdxSeq.tabulate(_exp_)(i => DiskInUGen(numChannels, _buf(i.%(_sz_buf)), _loop(i.%(_sz_loop))))
+      }
+   }
+   case class DiskInUGen(numChannels: Int, buf: AnyUGenIn, loop: AnyUGenIn) extends MultiOutUGen(IIdxSeq(buf, loop)) with AudioRated
    object DiskOut {
       def ar(buf: GE[AnyUGenIn], multi: GE[AnyGE]) = apply(buf, multi)
    }
@@ -111,6 +125,24 @@ object TestTypes {
       }
    }
    case class DiskOutUGen(buf: AnyUGenIn, multi: AnyGE) extends SingleOutUGen[audio.type](multi.expand.+:(buf)) with AudioRated
+   object VDiskIn {
+      def ar(numChannels: Int, buf: GE[AnyUGenIn], speed: GE[AnyUGenIn] = 1.0, loop: GE[AnyUGenIn] = 0.0, sendID: GE[AnyUGenIn] = 0.0) = apply(numChannels, buf, speed, loop, sendID)
+   }
+   case class VDiskIn(numChannels: Int, buf: GE[AnyUGenIn], speed: GE[AnyUGenIn], loop: GE[AnyUGenIn], sendID: GE[AnyUGenIn]) extends GE[VDiskInUGen] {
+      def expand = {
+         val _buf = buf.expand
+         val _speed = speed.expand
+         val _loop = loop.expand
+         val _sendID = sendID.expand
+         val _sz_buf = _buf.size
+         val _sz_speed = _speed.size
+         val _sz_loop = _loop.size
+         val _sz_sendID = _sendID.size
+         val _exp_ = max(_sz_buf, _sz_speed, _sz_loop, _sz_sendID)
+         IIdxSeq.tabulate(_exp_)(i => VDiskInUGen(numChannels, _buf(i.%(_sz_buf)), _speed(i.%(_sz_speed)), _loop(i.%(_sz_loop)), _sendID(i.%(_sz_sendID))))
+      }
+   }
+   case class VDiskInUGen(numChannels: Int, buf: AnyUGenIn, speed: AnyUGenIn, loop: AnyUGenIn, sendID: AnyUGenIn) extends MultiOutUGen(IIdxSeq(buf, speed, loop, sendID)) with AudioRated
 
    object SinOsc {
       def ar: SinOsc[audio.type] = ar( )
@@ -151,26 +183,6 @@ object TestTypes {
    extends SingleOutUGen[ R ]( IIdxSeq( start, end,  dur, doneAction )) with HasDoneFlag
 
    def max( i: Int, is: Int* ) : Int = is.foldLeft( i )( math.max( _, _ ))
-
-   object VDiskIn {
-      def ar(numChannels: Int, buf: GE[AnyUGenIn], speed: GE[AnyUGenIn] = 1.0, loop: GE[AnyUGenIn] = 0.0, sendID: GE[AnyUGenIn] = 0.0) = apply(numChannels, buf, speed, loop, sendID)
-   }
-   case class VDiskIn(numChannels: Int, buf: GE[AnyUGenIn], speed: GE[AnyUGenIn], loop: GE[AnyUGenIn], sendID: GE[AnyUGenIn]) extends GE[VDiskInUGen] {
-      def expand = {
-         val _buf = buf.expand
-         val _speed = speed.expand
-         val _loop = loop.expand
-         val _sendID = sendID.expand
-         val _sz_buf = _buf.size
-         val _sz_speed = _speed.size
-         val _sz_loop = _loop.size
-         val _sz_sendID = _sendID.size
-         val _exp_ = max(_sz_buf, _sz_speed, _sz_loop, _sz_sendID)
-         IIdxSeq.tabulate(_exp_)(i => VDiskInUGen(numChannels, _buf(i.%(_sz_buf)), _speed(i.%(_sz_speed)), _loop(i.%(_sz_loop)), _sendID(i.%(_sz_sendID))))
-      }
-   }
-   case class VDiskInUGen(numChannels: Int, buf: AnyUGenIn, speed: AnyUGenIn, loop: AnyUGenIn, sendID: AnyUGenIn)
-   extends MultiOutUGen(IIdxSeq(buf, speed, loop, sendID)) with AudioRated
 
    object Done {
       def kr( src: GE[ AnyUGenIn with HasDoneFlag ]) = apply( src )

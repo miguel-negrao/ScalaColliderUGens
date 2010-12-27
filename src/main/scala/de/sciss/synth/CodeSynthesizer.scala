@@ -241,15 +241,20 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                }
             }
 
+            val ugenCaseClassParents0 = TypeDef( NoMods, outputs.typ, if( outputs != SingleOutput ) Nil else {
+                  TypeDef( NoMods, { val t: String /* fucking shit */ = impliedRate.map( _.typ ).getOrElse( "R" ); t }, Nil, EmptyTree ) :: Nil },
+                  EmptyTree )
+            val ugenCaseClassParents = impliedRate.map( r =>
+               ugenCaseClassParents0 :: TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: Nil
+            ).getOrElse( ugenCaseClassParents0 :: Nil )
+
             val ugenCaseClassDef = mkCaseClass(
                NoMods,
                ugenName,
                caseClassTypeParam, // tparams
                ugenCaseClassConstrArgs,
                Nil,
-               TypeDef( NoMods, outputs.typ, if( outputs != SingleOutput ) Nil else {
-                  TypeDef( NoMods, { val t: String /* fucking shit */ = impliedRate.map( _.typ ).getOrElse( "R" ); t }, Nil, EmptyTree ) :: Nil },
-                  EmptyTree ) :: Nil,
+               ugenCaseClassParents,
                superArgs = {
                   val geArgs = args.filter( _.isGE )  // XXX TODO: order
                   geArgs.lastOption match {
