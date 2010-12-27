@@ -107,10 +107,10 @@ object TestTypes {
          val _sz_buf = _buf.size
          val _sz_multi = _multi.size
          val _exp_ = max(_sz_buf, _sz_multi)
-         IIdxSeq.tabulate(_exp_)(i => DiskOutUGen(_buf(i.%(_sz_buf)), _multi(i.%(_sz_multi)).expand))
+         IIdxSeq.tabulate(_exp_)(i => DiskOutUGen(_buf(i.%(_sz_buf)), _multi(i.%(_sz_multi))))
       }
    }
-   case class DiskOutUGen(buf: AnyUGenIn, multi: IIdxSeq[AnyUGenIn]) extends SingleOutUGen[audio.type](buf +: multi) with AudioRated
+   case class DiskOutUGen(buf: AnyUGenIn, multi: AnyGE) extends SingleOutUGen[audio.type](multi.expand.+:(buf)) with AudioRated
 
    object SinOsc {
       def ar: SinOsc[audio.type] = ar( )

@@ -73,7 +73,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val name       = (n \ "@name").text
                val multi      = getBoolAttr( n, "multi" )
                val typInfo    = (n \ "@type").headOption.map( n => TypeInfo( n.text -> Nil ))
-                  .getOrElse( TypeInfo( (if( multi ) "MultiGE" else "GE") -> (TypeInfo( ("AnyUGenIn" -> Nil) ) :: Nil) ))
+//                  .getOrElse( TypeInfo( (if( multi ) "MultiGE" else "GE") -> (TypeInfo( ("AnyUGenIn" -> Nil) ) :: Nil) ))
+                  .getOrElse( TypeInfo( "GE" -> (TypeInfo( (if( multi ) "AnyGE" else "AnyUGenIn") -> Nil ) :: Nil) ))
                val default    = (n \ "@default").headOption.map( _.text )
                val doc        = (n \ "doc").headOption.map( _.text )
                UGenArgInfo( ArgInfo( name, typInfo, default, doc ), multi, idx )
@@ -176,7 +177,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                                  if( a.isGE ) {
                                     val apply = Apply( Ident( "_" + a.arg.name ),
                                        Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.arg.name ) :: Nil ) :: Nil )
-                                    if( a.multi ) Select( apply, "expand" ) else apply
+//                                    if( a.multi ) Select( apply, "expand" ) else apply
+                                    apply
                                  } else Ident( a.arg.name )
                               })
                               if( impliedRate.isDefined ) args0 else (Ident( "rate" ) :: args0)
@@ -243,7 +245,15 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                TypeDef( NoMods, outputs.typ, if( outputs != SingleOutput ) Nil else {
                   TypeDef( NoMods, { val t: String /* fucking shit */ = impliedRate.map( _.typ ).getOrElse( "R" ); t }, Nil, EmptyTree ) :: Nil },
                   EmptyTree ) :: Nil,
-               superArgs = Apply( Ident( "IIdxSeq" ), args.collect { case a if( a.isGE ) => Ident( a.arg.name )}) :: Nil
+               superArgs = {
+                  val geArgs = args.filter( _.isGE )  // XXX TODO: order
+                  geArgs.lastOption match {
+                     case Some( a ) if( a.multi ) =>
+                        val rvsArgs = geArgs.dropRight( 1 ).reverse
+                        rvsArgs.foldLeft[ Tree ]( Select( Ident( a.arg.name ), "expand" ))( (a, b) => Apply( Select( a, "+:" ), Ident( b.arg.name ) :: Nil )) :: Nil
+                     case _ => Apply( Ident( "IIdxSeq" ), geArgs.map( a => Ident( a.arg.name ))) :: Nil
+                  }
+               }
             )
 
             objectDef :: caseClassDef :: ugenCaseClassDef :: Nil  // how to prepend a blank line??
@@ -295,7 +305,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
    private case class UGenArgInfo( arg: ArgInfo, multi: Boolean, idx: Int ) {
       def isGE = arg.typ.tuples.headOption match {
          case Some( ("GE", _) )        => true
-         case Some( ("MultiGE", _) )   => true
+//         case Some( ("MultiGE", _) )   => true
          case _                        => false
       }
    }
