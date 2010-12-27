@@ -21,14 +21,18 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
    def perform( xml: Node, dir: File ) {
 
-//      val testAst = treeFrom( "trait GE; class Schnucki extends GE" )
+//      val testAst = treeFrom( "object Test { def eins { }; def zwei() { }; def drei { eins; zwei() }}" )
 //      println( printer( testAst ))
-
+////      println( createText( testAst ))
+//
 //      ↓(matchingChildren(transform {
 //         case t: Template => t.body.foreach {
 //            case d: DefDef =>
+////               if( d.name == "eins" || d.name == "zwei" ) {
+//                  println( "For " + d.name + " --> " + d.vparamss )
+////               }
 ////               println( "Jo, defdef( name = " + d.name+ ", name " + d.hasSymbol + " ) = " + d )
-//               println( printer( d ))
+////               println( printer( d ))
 //            case _ =>
 //         }
 //         t
@@ -129,12 +133,13 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val allDefaults = args.forall( _.arg.default.isDefined )
             val objectMethodDefs = if( allDefaults ) {
                rates.map( rateInfo => {
+//                  val methodBody = Apply( Ident( rateInfo.methodName ), Ident( " " ) :: Nil )  // XXX how to get ar() with the parentheses?
                   val methodBody = Apply( Ident( rateInfo.methodName ), Ident( " " ) :: Nil )  // XXX how to get ar() with the parentheses?
                   DefDef(
                      NoMods withPosition (Flags.METHOD, NoPosition),
                      rateInfo.methodName,
                      Nil,        // tparams
-                     Nil,        // vparamss
+                     Nil,        // vparams
                      TypeDef( NoMods, name, if( impliedRate.isDefined ) Nil else {
                         TypeDef( NoMods, rateInfo.typ, Nil, EmptyTree ) :: Nil
                      }, EmptyTree ),
