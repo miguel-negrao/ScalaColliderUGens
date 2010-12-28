@@ -82,3 +82,6 @@ Implementations of 'checkInputs' :
    XFade2:checkInputs :     this.checkInputs
    XOut:checkInputs :     this.checkInputs
    ZeroCrossing:checkInputs :     this.checkInputs
+
+MultiOutUGen.allSubclasses.asCompileString
+[ /* Panner, */ GrainIn, BeatTrack, /* AbstractIn, */ Demand, Warp1, GrainSin, Pitch, PlayBuf, /* UnpackFFT, */ FreeVerb2, GrainFM, Control, AudioControl, TGrains, Hilbert, StereoConvolution2L, DC, DiskIn, GrainBuf, BufRd, MFCC, GVerb, Silent, BeatTrack2, VDiskIn, Rotate2, DecodeB2, Pan4, PanAz, Balance2, PanB2, PanB, Pan2, BiPanB2, LinPan2, LocalIn, SharedIn, LagIn, InFeedback, InTrig, In, LagControl, TrigControl ]

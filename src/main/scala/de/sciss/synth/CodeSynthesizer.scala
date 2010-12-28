@@ -81,6 +81,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //      val traitGE = TypeDef( Modifiers( Flags.TRAIT ), "GE", Nil, EmptyTree )
       val traitSideEffect  = TypeDef( Modifiers( Flags.TRAIT ), "HasSideEffect", Nil, EmptyTree )
       val traitDoneFlag    = TypeDef( Modifiers( Flags.TRAIT ), "HasDoneFlag",   Nil, EmptyTree )
+      val identIIdxSeq     = Ident( "IIdxSeq" )
 
       (xml \ "file") foreach { node =>
          val name       = (node \ "@name").text
@@ -117,12 +118,12 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      val tup1 = ((if( multi ) {
                         rate match {
                            case "" => "AnyGE"
-                           case r  => "GE[UGenIn[" + r + ".type]]" // XXX dirty
+                           case r  => "GE[UGenIn[" + r + /* ".type]]" */ "]]" // XXX dirty
                         }
                      } else {
                         rate match {
                            case "" => "AnyUGenIn"
-                           case r  => "UGenIn[" + r + ".type]" // XXX dirty
+                           case r  => "UGenIn[" + r + /* ".type]]" */ "]]" // XXX dirty
                         }
                      }) -> Nil) :: tup0
                      TypeInfo( tup1: _* ) :: Nil
@@ -171,7 +172,10 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val methodBody = if( impliedRate.isDefined ) {
                   Apply( Ident( "apply" ), args0 )
                } else {
+                  // the type application is still needed for the compiler not complain about some
+                  // audio.type versus audio bullshit...
                   Apply( TypeApply( Ident( "apply" ), Ident( rateInfo.typ ) :: Nil ), Ident( rateInfo.name ) :: args0 )
+//                  Apply( Ident( "apply" ), Ident( rateInfo.name ) :: args0 )
                }
                DefDef(
                   NoMods withPosition (Flags.METHOD, NoPosition),
@@ -228,7 +232,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   (expArgs.map( a => ValDef( NoMods, "_" + a.arg.name, TypeTree( NoType ), Select( Ident( a.arg.name ), "expand" ))) ++
                    expArgs.map( a => ValDef( NoMods, "_sz_" + a.arg.name, TypeTree( NoType ), Select( Ident( "_" + a.arg.name ), "size" ))) ++ (
                      ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "max" ), expArgs.map( a => Ident( "_sz_" + a.arg.name )))) ::
-                     Apply( Apply( Select( Ident( "IIdxSeq" ), "tabulate" ), Ident( "_exp_" ) :: Nil ),
+                     Apply( Apply( Select( identIIdxSeq, "tabulate" ), Ident( "_exp_" ) :: Nil ),
                         Function( ValDef( Modifiers( Flags.PARAM ), "i", TypeTree( NoType ), EmptyTree ) :: Nil,
                            Apply( Ident( ugenName ), {
                               val args0 = args.map( a => {
@@ -315,11 +319,17 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                ugenCaseClassParents,
                superArgs = {
                   val geArgs = args.filter( _.isGE )  // XXX TODO: order
-                  geArgs.lastOption match {
+                  val args0 = geArgs.lastOption match {
                      case Some( a ) if( a.multi ) =>
                         val rvsArgs = geArgs.dropRight( 1 ).reverse
                         rvsArgs.foldLeft[ Tree ]( Select( Ident( a.arg.name ), "expand" ))( (a, b) => Apply( Select( a, "+:" ), Ident( b.arg.name ) :: Nil )) :: Nil
-                     case _ => Apply( Ident( "IIdxSeq" ), geArgs.map( a => Ident( a.arg.name ))) :: Nil
+                     case _ => Apply( identIIdxSeq, geArgs.map( a => Ident( a.arg.name ))) :: Nil
+                  }
+                  outputs match {
+                     case m: MultiOutput =>
+                        Apply( Apply( Select( identIIdxSeq, "fill" ), Ident( m.num ) :: Nil ),
+                           Ident( impliedRate.map( _.typ ).getOrElse( "rate" )) :: Nil ) :: args0
+                     case _ => args0
                   }
                }
             )
@@ -331,10 +341,11 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
          // XXX add UGen class
 
-         val packageDef = PackageDef( Select( Select( Select( Ident( "de" ), "sciss" ), "synth" ), "ugen" ),
-            Import( Select( Ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, "IIdxSeq", -1 ) :: Nil ) ::
-            Import( Select( Select( Select( Ident( "de" ), "sciss" ), "synth" ), "SynthGraph" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) ::
-            /* DocDef( DocComment( "/** Kuuka */", NoPosition ), EmptyTree ) :: */ ugens )
+         val packageDef = PackageDef( Select( Select( Ident( "de" ), "sciss" ), "synth" ),
+            PackageDef( Ident( "ugen" ),
+               Import( Select( Ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, identIIdxSeq.name, -1 ) :: Nil ) ::
+               Import( Ident( "SynthGraph" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) ::
+               ugens ) :: Nil )
          println( createText( packageDef ))
          println()
 //         println( createText( ugens.head ))
@@ -345,7 +356,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       (n \ ("@" + name)).headOption.map( _.text.toBoolean ).getOrElse( default )
 
    private case class RateInfo( name: String, methodName: String, implied: Boolean ) {
-      def typ = name + ".type"
+//      def typ = name + ".type"
+      def typ = name // + ".type"
       def traitTyp = name.capitalize + "Rated"
    }
 //   private object TypeInfo {
