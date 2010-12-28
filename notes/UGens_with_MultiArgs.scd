@@ -44,3 +44,41 @@ object DiskOut {
 }
 
 ?
+
+//////////////////////////
+
+Implementations of 'checkInputs' :
+   AbstractOut:checkInputs :     this.checkInputs
+[ class LocalOut, class XOut, class SharedOut, class Out, class OffsetOut, class ReplaceOut ]
+   AmpComp:checkInputs :     this.checkInputs
+   BiPanB2:checkInputs :     this.checkInputs
+   BufRd:checkInputs :     this.checkInputs
+   BufWr:checkInputs :     this.checkInputs
+   CheckBadValues:checkInputs :     this.checkInputs
+   DecodeB2:checkInputs :     this.checkInputs
+   Demand:checkInputs :     this.checkInputs
+   DiskOut:checkInputs :     this.checkInputs
+   Duty:checkInputs :     this.checkInputs
+   Filter:checkInputs :     this.checkInputs
+[ BPF, LPF, LPZ2, LagUD, Decay2, Decay, OnePole, Resonz, MoogFF, Median, Integrator, DetectSilence, Lag, LPZ1, Ringz, FOS, RLPF, MidEQ, Slew, LeakDC, TwoPole, BEQSuite, Slope, Formlet, SOS, BRF, HPF, HPZ2, BPZ2, BRZ2, Lag2UD, Lag3UD, OneZero, Ramp, Lag3, Lag2, HPZ1, RHPF, TwoZero, APF, BBandStop, BHiPass, BLowShelf, BPeakEQ, BAllPass, BHiShelf, BBandPass, BLowPass ]
+   LinExp:checkInputs :     this.checkInputs
+   LinLin:checkInputs :     this.checkInputs
+   LinXFade2:checkInputs :     this.checkInputs
+   Median:checkInputs :     this.checkInputs
+   Panner:checkInputs :     this.checkInputs
+[ Rotate2, DecodeB2, Pan4, PanAz, Balance2, PanB2, PanB, Pan2, BiPanB2, LinPan2 ]
+   Peak:checkInputs :     this.checkInputs
+   PitchShift:checkInputs :     this.checkInputs
+   Poll:checkInputs :     this.checkInputs
+   PulseCount:checkInputs :     this.checkInputs
+   Select:checkInputs :     this.checkInputs
+   SendTrig:checkInputs :     this.checkInputs
+   Stepper:checkInputs :     this.checkInputs
+   SynthDef:checkInputs :     this.checkInputs
+   T2K:checkInputs :     this.checkInputs
+   TDelay:checkInputs :     this.checkInputs
+   Timer:checkInputs :     this.checkInputs
+//   UGen:checkInputs :     this.checkInputs
+   XFade2:checkInputs :     this.checkInputs
+   XOut:checkInputs :     this.checkInputs
+   ZeroCrossing:checkInputs :     this.checkInputs

@@ -107,12 +107,29 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val (n, idx)   = tup
                val name       = (n \ "@name").text
                val multi      = getBoolAttr( n, "multi" )
+               val doneFlagArg= getBoolAttr( n, "doneflag" )
+               val rate       = (n \ "@rate").text
+               if( multi ) require( !doneFlagArg )
                val typInfo    = (n \ "@type").headOption.map( n => TypeInfo( n.text -> Nil ))
 //                  .getOrElse( TypeInfo( (if( multi ) "MultiGE" else "GE") -> (TypeInfo( ("AnyUGenIn" -> Nil) ) :: Nil) ))
-                  .getOrElse( TypeInfo( "GE" -> (TypeInfo( (if( multi ) "AnyGE" else "AnyUGenIn") -> Nil ) :: Nil) ))
+                  .getOrElse( TypeInfo( "GE" -> {
+                     val tup0 = if( doneFlagArg ) (("HasDoneFlag" -> Nil) :: Nil) else Nil
+                     val tup1 = ((if( multi ) {
+                        rate match {
+                           case "" => "AnyGE"
+                           case r  => "GE[UGenIn[" + r + ".type]]" // XXX dirty
+                        }
+                     } else {
+                        rate match {
+                           case "" => "AnyUGenIn"
+                           case r  => "UGenIn[" + r + ".type]" // XXX dirty
+                        }
+                     }) -> Nil) :: tup0
+                     TypeInfo( tup1: _* ) :: Nil
+                  }))
                val default    = (n \ "@default").headOption.map( _.text )
                val doc        = (n \ "doc").headOption.map( _.text )
-               UGenArgInfo( ArgInfo( name, typInfo, default, doc ), multi, idx )
+               UGenArgInfo( ArgInfo( name, typInfo, default, doc ), multi, /* doneFlag, */ idx )
 //               val typ        =
 //               val vParam     = ValDef( Modifiers( Flags.PARAM ), name, TypeTree( typ /* selectedValue.tpt.tpe */ ), EmptyTree ) :: Nil
 //               vParam
