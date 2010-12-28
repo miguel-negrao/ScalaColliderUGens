@@ -1,3 +1,31 @@
+/*
+ *  CodeSynthesizer.scala
+ *  (ScalaCollider-UGens)
+ *
+ *  Copyright (c) 2008-2010 Hanns Holger Rutz. All rights reserved.
+ *
+ *  This software is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either
+ *  version 2, june 1991 of the License, or (at your option) any later version.
+ *
+ *  This software is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *  General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public
+ *  License (gpl.txt) along with this software; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ *
+ *
+ *  Changelog:
+ */
+
 package de.sciss.synth
 
 import scala.tools.nsc.symtab.Flags
@@ -51,6 +79,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //      )
 
 //      val traitGE = TypeDef( Modifiers( Flags.TRAIT ), "GE", Nil, EmptyTree )
+      val traitSideEffect  = TypeDef( Modifiers( Flags.TRAIT ), "HasSideEffect", Nil, EmptyTree )
+      val traitDoneFlag    = TypeDef( Modifiers( Flags.TRAIT ), "HasDoneFlag",   Nil, EmptyTree )
 
       (xml \ "file") foreach { node =>
          val name       = (node \ "@name").text
@@ -59,6 +89,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          val ugens: List[ Tree ] = (node \ "ugen").flatMap( node => {
             val name          = (node \ "@name").text
             val sideEffect    = getBoolAttr( node, "sideeffect" )
+            val doneFlag      = getBoolAttr( node, "doneflag" )
             val rates: List[ RateInfo ] = (node \ "rate").map( n => {
                val name       = (n \ "@name").text
                val methodName = name match {
@@ -106,8 +137,13 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   Modifiers( Flags.PARAM ),
                   uArgInfo.arg.name,
                   Ident( uArgInfo.arg.typ.toString ),
-                  uArgInfo.arg.default.map( s => Literal( if( uArgInfo.isGE ) Constant( s.toFloat ) else Constant( s )))
-                     .getOrElse( EmptyTree )
+                  uArgInfo.arg.default.map( s => if( uArgInfo.isGE ) {
+                     try {
+                        Literal( Constant( s.toFloat ))
+                     } catch {
+                        case e: NumberFormatException => Ident( s )
+                     }
+                  } else Ident( s )).getOrElse( EmptyTree )
                )
             }
 
@@ -241,12 +277,17 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                }
             }
 
-            val ugenCaseClassParents0 = TypeDef( NoMods, outputs.typ, if( outputs != SingleOutput ) Nil else {
-                  TypeDef( NoMods, { val t: String /* fucking shit */ = impliedRate.map( _.typ ).getOrElse( "R" ); t }, Nil, EmptyTree ) :: Nil },
-                  EmptyTree )
-            val ugenCaseClassParents = impliedRate.map( r =>
-               ugenCaseClassParents0 :: TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: Nil
-            ).getOrElse( ugenCaseClassParents0 :: Nil )
+            val ugenCaseClassParents: List[ TypeDef ] = {
+               val p1 = if( doneFlag )   (traitDoneFlag :: Nil) else Nil
+               val p2 = if( sideEffect ) (traitSideEffect :: p1) else p1
+               val p3 = impliedRate.map( r => TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: p2 ).getOrElse( p2 )
+               TypeDef( NoMods, outputs.typ, if( outputs != SingleOutput ) Nil else {
+                  TypeDef( NoMods, impliedRate.map( _.typ ).getOrElse( "R" ): String, Nil, EmptyTree ) :: Nil
+               }, EmptyTree ) :: p3
+            }
+//            val ugenCaseClassParents: List[ TypeDef ] = impliedRate.map( r =>
+//               ugenCaseClassParents0 :: TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: Nil
+//            ).getOrElse( ugenCaseClassParents0 :: Nil )
 
             val ugenCaseClassDef = mkCaseClass(
                NoMods,
@@ -278,6 +319,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             Import( Select( Select( Select( Ident( "de" ), "sciss" ), "synth" ), "SynthGraph" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) ::
             /* DocDef( DocComment( "/** Kuuka */", NoPosition ), EmptyTree ) :: */ ugens )
          println( createText( packageDef ))
+         println()
 //         println( createText( ugens.head ))
       }
    }

@@ -97,6 +97,25 @@ object TestTypes {
 //      final def outputs: IIdxSeq[ UGenIn ] = Vector.empty
    }
 
+   sealed abstract class DoneAction( val id: Int )
+   case object doNothing         extends DoneAction( 0 )
+   case object pauseSelf         extends DoneAction( 1 )
+   case object freeSelf          extends DoneAction( 2 )
+   case object freeSelfPred      extends DoneAction( 3 )
+   case object freeSelfSucc      extends DoneAction( 4 )
+   case object freeSelfPredAll   extends DoneAction( 5 )
+   case object freeSelfSuccAll   extends DoneAction( 6 )
+   case object freeSelfToHead    extends DoneAction( 7 )
+   case object freeSelfToTail    extends DoneAction( 8 )
+   case object freeSelfPausePred extends DoneAction( 9 )
+   case object freeSelfPauseSucc extends DoneAction( 10 )
+   case object freeSelfPredDeep  extends DoneAction( 11 )
+   case object freeSelfSuccDeep  extends DoneAction( 12 )
+   case object freeAllInGroup    extends DoneAction( 13 )
+   case object freeGroup         extends DoneAction( 14 )
+
+   implicit def doneActionToGE( x: DoneAction ) = Constant( x.id )
+
    object DiskIn {
       def ar(numChannels: Int, buf: GE[AnyUGenIn], loop: GE[AnyUGenIn] = 0.0) = apply(numChannels, buf, loop)
    }
@@ -110,7 +129,7 @@ object TestTypes {
          IIdxSeq.tabulate(_exp_)(i => DiskInUGen(numChannels, _buf(i.%(_sz_buf)), _loop(i.%(_sz_loop))))
       }
    }
-   case class DiskInUGen(numChannels: Int, buf: AnyUGenIn, loop: AnyUGenIn) extends MultiOutUGen(IIdxSeq(buf, loop)) with AudioRated
+   case class DiskInUGen(numChannels: Int, buf: AnyUGenIn, loop: AnyUGenIn) extends MultiOutUGen(IIdxSeq(buf, loop)) with AudioRated with HasSideEffect
    object DiskOut {
       def ar(buf: GE[AnyUGenIn], multi: GE[AnyGE]) = apply(buf, multi)
    }
@@ -124,7 +143,7 @@ object TestTypes {
          IIdxSeq.tabulate(_exp_)(i => DiskOutUGen(_buf(i.%(_sz_buf)), _multi(i.%(_sz_multi))))
       }
    }
-   case class DiskOutUGen(buf: AnyUGenIn, multi: AnyGE) extends SingleOutUGen[audio.type](multi.expand.+:(buf)) with AudioRated
+   case class DiskOutUGen(buf: AnyUGenIn, multi: AnyGE) extends SingleOutUGen[audio.type](multi.expand.+:(buf)) with AudioRated with HasSideEffect
    object VDiskIn {
       def ar(numChannels: Int, buf: GE[AnyUGenIn], speed: GE[AnyUGenIn] = 1.0, loop: GE[AnyUGenIn] = 0.0, sendID: GE[AnyUGenIn] = 0.0) = apply(numChannels, buf, speed, loop, sendID)
    }
@@ -142,7 +161,7 @@ object TestTypes {
          IIdxSeq.tabulate(_exp_)(i => VDiskInUGen(numChannels, _buf(i.%(_sz_buf)), _speed(i.%(_sz_speed)), _loop(i.%(_sz_loop)), _sendID(i.%(_sz_sendID))))
       }
    }
-   case class VDiskInUGen(numChannels: Int, buf: AnyUGenIn, speed: AnyUGenIn, loop: AnyUGenIn, sendID: AnyUGenIn) extends MultiOutUGen(IIdxSeq(buf, speed, loop, sendID)) with AudioRated
+   case class VDiskInUGen(numChannels: Int, buf: AnyUGenIn, speed: AnyUGenIn, loop: AnyUGenIn, sendID: AnyUGenIn) extends MultiOutUGen(IIdxSeq(buf, speed, loop, sendID)) with AudioRated with HasSideEffect
 
    object SinOsc {
       def ar: SinOsc[audio.type] = ar( )
@@ -163,24 +182,26 @@ object TestTypes {
    case class SinOscUGen[R <: Rate](rate: R, freq: AnyUGenIn, phase: AnyUGenIn) extends SingleOutUGen[R](IIdxSeq(freq, phase))
 
    object Line {
-      def kr( start: GE[ AnyUGenIn ], end: GE[ AnyUGenIn ], dur: GE[ AnyUGenIn ], doneAction: GE[ AnyUGenIn ]) =
-         apply[ control.type ]( control, start, end, dur, doneAction )
+      def ar: Line[audio.type] = ar( )
+      def kr: Line[control.type] = kr( )
+      def ar(start: GE[AnyUGenIn] = 0.0, end: GE[AnyUGenIn] = 1.0, dur: GE[AnyUGenIn] = 1.0, doneAction: GE[AnyUGenIn] = doNothing) = apply[audio.type](audio, start, end, dur, doneAction)
+      def kr(start: GE[AnyUGenIn] = 0.0, end: GE[AnyUGenIn] = 1.0, dur: GE[AnyUGenIn] = 1.0, doneAction: GE[AnyUGenIn] = doNothing) = apply[control.type](control, start, end, dur, doneAction)
    }
-   case class Line[ R <: Rate ]( rate: R, start: GE[ AnyUGenIn ], end: GE[ AnyUGenIn ],
-                                 dur: GE[ AnyUGenIn ], doneAction: GE[ AnyUGenIn ])
-   extends GE[ LineUGen[ R ]] with HasDoneFlag {
-      def expand: IIdxSeq[ LineUGen[ R ]] = {
-         val startE: IIdxSeq[ AnyUGenIn ] = start.expand
-         val endE: IIdxSeq[ AnyUGenIn ]   = end.expand
-         val durE: IIdxSeq[ AnyUGenIn ]   = dur.expand
-         val doneE: IIdxSeq[ AnyUGenIn ]  = doneAction.expand
-         val numExp  = math.max( math.max( math.max( startE.size, endE.size ), durE.size ), doneE.size )
-         IIdxSeq.tabulate( numExp )( i =>
-            LineUGen[ R ]( rate, startE( i % numExp ), endE( i % numExp ), durE( i % numExp ), doneE( i % numExp )))
+   case class Line[R <: Rate](rate: R, start: GE[AnyUGenIn], end: GE[AnyUGenIn], dur: GE[AnyUGenIn], doneAction: GE[AnyUGenIn]) extends GE[LineUGen[R]] {
+      def expand = {
+         val _start = start.expand
+         val _end = end.expand
+         val _dur = dur.expand
+         val _doneAction = doneAction.expand
+         val _sz_start = _start.size
+         val _sz_end = _end.size
+         val _sz_dur = _dur.size
+         val _sz_doneAction = _doneAction.size
+         val _exp_ = max(_sz_start, _sz_end, _sz_dur, _sz_doneAction)
+         IIdxSeq.tabulate(_exp_)(i => LineUGen(rate, _start(i.%(_sz_start)), _end(i.%(_sz_end)), _dur(i.%(_sz_dur)), _doneAction(i.%(_sz_doneAction))))
       }
    }
-   case class LineUGen[ R <: Rate ]( rate: R, start: AnyUGenIn, end: AnyUGenIn, dur: AnyUGenIn, doneAction: AnyUGenIn )
-   extends SingleOutUGen[ R ]( IIdxSeq( start, end,  dur, doneAction )) with HasDoneFlag
+   case class LineUGen[R <: Rate](rate: R, start: AnyUGenIn, end: AnyUGenIn, dur: AnyUGenIn, doneAction: AnyUGenIn) extends SingleOutUGen[R](IIdxSeq(start, end, dur, doneAction)) with HasSideEffect with HasDoneFlag
 
    def max( i: Int, is: Int* ) : Int = is.foldLeft( i )( math.max( _, _ ))
 
