@@ -32,12 +32,12 @@ import scala.tools.nsc.symtab.Flags
 import tools.refactoring.Refactoring
 import tools.refactoring.util.CompilerProvider
 import xml.Node
-import java.io.File
 import collection.breakOut
 import net.virtualvoid.string.MyNodePrinter
 import tools.refactoring.transformation.TreeFactory
 import tools.refactoring.common.{CompilerAccess, Tracing, Change}
 import tools.nsc.io.AbstractFile
+import java.io.{FileOutputStream, OutputStreamWriter, FileWriter, File}
 
 class CodeSynthesizer extends Refactoring
 with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with TreeFactory {
@@ -89,7 +89,10 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          val ast        = treeFrom( "package de.sciss.synth.ugen\n" )
          val ugens: List[ Tree ] = (node \ "ugen").flatMap( node => {
             val name          = (node \ "@name").text
-            val sideEffect    = getBoolAttr( node, "sideeffect" )
+            val readsBus      = getBoolAttr( node, "readsbus" )
+            val writesBus     = getBoolAttr( node, "writesbus" )
+            val writesBuffer  = getBoolAttr( node, "writesbuffer" )
+            val sideEffect    = getBoolAttr( node, "sideeffect" ) || readsBus || writesBus || writesBuffer
             val doneFlag      = getBoolAttr( node, "doneflag" )
             val rates: List[ RateInfo ] = (node \ "rate").map( n => {
                val name       = (n \ "@name").text
@@ -117,7 +120,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      val tup0 = if( doneFlagArg ) (("HasDoneFlag" -> Nil) :: Nil) else Nil
                      val tup1 = ((if( multi ) {
                         rate match {
-                           case "" => "AnyGE"
+                           case "" => "GE[AnyUGenIn]"   // XXX dirty
                            case r  => "GE[UGenIn[" + r + /* ".type]]" */ "]]" // XXX dirty
                         }
                      } else {
@@ -157,7 +160,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   Ident( uArgInfo.arg.typ.toString ),
                   uArgInfo.arg.default.map( s => if( uArgInfo.isGE ) {
                      try {
-                        Literal( Constant( s.toFloat ))
+//                        Literal( Constant( s.toFloat ))
+                        Ident( s.toFloat.toString + "f" )  // XXX workaround for scala-refactoring bug of missing f
                      } catch {
                         case e: NumberFormatException => Ident( s )
                      }
@@ -300,7 +304,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
             val ugenCaseClassParents: List[ TypeDef ] = {
                val p1 = if( doneFlag )   (traitDoneFlag :: Nil) else Nil
-               val p2 = if( sideEffect ) (traitSideEffect :: p1) else p1
+               // note: ZeroOutUGen already extends HasSideEffect
+               val p2 = if( sideEffect && (outputs != ZeroOutputs) ) (traitSideEffect :: p1) else p1
                val p3 = impliedRate.map( r => TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: p2 ).getOrElse( p2 )
                TypeDef( NoMods, outputs.typ, if( outputs != SingleOutput ) Nil else {
                   TypeDef( NoMods, impliedRate.map( _.typ ).getOrElse( "R" ): String, Nil, EmptyTree ) :: Nil
@@ -346,10 +351,25 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                Import( Select( Ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, identIIdxSeq.name, -1 ) :: Nil ) ::
                Import( Ident( "SynthGraph" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) ::
                ugens ) :: Nil )
-         println( createText( packageDef ))
-         println()
+//         println( createText( packageDef ))
+//         println()
 //         println( createText( ugens.head ))
+         println( "Writing " + fileName )
+         val osw = new OutputStreamWriter( new FileOutputStream( new File( dir, fileName )), "UTF-8" )
+         osw.write( """/*
+ * """ + fileName + """
+ * (ScalaCollider-UGens)
+ *
+ * This is a synthetically generated file.
+ * Created: """ + (new java.util.Date()).toString + """
+ * ScalaCollider-UGen version: """ + UGens.versionString + """
+ */
+
+""" )
+         osw.write( createText( packageDef ))
+         osw.close()
       }
+      println( "Done.")
    }
 
    private def getBoolAttr( n: Node, name: String, default: Boolean = false ) =

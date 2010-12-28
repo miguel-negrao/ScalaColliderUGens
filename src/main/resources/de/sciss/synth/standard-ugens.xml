@@ -1,4 +1,33 @@
 <ugens>
+    <file name="Delays">
+        <ugen name="CombN">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="in"/>
+            <arg name="maxDelayTime" default="0.2"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+
+        <ugen name="CombL">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="in"/>
+            <arg name="maxDelayTime" default="0.2"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+
+        <ugen name="CombC">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="in"/>
+            <arg name="maxDelayTime" default="0.2"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+    </file>
+
     <file name="EnvGen">
         <ugen name="Done" sideeffect="true">
             <rate name="control" implied="true"/>
@@ -19,6 +48,17 @@
                 <see>ugen.Line</see>
                 <see>ugen.EnvGen</see>
             </doc>
+        </ugen>
+    </file>
+
+    <file name="InOut">
+        <ugen name="Out" writesbus="true">
+            <outputs num="0"/>
+            <rate name="audio"/>
+            <rate name="control"/>
+            <rate name="scalar"/>
+            <arg name="bus"/>
+            <arg name="in" multi="true"/>
         </ugen>
     </file>
 
@@ -59,6 +99,32 @@
     </file>
 
     <file name="Osc">
+        <ugen name="LFSaw">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="freq" default="440">
+                <doc>
+                    frequency in Hertz
+                </doc>
+            </arg>
+            <arg name="phase" default="0">
+                <doc>
+                    Initial phase offset. For efficiency reasons this is a
+                    value ranging from 0 to 2. Note that a phase of zero (default) means
+                    the wave starts at 0 and rises to +1 before jumping down to -1. Use
+                    a phase of 1 to have the wave start at -1. The initial phase cannot
+                    be modulated.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A sawtooth oscillator UGen. The oscillator is creating an aliased sawtooth,
+                    that is it does not use band-limiting. For a band-limited version use
+                    `Saw` instead. The signal range is -1 to +1
+                </text>
+                <see>ugen.Saw</see>
+            </doc>
+        </ugen>
         <ugen name="SinOsc">
             <rate name="audio"/>
             <rate name="control"/>
@@ -119,7 +185,7 @@
             </doc>
         </ugen>
         
-        <ugen name="DiskOut" sideeffect="true">
+        <ugen name="DiskOut" writesbuffer="true">
             <rate name="audio" implied="true"/>
             <arg name="buf">
                 <doc>
@@ -130,7 +196,7 @@
                     (and not write anything to the file).
                 </doc>
             </arg>
-            <arg name="multi" multi="true" rate="audio">
+            <arg name="in" multi="true" rate="audio">
                 <doc>
                     the signal to be recorded
                 </doc>

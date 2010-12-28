@@ -3,3 +3,4 @@ special input values: Poll, EnvGen, Klang, ...
 output accessors for multi-output ugens, e.g. for Pitch
 ( default values: work around bug for float-literals )
 doc comments
+individuation
