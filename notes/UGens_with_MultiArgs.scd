@@ -96,3 +96,14 @@ Changed argument order:
 	Dswitch
 	SendTrig
 	SendReply
+
+
+///////////////////////////
+sclang probs:
+
+SynthDef( \test2, { SinOsc.kr( 441, mul: LFSaw.ar, add: 4 )}).writeDefFile( "~/Desktop/".standardizePath )
+// --> produziert MulAdd.kr mit illegalem a-rate mul argument
+// wobei nicht klar ist, ob es wirklich verboten ist:
+{ K2A.ar( SinOsc.kr( 441, mul: LFSaw.ar(1), add: 0.0001 ))}.play  // hmmm... sound the same
+{ K2A.ar( SinOsc.kr( 441, mul: LFSaw.kr(1), add: 0.0001 ))}.play
+
