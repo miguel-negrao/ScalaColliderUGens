@@ -114,23 +114,33 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val doneFlagArg= getBoolAttr( n, "doneflag" )
                val rate       = (n \ "@rate").text
                if( multi ) require( !doneFlagArg )
-               val typInfo    = (n \ "@type").headOption.map( n => TypeInfo( n.text -> Nil ))
+               val typInfo    = (n \ "@type").headOption.map( n => TypeInfo( (n.text -> Nil) :: Nil ))
 //                  .getOrElse( TypeInfo( (if( multi ) "MultiGE" else "GE") -> (TypeInfo( ("AnyUGenIn" -> Nil) ) :: Nil) ))
-                  .getOrElse( TypeInfo( "GE" -> {
-                     val tup0 = if( doneFlagArg ) (("HasDoneFlag" -> Nil) :: Nil) else Nil
-                     val tup1 = ((if( multi ) {
-                        rate match {
-                           case "" => "GE[AnyUGenIn]"   // XXX dirty
-                           case r  => "GE[UGenIn[" + r + /* ".type]]" */ "]]" // XXX dirty
+                  .getOrElse({
+                     val typ0 = rate match {
+                        case "" => if( doneFlagArg ) {
+                           TypeInfo( ("GE" -> (TypeInfo( ("R" -> Nil) :: Nil ) :: TypeInfo(
+                              List( ("UGenIn" -> (TypeInfo( ("R" -> Nil) :: Nil ) :: Nil)),
+                                    ("HasDoneFlag" -> Nil))
+                           ) :: Nil)) :: Nil, Some( "R" -> "<: Rate" ))
+                        } else {
+                           TypeInfo( ("AnyGE" -> Nil) :: Nil )
                         }
+                        case r  =>
+                           val t0 = "UGenIn" -> (TypeInfo( (r -> Nil) :: Nil ) :: Nil)
+                           val t1: List[ (String, List[ TypeInfo ])] = if( doneFlagArg ) {
+                              List( t0, "HasDoneFlag" -> Nil )
+                           } else {
+                              t0 :: Nil
+                           }
+                           TypeInfo( ("GE" -> (TypeInfo( (r -> Nil) :: Nil ) :: TypeInfo( t1 ) :: Nil)) :: Nil )
+                     }
+                     if( multi ) {
+                        TypeInfo( ("Expands" -> (typ0 :: Nil)) :: Nil )
                      } else {
-                        rate match {
-                           case "" => "AnyUGenIn"
-                           case r  => "UGenIn[" + r + /* ".type]]" */ "]]" // XXX dirty
-                        }
-                     }) -> Nil) :: tup0
-                     TypeInfo( tup1: _* ) :: Nil
-                  }))
+                        typ0
+                     }
+                  })
                val default    = (n \ "@default").headOption.map( _.text )
                val doc        = (n \ "doc").headOption.map( _.text )
                UGenArgInfo( ArgInfo( name, typInfo, default, doc ), multi, /* doneFlag, */ idx )
@@ -232,17 +242,30 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //               val numExp  = math.max( bufE.size, multiE.size )
 //               IIdxSeq.tabulate( numExp )( i => DiskOutUGen( bufE( i % numExp ), multiE( i % numExp ).expand ))
                val expArgs = args.filter( _.isGE )
+               val moreThanOneExp = expArgs.size > 1
                val methodBody = Block(
-                  (expArgs.map( a => ValDef( NoMods, "_" + a.arg.name, TypeTree( NoType ), Select( Ident( a.arg.name ), "expand" ))) ++
-                   expArgs.map( a => ValDef( NoMods, "_sz_" + a.arg.name, TypeTree( NoType ), Select( Ident( "_" + a.arg.name ), "size" ))) ++ (
-                     ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "max" ), expArgs.map( a => Ident( "_sz_" + a.arg.name )))) ::
-                     Apply( Apply( Select( identIIdxSeq, "tabulate" ), Ident( "_exp_" ) :: Nil ),
+//                  (expArgs.map( a => ValDef( NoMods, "_" + a.arg.name, TypeTree( NoType ), Select( Ident( a.arg.name ), "expand" )))
+                  // XXX dirty
+                  (expArgs.map( a => ValDef( NoMods, "_" + a.arg.name + ": IIdxSeq[" + a.deriveGE + "]", TypeTree( NoType ), Select( Ident( a.arg.name ), "expand" ))) ++
+                   (if( moreThanOneExp ) {
+                      expArgs.map( a => ValDef( NoMods, "_sz_" + a.arg.name, TypeTree( NoType ), Select( Ident( "_" + a.arg.name ), "size" )))
+                   } else {
+                      Nil
+                   }) ++ {
+//                     if( !moreThanOneExp ) println( name + " " + expArgs + " / " + args )
+                     val numId = if( moreThanOneExp ) Ident( "_exp_" ) else Select( Ident( "_" + expArgs.head.arg.name ), "size" )
+                     val app0 = Apply( Apply( Select( identIIdxSeq, "tabulate" ), numId :: Nil ),
                         Function( ValDef( Modifiers( Flags.PARAM ), "i", TypeTree( NoType ), EmptyTree ) :: Nil,
                            Apply( Ident( ugenName ), {
                               val args0 = args.map( a => {
                                  if( a.isGE ) {
-                                    val apply = Apply( Ident( "_" + a.arg.name ),
-                                       Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.arg.name ) :: Nil ) :: Nil )
+                                    val apply = Apply( Ident( "_" + a.arg.name ), {
+                                       if( moreThanOneExp ) {
+                                          Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.arg.name ) :: Nil )
+                                       } else {
+                                          Ident( "i" )
+                                       }
+                                    }  :: Nil )
 //                                    if( a.multi ) Select( apply, "expand" ) else apply
                                     apply
                                  } else Ident( a.arg.name )
@@ -251,7 +274,10 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                            })
                         ) :: Nil
                      ) :: Nil
-                  )): _*
+                     if( moreThanOneExp ) {
+                        ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "maxInt" ), expArgs.map( a => Ident( "_sz_" + a.arg.name )))) :: app0
+                     } else app0
+                  }): _*
                )
 //                  Apply( Ident( "apply" ), Ident( rateInfo.name ) :: args.map( i => Ident( i.arg.name )))
                DefDef(
@@ -275,9 +301,19 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                caseClassTypeParam, // tparams
                caseClassConstrArgs,
                caseClassExpandDef :: Nil,
-               TypeDef( NoMods, "GE", TypeDef( NoMods, ugenName,
-                  if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R", Nil, EmptyTree ) :: Nil),
-                  EmptyTree ) :: Nil, EmptyTree ) :: Nil
+               {
+                  val t0 = TypeDef( NoMods, if( outputs == SingleOutput ) "GE" else "Expands", {
+                     val p0 = TypeDef( NoMods, ugenName,
+                        if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R", Nil, EmptyTree ) :: Nil),
+                        EmptyTree ) :: Nil
+                     if( outputs == SingleOutput ) {
+                        TypeDef( NoMods, impliedRate.map( _.typ ).getOrElse( "R" ): String, Nil, EmptyTree ) :: p0
+                     } else {
+                        p0
+                     }
+                  }, EmptyTree )
+                  impliedRate.map( r => t0 :: TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: Nil ).getOrElse( t0 :: Nil )
+               }
             )
 
 //            caseClassDef.setSymbol( new tools.nsc.symtab.Symbols.Symbol( NoSymbol, NoPosition, new Name( 0, 0 )))
@@ -293,9 +329,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
             val ugenCaseClassConstrArgs = {
                val args0 = args map { uArgInfo =>
-                  (NoMods, uArgInfo.arg.name + ": " + (if( uArgInfo.isGE ) {
-                     uArgInfo.arg.typ.tuples.head._2.head
-                  } else uArgInfo.arg.typ), EmptyTree)
+                  (NoMods, uArgInfo.arg.name + ": " + uArgInfo.deriveGE, EmptyTree)
                }
                if( impliedRate.isDefined ) args0 else {
                   (NoMods, "rate: R", EmptyTree) :: args0
@@ -394,20 +428,44 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //   private case class ArgDef(mods: Modifiers, name: Name, tpt: Tree, rhs: Tree) extends ValOrDefDef
 
    // XXX remove in favour of TypeDef
-   private case class TypeInfo( tuples: (String, List[ TypeInfo ])* ) {
+   private case class TypeInfo( tuples: List[ (String, List[ TypeInfo ])], exist: Option[ (String, String) ] = None ) {
       override def toString = {
-         tuples.map( t => t._1 + (t._2 match {
+         val s0 = tuples.map( t => t._1 + (t._2 match {
             case Nil  => ""
             case coll => coll.mkString( "[", ", ", "]" )
          })).mkString( " with ")
+         exist.map( tup => s0 + " forSome { type " + tup._1 + " " + tup._2 + " }" ).getOrElse( s0 )
       }
    }
    private case class ArgInfo( name: String, typ: TypeInfo, default: Option[ String ], doc: Option[ String ])
    private case class UGenArgInfo( arg: ArgInfo, multi: Boolean, idx: Int ) {
       def isGE = arg.typ.tuples.headOption match {
          case Some( ("GE", _) )        => true
+         case Some( ("AnyGE", _) )     => true
+         case Some( ("Expands", List( TypeInfo( List( (sub, _), _* ), _ ), _* ))) => sub match {
+            case "GE"      => true
+            case "AnyGE"   => true
+            case _         => false
+         }
 //         case Some( ("MultiGE", _) )   => true
          case _                        => false
+      }
+
+      def deriveGE = arg.typ.tuples.headOption match {
+         case Some( ("GE", List( r, sub, _* )))    => arg.typ.exist.map( tup => {
+//            println( "Jo. derive with existential '" + sub + "'" )
+            val res = sub match {
+//               case TypeInfo( List( ("UGenIn", List( TypeInfo( List( (tup._1, Nil) ), None )))), None ) => "AnyUGenIn"
+               case TypeInfo( List( ("UGenIn", List( TypeInfo( List( (tup._1, Nil) ), None ))), rest @ _* ), None ) =>
+                  TypeInfo( ("AnyUGenIn" -> Nil) :: rest.toList, None )
+               case _ => Predef.error( "Cannot derive type " + arg.typ.toString )
+            }
+//            println( "res = " + res )
+            res.toString
+         }).getOrElse( sub.toString )
+         case Some( ("Expands", List( sub, _* )))  => sub.toString
+         case Some( ("AnyGE", _) )                 => "AnyUGenIn"
+         case _                                    => arg.typ.toString
       }
    }
 
