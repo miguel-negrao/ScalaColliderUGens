@@ -4,3 +4,27 @@ output accessors for multi-output ugens, e.g. for Pitch
 ( default values: work around bug for float-literals )
 doc comments
 individuation
+
+////////// 03-Jan
+
+for one argument ugens:
+
+   def expand = {
+      val _bus = bus.expand
+      val _sz_bus = _bus.size
+      IIdxSeq.tabulate(_sz_bus_)(i => OutUGen(rate, _bus(i.%(_sz_bus)))
+   }
+
+should be simplified to
+
+   def expand = {
+      val _bus = bus.expand
+      IIdxSeq.tabulate(_bus.size)(i => OutUGen(rate, _bus(i))
+   }
+
+this is by the way a bit faster than bus.expand.map( x => OutUGen( rate, x ))
+
+///////
+
+case class Done etc.: add "with ControlRated"
+case class DiskIn etc.: extends Expands[] instead of GE[]
