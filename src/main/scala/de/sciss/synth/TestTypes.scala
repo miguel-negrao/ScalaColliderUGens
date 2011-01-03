@@ -30,10 +30,6 @@ object TestTypes {
       def expand: IIdxSeq[ U ]
    }
 
-   sealed trait GEOps[ R <: Rate ] extends GE[ UGenIn[ R ]] {
-      def +( ge: GE[ AnyUGenIn ]) :
-   }
-
 //   sealed trait Multi[ +G ] {
 //      def expand: IIdxSeq[ G ]
 //   }

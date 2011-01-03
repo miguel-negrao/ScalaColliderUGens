@@ -28,3 +28,6 @@ this is by the way a bit faster than bus.expand.map( x => OutUGen( rate, x ))
 
 case class Done etc.: add "with ControlRated"
 case class DiskIn etc.: extends Expands[] instead of GE[]
+
+val _exp = max( ... ) --> maxInt
+; optimierung: bei zwei argumenten einfach math.max nehmen
