@@ -31,3 +31,14 @@ case class DiskIn etc.: extends Expands[] instead of GE[]
 
 val _exp = max( ... ) --> maxInt
 ; optimierung: bei zwei argumenten einfach math.max nehmen
+
+/////////////////
+
+[OK] <arg rate="ugen"/>
+[OK] <rate><arg name=... default=.../></rate>
+[OK] <rate><arg name=... rate=.../></rate>
+[OK] <doc warnpos="true"/>
+
+///////// missing ugens?
+DelayUGens : GrainTap
+Filter: Flip

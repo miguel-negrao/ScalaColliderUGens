@@ -144,8 +144,9 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val name          = (node \ "@name").text
             val readsBus      = getBoolAttr( node, "readsbus" )
             val writesBus     = getBoolAttr( node, "writesbus" )
-            val writesBuffer  = getBoolAttr( node, "writesbuffer" )
-            val sideEffect    = getBoolAttr( node, "sideeffect" ) || readsBus || writesBus || writesBuffer
+            val readsBuffer   = getBoolAttr( node, "readsbuf" )
+            val writesBuffer  = getBoolAttr( node, "writesbuf" )
+            val sideEffect    = getBoolAttr( node, "sideeffect" ) || writesBus || writesBuffer
             val doneFlag      = getBoolAttr( node, "doneflag" )
             val rates: List[ RateInfo ] = (node \ "rate").map( n => {
                val name       = (n \ "@name").text
@@ -156,48 +157,69 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   case "demand"  => "dr"
                }
                val implied    = getBoolAttr( n, "implied" )
-               RateInfo( name, methodName, implied )
+               RateInfo( name, methodName, implied, n )
             })( breakOut )
             val impliedRate   = rates.find( _.implied )
             if( impliedRate.isDefined ) require( rates.size == 1, "Can only have one implied rate (" + name + ")" )
+
+            val docNode       = (node \ "doc")
+            val docSees       = (docNode \ "see").map( _.text )
+            val docWarnPos    = docNode.headOption.map( getBoolAttr( _, "warnpos" )).getOrElse( false )
+            val docText       = (docNode \ "text").text
+
             val argsTup : List[ (UGenArgInfo, Int) ] = (node \ "arg").zipWithIndex.map( tup => {
                val (n, idx0)  = tup
                val idx        = getIntAttr( n, "pos", idx0 )
                val name       = (n \ "@name").text
                val multi      = getBoolAttr( n, "multi" )
                val doneFlagArg= getBoolAttr( n, "doneflag" )
-               val rate       = (n \ "@rate").text
+               val rateAttr   = (n \ "@rate").text
                if( multi ) require( !doneFlagArg, "Multi arguments cannot have done flag (" + name + ")" )
-               val typInfo    = (n \ "@type").headOption.map( n => TypeInfo( (n.text -> Nil) :: Nil ))
-//                  .getOrElse( TypeInfo( (if( multi ) "MultiGE" else "GE") -> (TypeInfo( ("AnyUGenIn" -> Nil) ) :: Nil) ))
-                  .getOrElse({
-                     val typ0 = rate match {
-                        case "" => if( doneFlagArg ) {
-                           TypeInfo( ("GE" -> (TypeInfo( ("R" -> Nil) :: Nil ) :: TypeInfo(
-                              List( ("UGenIn" -> (TypeInfo( ("R" -> Nil) :: Nil ) :: Nil)),
-                                    ("HasDoneFlag" -> Nil))
-                           ) :: Nil)) :: Nil, Some( "R" -> "<: Rate" ))
+
+               def createInfo( rateNode: Option[ Node ], rateInfo: Option[ RateInfo ]) : ArgInfo = {
+                  def getEitherAttr( name: String ) : Option[ Node ] = {
+                     val attrName = "@" + name
+                     (n \ attrName).headOption.orElse( rateNode.flatMap( n => (n \ attrName).headOption ))
+                  }
+                  val typInfo    = getEitherAttr( "type" ).map( n => TypeInfo( (n.text -> Nil) :: Nil ))
+   //                  .getOrElse( TypeInfo( (if( multi ) "MultiGE" else "GE") -> (TypeInfo( ("AnyUGenIn" -> Nil) ) :: Nil) ))
+                     .getOrElse({
+                        val typ0 = if( (rateAttr == "") || ((rateAttr == "ugen") && rateInfo.isEmpty) ) {
+                           if( doneFlagArg ) {
+                              TypeInfo( ("GE" -> (TypeInfo( ("R" -> Nil) :: Nil ) :: TypeInfo(
+                                 List( ("UGenIn" -> (TypeInfo( ("R" -> Nil) :: Nil ) :: Nil)),
+                                       ("HasDoneFlag" -> Nil))
+                              ) :: Nil)) :: Nil, Some( "R" -> "<: Rate" ))
+                           } else {
+                              TypeInfo( ("AnyGE" -> Nil) :: Nil )
+                           }
                         } else {
-                           TypeInfo( ("AnyGE" -> Nil) :: Nil )
-                        }
-                        case r  =>
-                           val t0 = "UGenIn" -> (TypeInfo( (r -> Nil) :: Nil ) :: Nil)
+                           val rateName = if( rateAttr == "ugen" ) rateInfo.get.name else rateAttr
+                           val t0 = "UGenIn" -> (TypeInfo( (rateName -> Nil) :: Nil ) :: Nil)
                            val t1: List[ (String, List[ TypeInfo ])] = if( doneFlagArg ) {
                               List( t0, "HasDoneFlag" -> Nil )
                            } else {
                               t0 :: Nil
                            }
-                           TypeInfo( ("GE" -> (TypeInfo( (r -> Nil) :: Nil ) :: TypeInfo( t1 ) :: Nil)) :: Nil )
-                     }
-                     if( multi ) {
-                        TypeInfo( ("Expands" -> (typ0 :: Nil)) :: Nil )
-                     } else {
-                        typ0
-                     }
-                  })
-               val default    = (n \ "@default").headOption.map( _.text )
-               val doc        = (n \ "doc").headOption.map( _.text )
-               UGenArgInfo( ArgInfo( name, typInfo, default, doc ), multi ) -> idx
+                           TypeInfo( ("GE" -> (TypeInfo( (rateName -> Nil) :: Nil ) :: TypeInfo( t1 ) :: Nil)) :: Nil )
+                        }
+                        if( multi ) {
+                           TypeInfo( ("Expands" -> (typ0 :: Nil)) :: Nil )
+                        } else {
+                           typ0
+                        }
+                     })
+                  val default    = getEitherAttr( "default" ).map( _.text )
+                  val doc        = getEitherAttr( "doc" ).map( _.text )
+                  ArgInfo( typInfo, default, doc )
+               }
+
+               val argDefault = createInfo( None, None )
+               val argMap: Map[ RateInfo, ArgInfo ] = rates.map( rateInfo => {
+                  val rateNode   = (rateInfo.xml \ "arg").find( n => (n \ "@name").text == name )
+                  rateInfo -> createInfo( rateNode, Some( rateInfo ))
+               })( breakOut )
+               UGenArgInfo( name, argDefault, argMap, multi ) -> idx
 //               val typ        =
 //               val vParam     = ValDef( Modifiers( Flags.PARAM ), name, TypeTree( typ /* selectedValue.tpt.tpe */ ), EmptyTree ) :: Nil
 //               vParam
@@ -221,26 +243,27 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //            val changes    = refactor( trnsAst.toList )
 //            val outputText = Change.applyChanges( changes, inputText )
 
-            val objectMethodArgs = argsIn map { uArgInfo =>
-               ValDef(
-                  Modifiers( Flags.PARAM ),
-                  uArgInfo.arg.name,
-                  Ident( uArgInfo.arg.typ.toString ),
-                  uArgInfo.arg.default.map( s => if( uArgInfo.isGE ) {
-                     try {
-//                        Literal( Constant( s.toFloat ))
-                        Ident( s.toFloat.toString + "f" )  // XXX workaround for scala-refactoring bug of missing f
-                     } catch {
-                        case e: NumberFormatException => Ident( s )
-                     }
-                  } else Ident( s )).getOrElse( EmptyTree )
-               )
-            }
-
 //            val methodBody = Block( Select( Ident( "freq" ), "toString" ) :: Nil, EmptyTree )
 //            val methodBody = Select( Ident( "freq" ), "toString" ))
-            val objectMethodDefs0 = rates.map( rateInfo => {
-               val args0 = argsIn.map( i => Ident( i.arg.name ))
+            val objectMethodDefs = rates.flatMap( rateInfo => {
+
+               val objectMethodArgs = argsIn map { uArgInfo =>
+                  ValDef(
+                     Modifiers( Flags.PARAM ),
+                     uArgInfo.name,
+                     Ident( uArgInfo.arg( rateInfo ).typ.toString ),
+                     uArgInfo.arg( rateInfo ).default.map( s => if( uArgInfo.isGE ) {
+                        try {
+//                        Literal( Constant( s.toFloat ))
+                           Ident( s.toFloat.toString + "f" )  // XXX workaround for scala-refactoring bug of missing f
+                        } catch {
+                           case e: NumberFormatException => Ident( s )
+                        }
+                     } else Ident( s )).getOrElse( EmptyTree )
+                  )
+               }
+
+               val args0 = argsIn.map( i => Ident( i.name ))
                val methodBody = if( impliedRate.isDefined ) {
                   Apply( Ident( "apply" ), args0 )
                } else {
@@ -249,22 +272,17 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   Apply( TypeApply( Ident( "apply" ), Ident( rateInfo.typ ) :: Nil ), Ident( rateInfo.name ) :: args0 )
 //                  Apply( Ident( "apply" ), Ident( rateInfo.name ) :: args0 )
                }
-               DefDef(
+               val def0 = DefDef(
                   NoMods withPosition (Flags.METHOD, NoPosition),
                   rateInfo.methodName,
                   Nil,        // tparams
                   objectMethodArgs :: Nil,    // vparamss
                   TypeTree( NoType ), // tpt -- empty for testing
                   methodBody // rhs
-               )
-            })
-
-            val allDefaults = argsIn.nonEmpty && argsIn.forall( _.arg.default.isDefined )
-            val objectMethodDefs = if( allDefaults ) {
-               rates.map( rateInfo => {
-//                  val methodBody = Apply( Ident( rateInfo.methodName ), Ident( " " ) :: Nil )  // XXX how to get ar() with the parentheses?
+               ) :: Nil
+               val allDefaults = argsIn.nonEmpty && argsIn.forall( _.arg( rateInfo ).default.isDefined )
+               if( allDefaults ) {
                   val methodBody = Apply( Ident( rateInfo.methodName ), Ident( " " ) :: Nil )  // XXX how to get ar() with the parentheses?
-//                  val methodBody = Apply( Ident( rateInfo.methodName ), Nil )  // fixed in scala-refactoring ; NOT FIXED
                   DefDef(
                      NoMods withPosition (Flags.METHOD, NoPosition),
                      rateInfo.methodName,
@@ -274,9 +292,9 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                         TypeDef( NoMods, rateInfo.typ, Nil, EmptyTree ) :: Nil
                      }, EmptyTree ),
                      methodBody // rhs
-                  )
-               }) ++ objectMethodDefs0
-            } else objectMethodDefs0
+                  ) :: def0
+               } else def0
+            })
 
             val objectDef = ModuleDef(
                NoMods,
@@ -289,7 +307,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             )
 
             val caseClassConstrArgs  = {
-               val args0 = argsIn map { uArgInfo => (NoMods, uArgInfo.arg.name + ": " + uArgInfo.arg.typ, EmptyTree) }
+               val args0 = argsIn map { uArgInfo => (NoMods, uArgInfo.name + ": " + uArgInfo.argDefault.typ, EmptyTree) }
                if( impliedRate.isDefined ) args0 else {
                   (NoMods, "rate: R", EmptyTree) :: args0
                }
@@ -313,36 +331,36 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val methodBody = Block(
 //                  (expArgs.map( a => ValDef( NoMods, "_" + a.arg.name, TypeTree( NoType ), Select( Ident( a.arg.name ), "expand" )))
                   // XXX dirty
-                  (argsOut.map( a => ValDef( NoMods, "_" + a.arg.name + ": IIdxSeq[" + a.deriveGE + "]", TypeTree( NoType ), Select( Ident( a.arg.name ), "expand" ))) ++
+                  (argsOut.map( a => ValDef( NoMods, "_" + a.name + ": IIdxSeq[" + a.deriveGE + "]", TypeTree( NoType ), Select( Ident( a.name ), "expand" ))) ++
                    (if( moreThanOneArgOut ) {
-                      argsOut.map( a => ValDef( NoMods, "_sz_" + a.arg.name, TypeTree( NoType ), Select( Ident( "_" + a.arg.name ), "size" )))
+                      argsOut.map( a => ValDef( NoMods, "_sz_" + a.name, TypeTree( NoType ), Select( Ident( "_" + a.name ), "size" )))
                    } else {
                       Nil
                    }) ++ {
 //                     if( !moreThanOneArgOut ) println( name + " " + expArgs + " / " + args )
-                     val numId = if( moreThanOneArgOut ) Ident( "_exp_" ) else Select( Ident( "_" + argsOut.head.arg.name ), "size" )
+                     val numId = if( moreThanOneArgOut ) Ident( "_exp_" ) else Select( Ident( "_" + argsOut.head.name ), "size" )
                      val app0 = Apply( Apply( Select( identIIdxSeq, "tabulate" ), numId :: Nil ),
                         Function( ValDef( Modifiers( Flags.PARAM ), "i", TypeTree( NoType ), EmptyTree ) :: Nil,
                            Apply( Ident( ugenName ), {
                               val args0 = argsIn.map( a => {
                                  if( a.isGE ) {
-                                    val apply = Apply( Ident( "_" + a.arg.name ), {
+                                    val apply = Apply( Ident( "_" + a.name ), {
                                        if( moreThanOneArgOut ) {
-                                          Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.arg.name ) :: Nil )
+                                          Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.name ) :: Nil )
                                        } else {
                                           Ident( "i" )
                                        }
                                     }  :: Nil )
 //                                    if( a.multi ) Select( apply, "expand" ) else apply
                                     apply
-                                 } else Ident( a.arg.name )
+                                 } else Ident( a.name )
                               })
                               if( impliedRate.isDefined ) args0 else (Ident( "rate" ) :: args0)
                            })
                         ) :: Nil
                      ) :: Nil
                      if( moreThanOneArgOut ) {
-                        ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "maxInt" ), argsOut.map( a => Ident( "_sz_" + a.arg.name )))) :: app0
+                        ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "maxInt" ), argsOut.map( a => Ident( "_sz_" + a.name )))) :: app0
                      } else app0
                   }): _*
                )
@@ -396,7 +414,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
             val ugenCaseClassConstrArgs = {
                val args0 = argsIn map { uArgInfo =>
-                  (NoMods, uArgInfo.arg.name + ": " + uArgInfo.deriveGE, EmptyTree)
+                  (NoMods, uArgInfo.name + ": " + uArgInfo.deriveGE, EmptyTree)
                }
                if( impliedRate.isDefined ) args0 else {
                   (NoMods, "rate: R", EmptyTree) :: args0
@@ -429,10 +447,10 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      case Some( a ) if( a.multi ) =>
 //                        val rvsArgs = geArgs.dropRight( 1 ).reverse
 //                        rvsArgs.foldLeft[ Tree ]( Select( Ident( a.arg.name ), "expand" ))( (a, b) => Apply( Select( a, "+:" ), Ident( b.arg.name ) :: Nil )) :: Nil
-                        Apply( Select( Apply( TypeApply( identIIdxSeq, Ident( "AnyUGenIn" ) :: Nil ), geArgs.dropRight( 1 ).map( a => Ident( a.arg.name ))),
-                           "++" ), Select( Ident( a.arg.name ), "expand" ) :: Nil ) :: Nil
+                        Apply( Select( Apply( TypeApply( identIIdxSeq, Ident( "AnyUGenIn" ) :: Nil ), geArgs.dropRight( 1 ).map( a => Ident( a.name ))),
+                           "++" ), Select( Ident( a.name ), "expand" ) :: Nil ) :: Nil
                      case _ => (if( hasArgsOut ) {
-                        Apply( identIIdxSeq, geArgs.map( a => Ident( a.arg.name )))
+                        Apply( identIIdxSeq, geArgs.map( a => Ident( a.name )))
                      } else {
                         Select( identIIdxSeq, "empty" )
                      }) :: Nil
@@ -485,7 +503,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
    private def getIntAttr( n: Node, name: String, default: Int ) =
       (n \ ("@" + name)).headOption.map( _.text.toInt ).getOrElse( default )
 
-   private case class RateInfo( name: String, methodName: String, implied: Boolean ) {
+   private case class RateInfo( name: String, methodName: String, implied: Boolean, xml: Node ) {
 //      def typ = name + ".type"
       def typ = name // + ".type"
       def traitTyp = name.capitalize + "Rated"
@@ -513,9 +531,11 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          exist.map( tup => s0 + " forSome { type " + tup._1 + " " + tup._2 + " }" ).getOrElse( s0 )
       }
    }
-   private case class ArgInfo( name: String, typ: TypeInfo, default: Option[ String ], doc: Option[ String ])
-   private case class UGenArgInfo( arg: ArgInfo, multi: Boolean ) {
-      def isGE = arg.typ.tuples.headOption match {
+   private case class ArgInfo( typ: TypeInfo, default: Option[ String ], doc: Option[ String ])
+   private case class UGenArgInfo( name: String, argDefault: ArgInfo, argMap: Map[ RateInfo, ArgInfo ], multi: Boolean ) {
+      def arg( rate: RateInfo ) : ArgInfo = argMap.getOrElse( rate, Predef.error( "Accessing illegal rate " + rate.name + " (" + name + ")" ))
+
+      def isGE = argDefault.typ.tuples.headOption match {
          case Some( ("GE", _) )        => true
          case Some( ("AnyGE", _) )     => true
          case Some( ("Expands", List( TypeInfo( List( (sub, _), _* ), _ ), _* ))) => sub match {
@@ -527,21 +547,21 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          case _                        => false
       }
 
-      def deriveGE = arg.typ.tuples.headOption match {
-         case Some( ("GE", List( r, sub, _* )))    => arg.typ.exist.map( tup => {
+      def deriveGE = argDefault.typ.tuples.headOption match {
+         case Some( ("GE", List( r, sub, _* )))    => argDefault.typ.exist.map( tup => {
 //            println( "Jo. derive with existential '" + sub + "'" )
             val res = sub match {
 //               case TypeInfo( List( ("UGenIn", List( TypeInfo( List( (tup._1, Nil) ), None )))), None ) => "AnyUGenIn"
                case TypeInfo( List( ("UGenIn", List( TypeInfo( List( (tup._1, Nil) ), None ))), rest @ _* ), None ) =>
                   TypeInfo( ("AnyUGenIn" -> Nil) :: rest.toList, None )
-               case _ => Predef.error( "Cannot derive type " + arg.typ.toString )
+               case _ => Predef.error( "Cannot derive type " + argDefault.typ.toString )
             }
 //            println( "res = " + res )
             res.toString
          }).getOrElse( sub.toString )
          case Some( ("Expands", List( sub, _* )))  => sub.toString
          case Some( ("AnyGE", _) )                 => "AnyUGenIn"
-         case _                                    => arg.typ.toString
+         case _                                    => argDefault.typ.toString
       }
    }
 
