@@ -196,15 +196,15 @@
         <ugen name="RecordBuf">
             <rate name="control"/>
             <rate name="audio"/>
-            <arg name="in" multi="true"/>
-            <arg name="buf"/>
-            <arg name="offset" default="0"/>
-            <arg name="recLevel" default="1"/>
-            <arg name="preLevel" default="0"/>
-            <arg name="run" default="1"/>
-            <arg name="loop" default="1"/>
-            <arg name="trig" default="1"/>
-            <arg name="doneAction" default="doNothing"/>
+            <arg name="buf" pos="1"/>
+            <arg name="offset" default="0" pos="2"/>
+            <arg name="recLevel" default="1" pos="3"/>
+            <arg name="preLevel" default="0" pos="4"/>
+            <arg name="run" default="1" pos="5"/>
+            <arg name="loop" default="1" pos="6"/>
+            <arg name="trig" default="1" pos="7"/>
+            <arg name="doneAction" default="doNothing" pos="8"/>
+            <arg name="in" multi="true" pos="0"/>
         </ugen>
         <ugen name="BufRd">
             <rate name="control"/>
@@ -260,10 +260,10 @@
         <ugen name="BufWr">
             <rate name="control"/>
             <rate name="audio"/>
-            <arg name="in" multi="true"/>
-            <arg name="buf"/>
-            <arg name="phase" default="0"/>
-            <arg name="loop" default="1"/>
+            <arg name="buf" pos="1"/>
+            <arg name="phase" default="0" pos="2"/>
+            <arg name="loop" default="1" pos="3"/>
+            <arg name="in" multi="true" pos="0"/>
         </ugen>
         <ugen name="Pitch">
             <rate name="control" implied="true"/>
