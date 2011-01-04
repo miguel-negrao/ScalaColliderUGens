@@ -5,5 +5,5 @@ class ScalaColliderUGensProject( info: ProjectInfo ) extends DefaultProject( inf
 //   val scalaToolsSnaps  = "Scala-Tools Snapshots" at "http://scala-tools.org/repo-snapshots"
 
    val scalaRefactoring = "org.scala-refactoring" % "org.scala-refactoring.library" % "0.3.0-SNAPSHOT" from
-      "http://scala-tools.org/repo-snapshots/org/scala-refactoring/org.scala-refactoring.library/0.3.0-SNAPSHOT/org.scala-refactoring.library-0.3.0-20101213.203503-7.jar"
+      "http://scala-tools.org/repo-snapshots/org/scala-refactoring/org.scala-refactoring.library/0.3.0-SNAPSHOT/org.scala-refactoring.library-0.3.0-20110102.153554-10.jar"
 }

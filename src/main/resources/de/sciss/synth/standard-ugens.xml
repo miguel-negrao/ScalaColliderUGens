@@ -1,5 +1,367 @@
 <ugens>
-    <file name="Delays">
+    <file name="DelayUGens">
+        <ugen name="ControlRate">
+            <rate name="scalar" implied="true"/>
+            <doc>
+                <text>
+                    A UGen that reports the server's current control rate. This is equivalent to the reciprocal
+                    of `ControlDur`
+                </text>
+                <see>ugen.ControlDur</see>
+                <see>ugen.SampleRate</see>
+            </doc>
+        </ugen>
+        <ugen name="SampleRate">
+            <rate name="scalar" implied="true"/>
+            <doc>
+                <text>
+                    A UGen that reports the server's current (audio) sample rate. This is equivalent to the reciprocal
+                    of `SampleDur`
+                </text>
+                <see>ugen.SampleDur</see>
+                <see>ugen.ControlRate</see>
+                <see>ugen.RadiansPerSample</see>
+            </doc>
+        </ugen>
+        <ugen name="SampleDur">
+            <rate name="scalar" implied="true"/>
+            <doc>
+                <text>
+                    A UGen that reports the server's current (audio) sample period in seconds. This is equivalent to the reciprocal
+                    of `SampleRate`
+                </text>
+                <see>ugen.SampleRate</see>
+                <see>ugen.ControlDur</see>
+            </doc>
+        </ugen>
+        <ugen name="ControlDur">
+            <rate name="scalar" implied="true"/>
+            <doc>
+                <text>
+                    A UGen that reports the server's current control period in seconds. This is equivalent to the reciprocal
+                    of `ControlRate`
+                </text>
+                <see>ugen.ControlRate</see>
+                <see>ugen.SampleDur</see>
+            </doc>
+        </ugen>
+        <ugen name="SubsampleOffset">
+            <rate name="scalar" implied="true"/>
+            <doc>
+                <text>
+                    A UGen that reports the fractional sample offset of the current Synth from its requested scheduled start.
+
+                    When a synth is created from a time stamped osc-bundle, it starts
+                    calculation at the next possible block (normally 64 samples). Using an
+                    `OffsetOut` UGen, one can delay the audio so that it matches sample
+                    accurately.
+
+                    For some synthesis methods, one even needs subsample accuracy. `SubsampleOffset`
+                    provides the information where, within the current sample, the synth was
+                    scheduled. It can be used to offset envelopes or resample the audio
+                    output.
+                </text>
+                <see>ugen.ControlRate</see>
+                <see>ugen.SampleDur</see>
+            </doc>
+        </ugen>
+        <ugen name="RadiansPerSample">
+            <rate name="scalar" implied="true"/>
+            <doc>
+                <text>
+                    A UGen that delivers the conversion factor from frequency in Hertz to radians (normalized frequency).
+                    The relation is `RadiansPerSample * sr = 2pi`, thus multiplying the UGen with a frequency between
+                    zero and nyquist (sr/2) yields the normalized frequency between zero and pi.
+                </text>
+                <see>ugen.SampleRate</see>
+            </doc>
+        </ugen>
+        <ugen name="NumInputBuses">
+            <rate name="scalar" implied="true"/>
+        </ugen>
+        <ugen name="NumOutputBuses">
+            <rate name="scalar" implied="true"/>
+        </ugen>
+        <ugen name="NumAudioBuses">
+            <rate name="scalar" implied="true"/>
+        </ugen>
+        <ugen name="NumControlBuses">
+            <rate name="scalar" implied="true"/>
+        </ugen>
+        <ugen name="NumBuffers">
+            <rate name="scalar" implied="true"/>
+        </ugen>
+        <ugen name="NumRunningSynths">
+            <rate name="scalar" implied="true"/>
+        </ugen>
+
+        <ugen name="BufSampleRate">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <arg name="buf"/>
+        </ugen>
+        <ugen name="BufRateScale">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <arg name="buf"/>
+        </ugen>
+        <ugen name="BufSamples">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <arg name="buf"/>
+        </ugen>
+        <ugen name="BufFrames">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <arg name="buf"/>
+        </ugen>
+        <ugen name="BufChannels">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <arg name="buf"/>
+        </ugen>
+        <ugen name="BufDur">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <arg name="buf"/>
+        </ugen>
+
+        <ugen name="PlayBuf" sideeffect="true" doneflag="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int">
+                <doc>
+                    the number of channels that the buffer will be. Since
+                    this is a constant, a change in number of channels of the underlying bus must
+                    be reflected by creating different SynthDefs. If a buffer identifier is used of a buffer
+                    that has a different numChannels then specified in the PlayBuf, it will fail silently.
+                </doc>
+            </arg>
+            <arg name="buf">
+                <doc>
+                    the identifier of the buffer to use
+                </doc>
+            </arg>
+            <arg name="speed" default="1">
+                <doc>
+                    1.0 advances the play head by the server's sample rate each second,
+                    so 2.0 means doubling speed (and pitch), and 0.5 means half speed (and half pitch).
+                    Negative numbers can be used for backwards playback. If the underlying buffer
+                    represents a sound at a different sample rate, the rate should be
+                    multiplied by `BufRateScale.kr( bufID )` to obtain the correct speed.
+                </doc>
+            </arg>
+            <arg name="trig" default="1">
+                <doc>
+                    a trigger which causes a jump to the given startPos. A trigger occurs when a
+                    signal changes from non-positive to positive (e.g. &lt;= 0 to &gt; 0).
+                </doc>
+            </arg>
+            <arg name="startPos" default="0">
+                <doc>
+                    sample frame to start playback. This is read when a trigger occurs.
+                </doc>
+            </arg>
+            <arg name="loop" default="1">
+                <doc>
+                    1 to loop after the play head reaches the buffer end, 0 to not loop. this can be modulated.
+                </doc>
+            </arg>
+            <arg name="doneAction" default="doNothing">
+                <doc>
+                    what to do when the play head reaches the buffer end.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen to play back samples from a buffer in memory.
+
+                    `PlayBuf` provides a kind of high-level interface to sample-playback, whereas `BufRd`
+                    represents a kind of lower-level access. While `BufRd` has a random-access-pointer
+                    in the form of a phase input, `PlayBuf` advances the phase automatically based on
+                    a given playback speed. `PlayBuf` uses cubic interpolation.
+                </text>
+                <see>ugen.BufRd</see>
+                <see>ugen.DiskIn</see>
+                <see>ugen.RecordBuf</see>
+                <see>DoneAction</see>
+                <see>ugen.Done</see>
+                <see>ugen.BufRateScale</see>
+                <see>ugen.BufFrames</see>
+            </doc>
+        </ugen>
+        <!-- <ugen name="SimpleLoopBuf">
+        </ugen> -->
+        <ugen name="RecordBuf">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in" multi="true"/>
+            <arg name="buf"/>
+            <arg name="offset" default="0"/>
+            <arg name="recLevel" default="1"/>
+            <arg name="preLevel" default="0"/>
+            <arg name="run" default="1"/>
+            <arg name="loop" default="1"/>
+            <arg name="trig" default="1"/>
+            <arg name="doneAction" default="doNothing"/>
+        </ugen>
+        <ugen name="BufRd">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int">
+                <doc>
+                    number of channels that the buffer will be.
+                    Since this is an integer constant, a change in the number of channels must
+                    be reflected by creating different SynthDefs.
+                </doc>
+            </arg>
+            <arg name="buf">
+                <doc>
+                    the identifier of the buffer to use
+                </doc>
+            </arg>
+            <arg name="phase" default="0">
+                <doc>
+                    audio rate frame-index into the buffer.
+                </doc>
+            </arg>
+            <arg name="loop" default="1">
+                <doc>
+                    1 to enable looping, 0 to disable looping. this can be modulated.
+                </doc>
+            </arg>
+            <arg name="interp" default="2">
+                <doc>
+                    1 for no interpolation, 2 for linear, and 4 for cubic interpolation
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen which reads the content of a buffer, using an index pointer.
+
+                    Warning: if the supplied `bufID` refers to a buffer whose number of channels
+                    differs from `numChannels`, the UGen will fail silently.
+
+                    An alternative to `BufRd` is `PlayBuf`. While `PlayBuf` plays
+                    through the buffer by itself, `BufRd` only moves its read point by the phase input
+                    and therefore has no pitch input. `PlayBuf` uses cubic interplation, while
+                    `BufRd` has variable interpolation. `PlayBuf` can determine the end of the buffer
+                    and issue a done-action.
+                </text>
+                <see>ugen.PlayBuf</see>
+                <see>ugen.BufWr</see>
+                <see>ugen.Phasor</see>
+                <see>ugen.BufFrames</see>
+                <see>ugen.BufRateScale</see>
+            </doc>
+        </ugen>
+        <ugen name="BufWr">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in" multi="true"/>
+            <arg name="buf"/>
+            <arg name="phase" default="0"/>
+            <arg name="loop" default="1"/>
+        </ugen>
+        <ugen name="Pitch">
+            <rate name="control" implied="true"/>
+            <outputs num="2"/>
+            <arg name="in"/>
+            <arg name="initFreq" default="440"/>
+            <arg name="minFreq" default="60"/>
+            <arg name="maxFreq" default="4000"/>
+            <arg name="execFreq" default="100"/>
+            <arg name="binsPerOct" default="16"/>
+            <arg name="median" default="1"/>
+            <arg name="ampThresh" default="0.01"/>
+            <arg name="peakThresh" default="0.5"/>
+            <arg name="downSample" default="1"/>
+        </ugen>
+
+        <ugen name="BufDelayN">
+            <rate name="audio"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+            <arg name="delayTime" default="0.2"/>
+        </ugen>
+        <ugen name="BufDelayL">
+            <rate name="audio"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+            <arg name="delayTime" default="0.2"/>
+        </ugen>
+        <ugen name="BufDelayC">
+            <rate name="audio"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+            <arg name="delayTime" default="0.2"/>
+        </ugen>
+        <ugen name="BufCombN">
+            <rate name="audio"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+        <ugen name="BufCombL">
+            <rate name="audio"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+        <ugen name="BufCombC">
+            <rate name="audio"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+        <ugen name="BufAllpassN">
+            <rate name="audio"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+        <ugen name="BufAllpassL">
+            <rate name="audio"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+        <ugen name="BufAllpassC">
+            <rate name="audio"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+
+        <ugen name="DelayN">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="maxDelayTime" default="0.2"/>
+            <arg name="delayTime" default="0.2"/>
+        </ugen>
+        <ugen name="DelayL">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="maxDelayTime" default="0.2"/>
+            <arg name="delayTime" default="0.2"/>
+        </ugen>
+        <ugen name="DelayC">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="maxDelayTime" default="0.2"/>
+            <arg name="delayTime" default="0.2"/>
+        </ugen>
         <ugen name="CombN">
             <rate name="audio"/>
             <rate name="control"/>
@@ -8,7 +370,6 @@
             <arg name="delayTime" default="0.2"/>
             <arg name="decayTime" default="1"/>
         </ugen>
-
         <ugen name="CombL">
             <rate name="audio"/>
             <rate name="control"/>
@@ -17,7 +378,6 @@
             <arg name="delayTime" default="0.2"/>
             <arg name="decayTime" default="1"/>
         </ugen>
-
         <ugen name="CombC">
             <rate name="audio"/>
             <rate name="control"/>
@@ -26,6 +386,94 @@
             <arg name="delayTime" default="0.2"/>
             <arg name="decayTime" default="1"/>
         </ugen>
+        <ugen name="AllpassN">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="maxDelayTime" default="0.2"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+        <ugen name="AllpassL">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="maxDelayTime" default="0.2"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+        <ugen name="AllpassC">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="maxDelayTime" default="0.2"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+
+        <ugen name="PitchShift">
+            <rate name="audio" implied="true"/>
+            <arg name="in"/>
+            <arg name="winSize" default="0.2"/>
+            <arg name="pitchRatio" default="1"/>
+            <arg name="pitchDispersion" default="0"/>
+            <arg name="timeDispersion" default="0"/>
+        </ugen>
+        <!-- this should exist according to plugin sources... <ugen name="GrainTap">
+        </ugen> -->
+        <ugen name="TGrains">
+            <rate name="audio" implied="true"/>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int"/>
+            <arg name="trig"/>
+            <arg name="buf"/>
+            <arg name="speed" default="1"/>
+            <arg name="centerPos" default="0"/>
+            <arg name="dur" default="0.1"/>
+            <arg name="pan" default="0"/>
+            <arg name="amp" default="0.1"/>
+            <arg name="interp" default="4"/>
+        </ugen>
+        <ugen name="ScopeOut"> <!-- XXX zero outputs? -->
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="buf"/>
+            <arg name="in" multi="true"/>
+        </ugen>
+        <ugen name="Pluck">
+            <rate name="audio" implied="true"/>
+            <arg name="in"/>
+            <arg name="trig" default="1"/>
+            <arg name="maxDelayTime" default="0.2"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+            <arg name="coef" default="0.5"/>
+        </ugen>
+
+        <ugen name="DelTapWr">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+        </ugen>
+        <ugen name="DelTapRd">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="buf"/>
+            <arg name="phase"/>
+            <arg name="delayTime"/>
+            <arg name="interp" default="1"/>
+        </ugen>
+
+        <!-- XXX TODO
+        <ugen name="LocalBuf">
+        </ugen>
+        <ugen name="MaxLocalBufs">
+        </ugen>
+        <ugen name="SetBuf">
+        </ugen>
+        <ugen name="ClearBuf">
+        </ugen> -->
     </file>
 
     <file name="EnvGen">

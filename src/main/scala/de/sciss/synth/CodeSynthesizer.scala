@@ -47,11 +47,60 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
    def compilationUnitOfFile( f: AbstractFile ) = global.unitOfFile.get( f )
 
+//   def myMkClass(
+//      mods: Modifiers = NoMods,
+//      name: String,
+//      tparams: List[TypeDef] = Nil,
+//      args: List[(Modifiers, String, Tree)],
+//      body: List[Tree] = Nil,
+//      parents: List[Tree] = Nil,
+//      superArgs: List[Tree] = Nil) = {
+//
+//      val constructorArguments0 = args.map {
+//         case (mods, name, tpe) =>
+//            ValDef(mods | Flags.PARAMACCESSOR, name, tpe, EmptyTree)
+//      }
+//      val constructorArguments = if( args.nonEmpty ) constructorArguments0 else {
+//         ValDef(NoMods | Flags.PARAMACCESSOR, "\t", EmptyTree, EmptyTree) :: constructorArguments0
+//      }
+//
+//      val superArgsCall = superArgs match {
+//         case Nil => EmptyTree
+//         case args =>
+//            mkDefDef(name = nme.CONSTRUCTOR.toString, body = Apply(EmptyTree, args) :: Nil)
+//      }
+//
+//      ClassDef(
+//         mods,
+//         mkTypeName(name),
+//         tparams,
+//         Template(
+//            parents,
+//            emptyValDef,
+//            superArgsCall :: constructorArguments ::: body
+//         )
+//      )
+//   }
+
+   def myMkCaseClass(
+      mods: Modifiers = NoMods,
+      name: String,
+      tparams: List[TypeDef] = Nil,
+      args: List[(Modifiers, String, Tree)],
+      body: List[Tree] = Nil,
+      parents: List[Tree] = Nil,
+      superArgs: List[Tree] = Nil) = {
+
+//    if (args.size < 1) throw new IllegalArgumentException("Case-class must have at least one argument.")
+
+      mkClass(mods withPosition (Flags.CASE, NoPosition), name, tparams, args, body, parents, superArgs)
+   }
+
    def perform( xml: Node, dir: File ) {
 
-//      val testAst = treeFrom( "object Test { def eins { }; def zwei() { }; def drei { eins; zwei() }}" )
+//      val testAst = treeFrom( "class A(); class B" )
 //      println( printer( testAst ))
-////      println( createText( testAst ))
+//      println( createText( testAst ))
 //
 //      ↓(matchingChildren(transform {
 //         case t: Template => t.body.foreach {
@@ -82,6 +131,9 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       val traitSideEffect  = TypeDef( Modifiers( Flags.TRAIT ), "HasSideEffect", Nil, EmptyTree )
       val traitDoneFlag    = TypeDef( Modifiers( Flags.TRAIT ), "HasDoneFlag",   Nil, EmptyTree )
       val identIIdxSeq     = Ident( "IIdxSeq" )
+
+      // bug in scala-refactoring : case class constructor arg list cannot be empty
+//      val dummyCaseClassArgs = (NoMods, "", EmptyTree) :: Nil
 
       (xml \ "file") foreach { node =>
          val name       = (node \ "@name").text
@@ -161,8 +213,6 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //            val changes    = refactor( trnsAst.toList )
 //            val outputText = Change.applyChanges( changes, inputText )
 
-            val ugenName = name + "UGen"
-
             val objectMethodArgs = args map { uArgInfo =>
                ValDef(
                   Modifiers( Flags.PARAM ),
@@ -201,11 +251,12 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                )
             })
 
-            val allDefaults = args.forall( _.arg.default.isDefined )
+            val allDefaults = args.nonEmpty && args.forall( _.arg.default.isDefined )
             val objectMethodDefs = if( allDefaults ) {
                rates.map( rateInfo => {
 //                  val methodBody = Apply( Ident( rateInfo.methodName ), Ident( " " ) :: Nil )  // XXX how to get ar() with the parentheses?
                   val methodBody = Apply( Ident( rateInfo.methodName ), Ident( " " ) :: Nil )  // XXX how to get ar() with the parentheses?
+//                  val methodBody = Apply( Ident( rateInfo.methodName ), Nil )  // fixed in scala-refactoring ; NOT FIXED
                   DefDef(
                      NoMods withPosition (Flags.METHOD, NoPosition),
                      rateInfo.methodName,
@@ -236,12 +287,20 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                }
             }
 
+            // hmmmm... is this the cleanest way to define R <: Rate?
+//            if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R", Nil, TypeBoundsTree( EmptyTree, TypeDef( NoMods, "Rate", Nil, EmptyTree ))) :: Nil), // tparams
+            val caseClassTypeParam = if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R <: Rate", Nil, EmptyTree ) :: Nil)
+
+            val expArgs    = args.filter( _.isGE )
+            val hasExpArgs = expArgs.size > 0
+            val ugenName   = if( hasExpArgs ) name + "UGen" else name
+            val classes0   = if( hasExpArgs ) {
+
             val caseClassExpandDef = {
 //               val bufE    = buf.expand
 //               val multiE  = multi.expand
 //               val numExp  = math.max( bufE.size, multiE.size )
 //               IIdxSeq.tabulate( numExp )( i => DiskOutUGen( bufE( i % numExp ), multiE( i % numExp ).expand ))
-               val expArgs = args.filter( _.isGE )
                val moreThanOneExp = expArgs.size > 1
                val methodBody = Block(
 //                  (expArgs.map( a => ValDef( NoMods, "_" + a.arg.name, TypeTree( NoType ), Select( Ident( a.arg.name ), "expand" )))
@@ -290,11 +349,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                )
             }
 
-            // hmmmm... is this the cleanest way to define R <: Rate?
-//            if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R", Nil, TypeBoundsTree( EmptyTree, TypeDef( NoMods, "Rate", Nil, EmptyTree ))) :: Nil), // tparams
-            val caseClassTypeParam = if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R <: Rate", Nil, EmptyTree ) :: Nil)
-
-            val caseClassDef = mkCaseClass(
+            val caseClassDef = myMkCaseClass(
                NoMods,
                name,
 
@@ -326,6 +381,10 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
 //            case class SinOscUGen[ R <: Rate ]( freq: AnyUGenIn, phase: AnyUGenIn )
 //            extends SingleOutUGen[ R ]( List( freq, phase ))
+               objectDef :: caseClassDef :: Nil
+            } else {
+               objectDef :: Nil
+            }
 
             val ugenCaseClassConstrArgs = {
                val args0 = args map { uArgInfo =>
@@ -349,11 +408,11 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //               ugenCaseClassParents0 :: TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: Nil
 //            ).getOrElse( ugenCaseClassParents0 :: Nil )
 
-            val ugenCaseClassDef = mkCaseClass(
+            val ugenCaseClassDef = myMkCaseClass(
                NoMods,
                ugenName,
                caseClassTypeParam, // tparams
-               ugenCaseClassConstrArgs,
+               /* if( ugenCaseClassConstrArgs.nonEmpty ) */ ugenCaseClassConstrArgs /* else dummyCaseClassArgs */,
                Nil,
                ugenCaseClassParents,
                superArgs = {
@@ -362,7 +421,11 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      case Some( a ) if( a.multi ) =>
                         val rvsArgs = geArgs.dropRight( 1 ).reverse
                         rvsArgs.foldLeft[ Tree ]( Select( Ident( a.arg.name ), "expand" ))( (a, b) => Apply( Select( a, "+:" ), Ident( b.arg.name ) :: Nil )) :: Nil
-                     case _ => Apply( identIIdxSeq, geArgs.map( a => Ident( a.arg.name ))) :: Nil
+                     case _ => (if( hasExpArgs ) {
+                        Apply( identIIdxSeq, geArgs.map( a => Ident( a.arg.name )))
+                     } else {
+                        Select( identIIdxSeq, "empty" )
+                     }) :: Nil
                   }
                   outputs match {
                      case m: MultiOutput =>
@@ -373,7 +436,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                }
             )
 
-            objectDef :: caseClassDef :: ugenCaseClassDef :: Nil  // how to prepend a blank line??
+            classes0 ++ List( ugenCaseClassDef ) // how to prepend a blank line??
 
 //            println( outputText )
          })( breakOut )
@@ -383,7 +446,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          val packageDef = PackageDef( Select( Select( Ident( "de" ), "sciss" ), "synth" ),
             PackageDef( Ident( "ugen" ),
                Import( Select( Ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, identIIdxSeq.name, -1 ) :: Nil ) ::
-               Import( Ident( "SynthGraph" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) ::
+               Import( Ident( "UGenHelper" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) ::
                ugens ) :: Nil )
 //         println( createText( packageDef ))
 //         println()
