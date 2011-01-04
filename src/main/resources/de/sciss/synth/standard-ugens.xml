@@ -476,7 +476,293 @@
         </ugen> -->
     </file>
 
-    <file name="EnvGen">
+    <file name="TriggerUGens">
+        <ugen name="Trig1">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="in">
+                <doc>
+                    the trigger. This can be any signal. A trigger happens when the signal changes
+                    from non-positive to positive.
+                </doc>
+            </arg>
+            <arg name="dur" default="0.1">
+                <doc>
+                    the duration for which the ugens holds the value of 1 when triggered
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen which outputs a value of 1 for a given duration when triggered.
+
+                    When a trigger occurs at the input, a value of 1 is output for the specified duration,
+                    otherwise zero is output. When a new trigger occurs while this ugens outputs 1, the
+                    hold-time is reset to the duration.
+                </text>
+                <see>ugen.Trig</see>
+            </doc>
+        </ugen>
+        <ugen name="Trig">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="in">
+                <doc>
+                    the trigger. This can be any signal. A trigger happens when the signal changes
+                    from non-positive to positive.
+                </doc>
+            </arg>
+            <arg name="dur" default="0.1">
+                <doc>
+                    the duration for which the ugens holds the value of the input signal when triggered
+                </doc>
+            </arg>
+        </ugen>
+        <ugen name="SendTrig" sideeffect="true">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="trig">
+                <doc>
+                    the trigger signal causing the value to be read and sent. A trigger occurs
+                    when passing from non-positive to positive.
+                </doc>
+            </arg>
+            <arg name="value" default="0">
+                <doc>
+                    a changing signal or constant that will be polled at the time of trigger,
+                    and its value passed with the trigger message
+                </doc>
+            </arg>
+            <arg name="id" default="0">
+                <doc>
+                    an arbitrary integer that will be sent along with the `"/tr"` message.
+                    This is useful to distinguish between several SendTrig instances per SynthDef.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that sends a value from the server to all notified clients upon receiving triggers.
+                    The message sent is `OSCMessage( "/tr", &lt;(Int) nodeID&gt;, &lt;(Int) trigID&gt;, &lt;(Float) value&gt; )`.
+
+                    For sending an array of values, or using an arbitrary reply command, see `SendReply`.
+
+                    '''Warning''': We have changed the argument order. While in sclang, `id` precedes `value`,
+                    we are using them in reverse order here!
+                </text>
+                <see>ugen.SendReply</see>
+            </doc>
+        </ugen>
+
+        <!-- XXX TODO
+        <ugen name="SendReply" sideeffect="true">
+        <ugen name="Poll" sideeffect="true">
+        -->
+
+        <ugen name="ToggleFF">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig">
+                <doc>
+                    a signal to trigger the flip-flop. a trigger occurs when the signal
+                    changes from non-positive to positive.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that toggles like a flip-flop between zero and one upon receiving a trigger.
+                    The flip-flop is initially outputing zero, so changes to one when the first trigger
+                    arrives.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="SetResetFF">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="reset"/>
+        </ugen>
+        <ugen name="Latch">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in">
+                <doc>
+                    the input signal
+                </doc>
+            </arg>
+            <arg name="trig">
+                <doc>
+                    the trigger. The can be any signal. A trigger happens when the signal changes from
+                    non-positive to positive.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A sample-and-hold UGen. When triggered, a new value is taken from the input and
+                    hold until the next trigger occurs.
+                </text>
+                <see>ugen.Gate</see>
+                <see>ugen.Demand</see>
+            </doc>
+        </ugen>
+        <ugen name="Gate">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in">
+                <doc>
+                    the input signal to gate
+                </doc>
+            </arg>
+            <arg name="gate">
+                <doc>
+                    the signal specifying whether to pass the input signal (when greater than zero) or
+                    whether to close the gate and hold the last value (when less than or equal to zero)
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A gate or hold UGen.
+                    It allows the input signal value to pass when the `gate` argument is positive,
+                    otherwise it holds last value.
+                </text>
+                <see>ugen.Latch</see>
+            </doc>
+        </ugen>
+        <ugen name="Schmidt">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="min" default="0"/>
+            <arg name="max" default="0"/>
+        </ugen>
+        <ugen name="PulseDivider">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="div" default="2"/>
+            <arg name="start" default="0"/>
+        </ugen>
+        <ugen name="PulseCount">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="reset" default="0"/>
+        </ugen>
+        <ugen name="Stepper">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="reset" default="0"/>
+            <arg name="min" default="0"/>
+            <arg name="max" default="7"/>
+            <arg name="step" default="1"/>
+            <arg name="resetVal" default="0"/>
+        </ugen>
+        <ugen name="TDelay">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="dur" default="0.1"/>
+        </ugen>
+        <ugen name="ZeroCrossing">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+        </ugen>
+        <ugen name="Timer">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig">
+                <doc>
+                    the trigger to update the output signal.
+                    A trigger occurs when trig signal crosses from non-positive to positive.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that returns time since last triggered.
+                    The time returned is in seconds and is measured from the last received trigger.
+                    Note that currently it seems the initial memory is at -1 sample, so for
+                    `Impulse.ar(1)` the result (at 44.1 kHz) is 2.26757e-05, followed strangely
+                    by 1.00002, and then (as expected) 1.0.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="Sweep">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig">
+                <doc>
+                    the trigger that restarts the ramp, when passing from
+                    non-positive to positive
+                </doc>
+            </arg>
+            <arg name="speed">
+                <doc>
+                    the amount of increment of the output signal per second.
+                    In SCLang this argument is named `rate`, while ScalaCollider uses
+                    `speed` to avoid conflict with the UGen's calculation rate.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen which starts a linear raise from zero each time it is
+                    triggered.
+                </text>
+                <see>ugen.Ramp</see>
+                <see>ugen.Phasor</see>
+                <see>ugen.Line</see>
+            </doc>
+        </ugen>
+        <ugen name="Phasor">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="speed" default="1"/>
+            <arg name="min" default="0"/>
+            <arg name="max" default="1"/>
+            <arg name="resetVal" default="0"/>
+        </ugen>
+        <ugen name="Peak">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="trig"/>
+        </ugen>
+        <ugen name="RunningMin">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="trig"/>
+        </ugen>
+        <ugen name="RunningMax">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="trig"/>
+        </ugen>
+        <ugen name="PeakFollower">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="decay" default="0.999"/>
+        </ugen>
+        <ugen name="MostChange">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="a"/>
+            <arg name="b"/>
+        </ugen>
+        <ugen name="LeastChange">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="a"/>
+            <arg name="b"/>
+        </ugen>
+        <ugen name="LastValue">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="thresh" default="0.01"/>
+        </ugen>
         <ugen name="Done" sideeffect="true">
             <rate name="control" implied="true"/>
             <arg name="src" doneflag="true">
@@ -497,9 +783,138 @@
                 <see>ugen.EnvGen</see>
             </doc>
         </ugen>
+        <ugen name="Pause" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="gate">
+                <doc>
+                    when 0, node is paused, when 1, node is resumed
+                </doc>
+            </arg>
+            <arg name="node">
+                <doc>
+                    the id of the node to be paused or resumed
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen which pauses and resumes another node.
+                    Note that the UGen initially assumes the node is running, that is,
+                    if `gate` is initially 1, this will '''not''' resume a paused node.
+                    Instead, the gate must go to zero and back to one to resume the node.
+                    Additionally, this UGen will only cause action if the gate value
+                    changes, that is, if the node is paused or resumed otherwise, this
+                    UGen will not interfere with that action, unless the gate value is
+                    adjusted.
+                </text>
+                <see>ugen.Free</see>
+                <see>ugen.PauseSelf</see>
+            </doc>
+        </ugen>
+        <ugen name="FreeSelf" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="trig">
+                <doc>
+                    the input signal which will trigger the action.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that, when triggered, frees enclosing synth.
+                    It frees the enclosing synth when the input signal crosses from non-positive to positive.
+
+                    This UGen outputs its input signal for convenience.
+                </text>
+                <see>ugen.Free</see>
+                <see>ugen.PauseSelf</see>
+            </doc>
+        </ugen>
+        <ugen name="PauseSelf" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="trig">
+                <doc>
+                    the input signal which will trigger the action.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that, when triggered, pauses enclosing synth.
+                    It pauses the enclosing synth when the input signal crosses from non-positive to positive.
+
+                    This UGen outputs its input signal for convenience.
+                </text>
+                <see>ugen.Pause</see>
+                <see>ugen.FreeSelf</see>
+            </doc>
+        </ugen>
+        <ugen name="Free" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="trig">
+                <doc>
+                    the trigger to cause the action
+                </doc>
+            </arg>
+            <arg name="node">
+                <doc>
+                    the id of the target node to free upon receiving the trigger
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that, when triggered, frees a given node.
+
+                    This UGen outputs its trig input signal for convenience.
+                </text>
+                <see>ugen.Pause</see>
+                <see>ugen.FreeSelf</see>
+            </doc>
+        </ugen>
+        <ugen name="FreeSelfWhenDone" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="src" doneflag="true">
+                <doc>
+                    the input UGen which when finished will trigger the action.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that, when its input UGen is finished, frees enclosing synth.
+                    This is essentially a shortcut for `FreeSelf.kr( Done.kr( src ))`, so instead
+                    of providing a trigger signal it reads directly the done flag of an
+                    appropriate ugen (such as `Line` or `PlayBuf`).
+
+                    This UGen outputs its input signal for convenience.
+                </text>
+                <see>ugen.Free</see>
+                <see>ugen.FreeSelf</see>
+                <see>ugen.PauseSelfWhenDone</see>
+                <see>ugen.Done</see>
+            </doc>
+        </ugen>
+        <ugen name="PauseSelfWhenDone" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="src" doneflag="true">
+                <doc>
+                    the input UGen which when finished will trigger the action.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that, when its input UGen is finished, pauses enclosing synth.
+                    This is essentially a shortcut for `PauseSelf.kr( Done.kr( src ))`, so instead
+                    of providing a trigger signal it reads directly the done flag of an
+                    appropriate ugen (such as `Line` or `PlayBuf`).
+
+                    This UGen outputs its input signal for convenience.
+                </text>
+                <see>ugen.Pause</see>
+                <see>ugen.PauseSelf</see>
+                <see>ugen.FreeSelfWhenDone</see>
+                <see>ugen.Done</see>
+            </doc>
+        </ugen>
     </file>
 
-    <file name="Filter">
+    <file name="FilterUGens">
         <ugen name="Ramp">
             <rate name="control"/>
             <rate name="audio"/>
@@ -1515,7 +1930,7 @@
         </ugen>
     </file>
 
-    <file name="DiskIO">
+    <file name="DiskIOUGens">
         <!-- // side-effect: advancing sf offset -->
         <ugen name="DiskIn" sideeffect="true">
             <rate name="audio" implied="true"/>

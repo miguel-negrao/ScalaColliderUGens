@@ -42,3 +42,9 @@ val _exp = max( ... ) --> maxInt
 ///////// missing ugens?
 DelayUGens : GrainTap
 Filter: Flip
+
+/////
+
+Combination MultiOut + HasDoneFlag (PlayBuf) : 
+MultiOutUGen[ R <: Rate ]( ... ) extends UGen with GE[R, UGenIn[ R ]]{
+--> benoetigen GE[R, UGenIn[ R ] with HasDoneFlag ]
