@@ -2927,6 +2927,304 @@
         -->
     </file>
 
+    <file name="PanUGens">
+        <ugen name="Pan2">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="in" rate="ugen"/>
+            </rate>
+            <outputs num="2"/>
+            <arg name="in"/>
+            <arg name="pos" default="0"/>
+            <arg name="level" default="1"/>
+        </ugen>
+        <ugen name="Pan4">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="in" rate="ugen"/>
+            </rate>
+            <outputs num="4"/>
+            <arg name="in"/>
+            <arg name="xpos" default="0"/>
+            <arg name="ypos" default="0"/>
+            <arg name="level" default="1"/>
+        </ugen>
+        <ugen name="LinPan2">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="in" rate="ugen"/>
+            </rate>
+            <outputs num="2"/>
+            <arg name="in"/>
+            <arg name="pos" default="0"/>
+            <arg name="level" default="1"/>
+        </ugen>
+        <ugen name="Balance2">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="left" rate="ugen"/>
+                <arg name="right" rate="ugen"/>
+            </rate>
+            <outputs num="2"/>
+            <arg name="left"/>
+            <arg name="right"/>
+            <arg name="pos" default="0"/>
+            <arg name="level" default="1"/>
+        </ugen>
+        <ugen name="Rotate2">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="left" rate="ugen"/>
+                <arg name="right" rate="ugen"/>
+            </rate>
+            <outputs num="2"/>
+            <arg name="x"/>
+            <arg name="y"/>
+            <arg name="pos" default="0"/>
+        </ugen>
+        <ugen name="XFade2">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="inA" rate="ugen"/>
+                <arg name="inB" rate="ugen"/>
+            </rate>
+            <arg name="inA">
+                <doc>
+                    The first input signal
+                </doc>
+            </arg>
+            <arg name="inB" default="0">
+                <doc>
+                    The second input signal
+                </doc>
+            </arg>
+            <arg name="pan" default="0">
+                <doc>
+                    the xfade position from `-1` (only input A audible) to
+                    `+1` (only input B audible)
+                </doc>
+            </arg>
+            <arg name="level" default="1">
+                <doc>
+                    An overall amplitude multiplier that is applied to the output signal
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    An equal power two channel cross fading UGen.
+                </text>
+                <see>ugen.LinXFade2</see>
+            </doc>
+        </ugen>
+        <ugen name="LinXFade2">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="inA" rate="ugen"/>
+                <arg name="inB" rate="ugen"/>
+            </rate>
+            <arg name="inA">
+                <doc>
+                    The first input signal
+                </doc>
+            </arg>
+            <arg name="inB" default="0">
+                <doc>
+                    The second input signal
+                </doc>
+            </arg>
+            <arg name="pan" default="0">
+                <doc>
+                    the xfade position from `-1` (only input A audible) to
+                    `+1` (only input B audible)
+                </doc>
+            </arg>
+            <arg name="level" default="1">
+                <doc>
+                    An overall amplitude multiplier that is applied to the output signal
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    An linear two channel cross fading UGen.
+                </text>
+                <see>ugen.LinXFade2</see>
+            </doc>
+        </ugen>
+        <ugen name="PanB">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="in" rate="ugen"/>
+            </rate>
+            <outputs num="4"/>
+            <arg name="in"/>
+            <arg name="azimuth" default="0"/>
+            <arg name="elevation" default="0"/>
+            <arg name="level" default="1"/>
+        </ugen>
+        <ugen name="PanB2">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="in" rate="ugen"/>
+            </rate>
+            <outputs num="3"/>
+            <arg name="in"/>
+            <arg name="azimuth" default="0"/>
+            <arg name="level" default="1"/>
+        </ugen>
+        <ugen name="BiPanB2">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="inA" rate="ugen"/>
+                <arg name="inB" rate="ugen"/>
+            </rate>
+            <outputs num="3"/>
+            <arg name="inA"/>
+            <arg name="inB"/>
+            <arg name="azimuth" default="0"/>
+            <arg name="level" default="1"/>
+        </ugen>
+        <ugen name="PanAz">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="in" rate="ugen"/>
+            </rate>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int">
+                <doc>
+                    the number of output channels
+                </doc>
+            </arg>
+            <arg name="in">
+                <doc>
+                    the input signal
+                </doc>
+            </arg>
+            <arg name="pos" default="0">
+                <doc>
+                    the pan position. Channels are evenly spaced over a cyclic period of 2.0.
+                    the output channel position is `pos / 2 * numChannels + orient`. Thus, assuming an `orient`
+                    of `0.0`, and `numChannels` being for example `3`, a `pos` of `0*2.0/3 == 0.0` corresponds to the first
+                    output channel, a `pos` of `1*2.0/3` corresponds to the second output channel,
+                    a `pos` of `2*2.0/3=4.0/3` corresponds to the third and last output channel, and
+                    a `pos` of `3*2.0/3=2.0` completes the circle and wraps again to the first channel.
+                    Using a bipolar pan position, such as a sawtooth that ranges from -1 to +1, all channels will be
+                    cyclically panned through.
+                </doc>
+            </arg>
+            <arg name="level" default="1">
+                <doc>
+                    a control rate level input (linear multiplier).
+                </doc>
+            </arg>
+            <arg name="width" default="2">
+                <doc>
+                    the width of the panning envelope. The default of 2.0 pans between pairs
+                    of adjacent speakers. Width values greater than two will spread the pan over greater numbers
+                    of speakers. Width values less than one will leave silent gaps between speakers.
+                </doc>
+            </arg>
+            <arg name="orient" default="0">
+                <doc>
+                    the offset in the output channels regarding a pan position of zero.
+                    Note that ScalaCollider uses a default of zero which means that a pan pos of zero outputs
+                    the signal exactly on the first output channel. This is different in sclang where the default is
+                    0.5 which means that a pan position of zero will output the signal inbetween the first and second
+                    speaker. Accordingly, an `orient` of `1.0` would result in a channel offset of one, where a
+                    pan position of zero would output the signal exactly on the second output channel, and so forth.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    An azimuth-based panorama UGen. It uses vector-based-amplitude panning where
+                    the arbitrary number of speakers is supposed to be distributed in a circle
+                    with even spacing between them. It uses an equal-power-curve to transition
+                    between adjectant speakers. '''Note''' the different default value for
+                    the `orient` argument!
+
+                    Use case: To spread an multi-channel input signal across an output bus
+                    with a different number of channels, such that the first input channel is played on the
+                    first output channel (no spread to adjectant channels) and the last input channel is played
+                    to the last output channel (no spread to adjectant channels), you would create a dedicated `PanAz` per
+                    input channel where the pan position
+                    is `inChanIdx * 2f / (inChannels - 1) * (outChannels - 1) / outChannels`.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="DecodeB2">
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="w" rate="ugen"/>
+                <arg name="x" rate="ugen"/>
+                <arg name="y" rate="ugen"/>
+            </rate>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int"/>
+            <arg name="w"/>
+            <arg name="x"/>
+            <arg name="y"/>
+            <arg name="orient" default="0.5"/>
+        </ugen>
+    </file>
+
+    <file name="PhysicalModellingUGens">
+        <ugen name="Spring">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="spring" default="1"/>
+            <arg name="damp" default="0"/>
+        </ugen>
+        <ugen name="Ball">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="g" default="1"/>
+            <arg name="damp" default="0"/>
+            <arg name="friction" default="0.01"/>
+        </ugen>
+        <ugen name="TBall">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="g" default="10"/>
+            <arg name="damp" default="0"/>
+            <arg name="friction" default="0.01"/>
+        </ugen>
+    </file>
+
+    <file name="ReverbUGens">
+        <ugen name="FreeVerb">
+            <rate name="audio" implied="true"/>
+            <arg name="in"/>
+            <arg name="mix" default="0.33"/>
+            <arg name="room" default="0.5"/>
+            <arg name="damp" default="0.5"/>
+        </ugen>
+        <ugen name="FreeVerb2">
+            <rate name="audio" implied="true"/>
+            <outputs num="2"/>
+            <arg name="left"/>
+            <arg name="right"/>
+            <arg name="mix" default="0.33"/>
+            <arg name="room" default="0.5"/>
+            <arg name="damp" default="0.5"/>
+        </ugen>
+        <ugen name="GVerb">
+            <rate name="audio" implied="true"/>
+            <outputs num="2"/>
+            <arg name="in"/>
+            <arg name="roomSize" default="10"/>
+            <arg name="revTime" default="3"/>
+            <arg name="damping" default="0.5"/>
+            <arg name="inputBW" default="0.5"/>
+            <arg name="spread" default="15"/>
+            <arg name="dryLevel" default="1"/>
+            <arg name="earlyRefLevel" default="0.7"/>
+            <arg name="tailLevel" default="0.5"/>
+            <arg name="maxRoomSize" default="300"/>
+        </ugen>
+    </file>
+
     <file name="TriggerUGens">
         <ugen name="Trig1">
             <rate name="audio"/>

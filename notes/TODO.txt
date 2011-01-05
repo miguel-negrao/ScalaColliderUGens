@@ -41,7 +41,7 @@ val _exp = max( ... ) --> maxInt
 [OK] <ugen random="true"/>
 <rate method="apply"/>	// currently no example
 <outputs num="in"/> // DC (currently commented out)
-<ugen readsfft="true"/>
+[OK] <ugen readsfft="true"/>
 
 ///////// missing ugens?
 DelayUGens : GrainTap
@@ -61,9 +61,6 @@ DemandUGens
 FFT_UGens
 FFT2_UGens
 NoiseUGens
-PanUGens
-PhysicalModellingUGens
-ReverbUGens
 TestUGens
 UnpackFFTUGens
 
