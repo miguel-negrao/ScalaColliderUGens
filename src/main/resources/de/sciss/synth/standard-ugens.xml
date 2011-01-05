@@ -605,8 +605,9 @@
             <arg name="pitchDispersion" default="0"/>
             <arg name="timeDispersion" default="0"/>
         </ugen>
-        <!-- this should exist according to plugin sources... <ugen name="GrainTap">
-        </ugen> -->
+        <!-- this should exist according to plugin sources...
+        <ugen name="GrainTap"/>
+        -->
         <ugen name="TGrains" readsbuf="true">
             <rate name="audio" implied="true"/>
             <outputs num="numChannels"/>
@@ -1149,8 +1150,9 @@
             <arg name="attack" default="0.01"/>
             <arg name="release" default="1"/>
         </ugen>
-        <!-- this should exist according to plugin sources... <ugen name="Flip">
-        </ugen> -->
+        <!-- this should exist according to plugin sources...
+        <ugen name="Flip"/>
+        -->
         <ugen name="Delay1">
             <rate name="control"/>
             <rate name="audio"/>
@@ -2038,13 +2040,162 @@
         <ugen name="KeyState">
             <rate name="control" implied="true"/>
             <arg name="keyCode"/>
-            <arg name="minVal" default="0"/>
-            <arg name="maxVal" default="1"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
             <arg name="lag" default="0.2"/>
         </ugen>
     </file>
 
-    <file name="Line">
+    <file name="LFUGens">
+        <ugen name="Vibrato">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="440"/>
+            <arg name="beat" default="6"/>
+            <arg name="depth" default="0.02"/>
+            <arg name="delay" default="0"/>
+            <arg name="onset" default="0"/>
+            <arg name="beatVar" default="0.04"/>
+            <arg name="depthVar" default="0.1"/>
+            <arg name="iphase" default="0"/>
+        </ugen>
+        <ugen name="LFPulse">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="440">
+                <doc>
+                    oscillator frequency in Hertz
+                </doc>
+            </arg>
+            <arg name="iphase" default="0">
+                <doc>
+                    initial phase offset in cycles ( `0..1` ). If you think
+                    of a buffer of one cycle of the waveform, this is the starting offset
+                    into this buffer. Hence, an `iphase` of `0.25` means that you will hear
+                    the first impulse after `0.75` periods! If you prefer to specify the
+                    perceived delay instead, you could use an `iphase` of `-0.25 + 1` which
+                    is more intuitive. Note that the phase is not automatically wrapped
+                    into the range of `0..1`, so putting an `iphase` of `-0.25` currently
+                    results in a strange initial signal which only stabilizes to the
+                    correct behaviour after one period!
+                </doc>
+            </arg>
+            <arg name="width" default="0.5">
+                <doc>
+                    pulse width duty cycle from zero to one. If you want to
+                    specify the width rather in seconds, you can use the formula
+                    `width = freq * dur`, e.g. for a single sample impulse use
+                    `width = freq * SampleDur.ir`.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A non-band-limited pulse oscillator UGen.
+                    Outputs a high value of one and a low value of zero.
+                </text>
+                <see>ugen.Pulse</see>
+            </doc>
+        </ugen>
+        <ugen name="LFSaw">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="440">
+                <doc>
+                    oscillator frequency in Hertz
+                </doc>
+            </arg>
+            <arg name="iphase" default="0">
+                <doc>
+                    initial phase offset. For efficiency reasons this is a
+                    value ranging from 0 to 2. Note that a phase of zero (default) means
+                    the wave starts at 0 and rises to +1 before jumping down to -1. Use
+                    a phase of 1 to have the wave start at -1.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A sawtooth oscillator UGen. The oscillator is creating an aliased sawtooth,
+                    that is it does not use band-limiting. For a band-limited version use
+                    `Saw` instead. The signal range is -1 to +1.
+                </text>
+                <see>ugen.Saw</see>
+            </doc>
+        </ugen>
+        <ugen name="LFPar">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="440"/>
+            <arg name="iphase" default="0"/>
+        </ugen>
+        <ugen name="LFCub">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="440"/>
+            <arg name="iphase" default="0"/>
+        </ugen>
+        <ugen name="LFTri">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="440"/>
+            <arg name="iphase" default="0"/>
+        </ugen>
+        <ugen name="LFGauss">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="dur" default="1"/>
+            <arg name="width" default="0.1"/>
+            <arg name="iphase" default="0"/>
+            <arg name="loop" default="1"/>
+            <arg name="doneAction" default="doNothing"/>
+        </ugen>
+        <ugen name="Impulse">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="440"/>
+            <arg name="phase" default="0"/>
+        </ugen>
+        <ugen name="VarSaw">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="440"/>
+            <arg name="iphase" default="0"/>
+            <arg name="width" default="0.5"/>
+        </ugen>
+        <ugen name="SyncSaw">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="syncFreq" default="440"/>
+            <arg name="sawFreq" default="440"/>
+        </ugen>
+        <ugen name="K2A">
+            <rate name="audio" implied="true"/>
+            <arg name="in"/>
+        </ugen>
+        <ugen name="A2K">
+            <rate name="control" implied="true"/>
+            <arg name="in"/>
+        </ugen>
+        <ugen name="T2K">
+            <rate name="control" implied="true"/>
+            <arg name="in"/>
+        </ugen>
+        <ugen name="T2A">
+            <rate name="audio" implied="true"/>
+            <arg name="in"/>
+        </ugen>
+        <!-- TODO: outputs num=in
+        <ugen name="DC">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <outputs num="in"/>
+            <arg name="in" multi="true"/>
+        </ugen>
+        -->
+        <ugen name="Silent">
+            <rate name="audio" implied="true"/>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int" default="1"/>
+        </ugen>
         <ugen name="Line" sideeffect="true" doneflag="true">
             <rate name="audio"/>
             <rate name="control"/>
@@ -2078,58 +2229,140 @@
                 <see>ugen.Ramp</see>
             </doc>
         </ugen>
+        <ugen name="XLine" sideeffect="true" doneflag="true">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="start" default="1"/>
+            <arg name="end" default="2"/>
+            <arg name="dur" default="1"/>
+            <arg name="doneAction" default="doNothing"/>
+        </ugen>
+
+        <ugen name="Wrap">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
+        </ugen>
+        <ugen name="Fold">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
+        </ugen>
+        <ugen name="Clip">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
+        </ugen>
+        <!-- this should exist according to plugin sources...
+        <ugen name="Unwrap"/>
+        -->
+        <ugen name="AmpComp">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="60.midicps"/>
+            <arg name="root" default="60.midicps"/>
+            <arg name="expon" default="0.3333"/>
+        </ugen>
+        <ugen name="AmpCompA">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="1000"/>
+            <arg name="root" default="0"/>
+            <arg name="minAmp" default="0.32"/>
+            <arg name="rootAmp" default="1"/>
+        </ugen>
+        <ugen name="InRange">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
+        </ugen>
+        <ugen name="InRect">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="x"/>
+            <arg name="y"/>
+            <arg name="left" default="0"/>
+            <arg name="top" default="0"/>
+            <arg name="right" default="1"/>
+            <arg name="bottom" default="1"/>
+        </ugen>
+        <ugen name="LinExp">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="srcLo" default="0"/>
+            <arg name="srcHi" default="1"/>
+            <arg name="dstLo" default="1"/>
+            <arg name="dstHi" default="2"/>
+        </ugen>
+        <ugen name="LinLin">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="srcLo" default="0"/>
+            <arg name="srcHi" default="1"/>
+            <arg name="dstLo" default="0"/>
+            <arg name="dstHi" default="1"/>
+        </ugen>
+        <!-- TODO:
+        <ugen name="EnvGen"/>
+        -->
+        <ugen name="Linen">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="gate" default="1"/>
+            <arg name="attack" default="0.01"/>
+            <arg name="sustain" default="1"/>
+            <arg name="release" default="1"/>
+            <arg name="doneAction" default="doNothing"/>
+        </ugen>
+
+        <!-- TODO:
+        <ugen name="IEnvGen"/>
+        -->
     </file>
 
     <file name="MouseUGens">
         <ugen name="MouseX">
             <rate name="control" implied="true"/>
-            <arg name="minVal" default="0"/>
-            <arg name="maxVal" default="1"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
             <arg name="warp" default="0"/>
             <arg name="lag" default="0.2"/>
         </ugen>
         <ugen name="MouseY">
             <rate name="control" implied="true"/>
-            <arg name="minVal" default="0"/>
-            <arg name="maxVal" default="1"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
             <arg name="warp" default="0"/>
             <arg name="lag" default="0.2"/>
         </ugen>
         <ugen name="MouseButton">
             <rate name="control" implied="true"/>
-            <arg name="minVal" default="0"/>
-            <arg name="maxVal" default="1"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
             <arg name="lag" default="0.2"/>
         </ugen>
     </file>
 
     <file name="Osc">
-        <ugen name="LFSaw">
-            <rate name="audio"/>
-            <rate name="control"/>
-            <arg name="freq" default="440">
-                <doc>
-                    frequency in Hertz
-                </doc>
-            </arg>
-            <arg name="phase" default="0">
-                <doc>
-                    Initial phase offset. For efficiency reasons this is a
-                    value ranging from 0 to 2. Note that a phase of zero (default) means
-                    the wave starts at 0 and rises to +1 before jumping down to -1. Use
-                    a phase of 1 to have the wave start at -1. The initial phase cannot
-                    be modulated.
-                </doc>
-            </arg>
-            <doc>
-                <text>
-                    A sawtooth oscillator UGen. The oscillator is creating an aliased sawtooth,
-                    that is it does not use band-limiting. For a band-limited version use
-                    `Saw` instead. The signal range is -1 to +1
-                </text>
-                <see>ugen.Saw</see>
-            </doc>
-        </ugen>
         <ugen name="SinOsc">
             <rate name="audio"/>
             <rate name="control"/>
@@ -2308,8 +2541,8 @@
             <rate name="control"/>
             <rate name="audio"/>
             <arg name="trig"/>
-            <arg name="minVal" default="0"/>
-            <arg name="maxVal" default="0"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
         </ugen>
         <ugen name="PulseDivider">
             <rate name="control"/>
@@ -2329,8 +2562,8 @@
             <rate name="audio"/>
             <arg name="trig"/>
             <arg name="reset" default="0"/>
-            <arg name="minVal" default="0"/>
-            <arg name="maxVal" default="7"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="7"/>
             <arg name="step" default="1"/>
             <arg name="resetVal" default="0"/>
         </ugen>
@@ -2395,8 +2628,8 @@
             <rate name="audio"/>
             <arg name="trig"/>
             <arg name="speed" default="1"/>
-            <arg name="minVal" default="0"/>
-            <arg name="maxVal" default="1"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
             <arg name="resetVal" default="0"/>
         </ugen>
         <ugen name="Peak">
