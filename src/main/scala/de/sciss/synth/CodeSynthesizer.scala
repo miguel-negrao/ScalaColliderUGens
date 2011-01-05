@@ -162,7 +162,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val random        = getBoolAttr( node, "random" )
             val indiv         = getBoolAttr( node, "indiv" ) // || random
             val indIndiv      = indSideEffect || random
-            val rates: List[ RateInfo ] = (node \ "rate").map( n => {
+            val rates0: List[ RateInfo ] = (node \ "rate").map( n => {
                val name       = (n \ "@name").text
                val mName0     = (n \ "@method").text
                val mName1     = (n \ "@methodalias").text
@@ -180,8 +180,15 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val implied    = getBoolAttr( n, "implied" )
                RateInfo( name, methodNames, implied, n )
             })( breakOut )
-            val impliedRate   = rates.find( _.implied )
-            if( impliedRate.isDefined ) require( rates.size == 1, "Can only have one implied rate (" + name + ")" )
+            val impliedRate   = rates0.find( _.implied )
+            val (rates: List[ RateInfo ], caseDefaults: Boolean) = impliedRate.map( irate => {
+               require( rates0.size == 1, "Can only have one implied rate (" + name + ")" )
+               val rateInfo   = rates0.head
+               val hasApply   = rateInfo.methodNames.contains( "apply" )
+               ((if( hasApply ) {
+                  rateInfo.copy( methodNames = rateInfo.methodNames - "apply" ) :: Nil
+               } else rates0), hasApply)
+            }).getOrElse( (rates0, false) )
 
             val docNode       = (node \ "doc")
             val docSees       = (docNode \ "see").map( _.text )
@@ -271,22 +278,15 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //            val methodBody = Block( Select( Ident( "freq" ), "toString" ) :: Nil, EmptyTree )
 //            val methodBody = Select( Ident( "freq" ), "toString" ))
             val objectMethodDefs = rates.flatMap( rateInfo => {
-
-               val objectMethodArgs = argsIn map { uArgInfo =>
+               val objectMethodArgs = argsIn.map( uArgInfo => {
+                  val argInfo = uArgInfo.arg( rateInfo )
                   ValDef(
                      Modifiers( Flags.PARAM ),
                      uArgInfo.name,
-                     Ident( uArgInfo.arg( rateInfo ).typ.toString ),
-                     uArgInfo.arg( rateInfo ).default.map( s => if( uArgInfo.isGE ) {
-                        try {
-//                        Literal( Constant( s.toFloat ))
-                           Ident( s.toFloat.toString + "f" )  // XXX workaround for scala-refactoring bug of missing f
-                        } catch {
-                           case e: NumberFormatException => Ident( s )
-                        }
-                     } else Ident( s )).getOrElse( EmptyTree )
+                     Ident( argInfo.typ.toString ),
+                     uArgInfo.defaultTree( argInfo )
                   )
-               }
+               })
 
                val args0 = argsInS.map( i => Ident( i.name ))
                val methodBody = if( impliedRate.isDefined ) {
@@ -322,18 +322,28 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                } else def0
             })
 
-            val objectDef = ModuleDef(
-               NoMods,
-               name,
-               Template(
-                  EmptyTree :: Nil, // parents
-                  emptyValDef,      // self
-                  objectMethodDefs  // body
-               )
-            )
+            val objectDef = if( objectMethodDefs.nonEmpty ) {
+               ModuleDef(
+                  NoMods,
+                  name,
+                  Template(
+                     EmptyTree :: Nil, // parents
+                     emptyValDef,      // self
+                     objectMethodDefs  // body
+                  )
+               ) :: Nil
+            } else Nil
 
             val caseClassConstrArgs  = {
-               val args0 = argsInS map { uArgInfo => (NoMods, uArgInfo.name + ": " + uArgInfo.argDefault.typ, EmptyTree) }
+//               val args0 = argsInS map { uArgInfo => (NoMods, uArgInfo.name + ": " + uArgInfo.argDefault.typ,
+//                  if( caseDefaults ) uArgInfo.defaultTree() else EmptyTree) }
+               val args0 = argsInS map { uArgInfo => (NoMods, uArgInfo.name, {
+                  val typ0 = Ident( uArgInfo.argDefault.typ.toString )
+                  if( caseDefaults ) uArgInfo.defaultTree() match {
+                     case EmptyTree => typ0
+                     case t => Assign( typ0, t )
+                  } else typ0
+               }) }
                if( impliedRate.isDefined ) args0 else {
                   (NoMods, "rate: R", EmptyTree) :: args0
                }
@@ -463,9 +473,9 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
 //            case class SinOscUGen[ R <: Rate ]( freq: AnyUGenIn, phase: AnyUGenIn )
 //            extends SingleOutUGen[ R ]( List( freq, phase ))
-               objectDef :: caseClassDef :: Nil
+               objectDef ::: (caseClassDef :: Nil)
             } else {
-               objectDef :: Nil
+               objectDef
             }
 
             val ugenCaseClassConstrArgs = {
@@ -627,6 +637,14 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          case Some( ("AnyGE", _) )                 => "AnyUGenIn"
          case _                                    => argDefault.typ.toString
       }
+
+      def defaultTree( arg: ArgInfo = argDefault ): Tree = arg.default.map( s => if( isGE ) {
+         try {
+            Ident( s.toFloat.toString + "f" )  // XXX workaround for scala-refactoring bug of missing f
+         } catch {
+            case e: NumberFormatException => Ident( s )
+         }
+      } else Ident( s )).getOrElse( EmptyTree )
    }
 
    private case class UGenArgInfo( name: String, argDefault: ArgInfo, argMap: Map[ RateInfo, ArgInfo ], multi: Boolean )

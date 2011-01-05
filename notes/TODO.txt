@@ -59,7 +59,6 @@ MultiOutUGen[ R <: Rate ]( ... ) extends UGen with GE[R, UGenIn[ R ]]{
 /////
 
 DemandUGens
-FFT_UGens
 FFT2_UGens
 NoiseUGens
 UnpackFFTUGens
