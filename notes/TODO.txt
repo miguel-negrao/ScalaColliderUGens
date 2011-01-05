@@ -64,3 +64,20 @@ DemandUGens
 //////
 
 bufgen : env ??
+
+/////////////// Noise / expandBin solution:
+
+object WhiteNoise {
+   def kr: WhiteNoise[control,scalar,control] = kr( )
+   def kr[S <: Rate, T <: Rate](mul: GE[S, UGenIn[S]] = 1.0f)( implicit rateOrder: RateOrder[ control, S, T ]) = apply[control, S, T](rateOrder.out, mul)(rateOrder)
+   def ar: WhiteNoise[audio,scalar,audio] = ar( )
+   def ar[S <: Rate, T <: Rate](mul: GE[S, UGenIn[S]] = 1.0f)( implicit rateOrder: RateOrder[ audio, S, T ]) = apply[audio, S, T](rateOrder.out, mul)(rateOrder)
+}
+case class WhiteNoise[R <: Rate, S <: Rate, T <: Rate](rate: T, mul: GE[S, UGenIn[S]])(implicit rateOrder: RateOrder[ R, S, T ])
+extends GE[T, UGenIn[T]] with UsesRandSeed {
+   def expand = {
+      val _mul: IIdxSeq[UGenIn[S]] = mul.expand
+      IIdxSeq.tabulate(_mul.size)(i => BinaryOpUGen[T]( rateOrder.out, BinaryOp.Times, WhiteNoiseUGen(rateOrder.in1), _mul(i)))
+   }
+}
+case class WhiteNoiseUGen[R <: Rate](rate: R) extends SingleOutUGen[R](IIdxSeq.empty) with UsesRandSeed
