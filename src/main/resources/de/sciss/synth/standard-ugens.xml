@@ -1766,7 +1766,7 @@
             <arg name="propHFC" default="0.25"/>
             <arg name="propSF" default="0.25"/>
             <arg name="thresh" default="1.0"/>
-            <arg name="wait" default="0.04"/>
+            <arg name="waitTime" default="0.04"/>
         </ugen>
         <ugen name="PV_HainsworthFoote" readsfft="true">
             <rate name="audio"/>
@@ -1774,7 +1774,7 @@
             <arg name="propH" default="0.0"/>
             <arg name="propF" default="0.0"/>
             <arg name="thresh" default="1.0"/>
-            <arg name="wait" default="0.04"/>
+            <arg name="waitTime" default="0.04"/>
         </ugen>
 
         <ugen name="RunningSum">
@@ -4307,7 +4307,7 @@
     <file name="ReverbUGens">
         <ugen name="FreeVerb">
             <rate name="audio" implied="true"/>
-            <arg name="in"/>
+            <arg name="in" rate="ugen"/>
             <arg name="mix" default="0.33"/>
             <arg name="room" default="0.5"/>
             <arg name="damp" default="0.5"/>
@@ -4315,8 +4315,8 @@
         <ugen name="FreeVerb2">
             <rate name="audio" implied="true"/>
             <outputs num="2"/>
-            <arg name="left"/>
-            <arg name="right"/>
+            <arg name="left" rate="ugen"/>
+            <arg name="right" rate="ugen"/>
             <arg name="mix" default="0.33"/>
             <arg name="room" default="0.5"/>
             <arg name="damp" default="0.5"/>
@@ -4324,7 +4324,7 @@
         <ugen name="GVerb">
             <rate name="audio" implied="true"/>
             <outputs num="2"/>
-            <arg name="in"/>
+            <arg name="in" rate="ugen"/>
             <arg name="roomSize" default="10"/>
             <arg name="revTime" default="3"/>
             <arg name="damping" default="0.5"/>

@@ -40,7 +40,8 @@ object UGens {
       val dir  = new File( args( 1 ))
       val xml  = XML.load( UGens.getClass.getResourceAsStream( "standard-ugens.xml" ))
       val synth= new CodeSynthesizer
-      synth.perform( xml, dir )
+//      synth.perform( xml, dir )
+      synth.perform( xml, dir, (f, u) => f == "NoiseUGens" )
       System.exit( 0 )
    }
 }

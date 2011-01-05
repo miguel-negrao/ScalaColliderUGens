@@ -97,7 +97,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       mkClass(mods withPosition (Flags.CASE, NoPosition), name, tparams, args, body, parents, superArgs)
    }
 
-   def perform( xml: Node, dir: File ) {
+   // filter gets applied with filename (without extension) and ugen name
+   def perform( xml: Node, dir: File, filter: (String, String) => Boolean = (_, _) => true ) {
 
 //      val testAst = treeFrom( "class A(); class B" )
 //      println( printer( testAst ))
@@ -138,7 +139,11 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       val traitWritesFFT   = TypeDef( Modifiers( Flags.TRAIT ), "WritesFFT",     Nil, EmptyTree )
       val traitWritesBus   = TypeDef( Modifiers( Flags.TRAIT ), "WritesBus",     Nil, EmptyTree )
       val identIIdxSeq     = Ident( "IIdxSeq" )
+      val typExpandBin     = TypeDef( NoMods, "S <: Rate", Nil, EmptyTree ) :: TypeDef( NoMods, "T <: Rate", Nil, EmptyTree ) :: Nil
 //      val argIndiv         = SyntheticUGenArgInfo( "_indiv", ArgInfo( TypeInfo( ("Int", Nil) :: Nil ), None, None ))
+
+//         def *[ S <: Rate, T <: Rate ]( b: GE[ S, UGenIn[ S ]])( implicit r: RateOrder[ R, S, T ]) =
+//            Times.make[ R, S, T ]( r.rate, this, b )
 
       // bug in scala-refactoring : case class constructor arg list cannot be empty
 //      val dummyCaseClassArgs = (NoMods, "", EmptyTree) :: Nil
@@ -147,7 +152,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          val name       = (node \ "@name").text
          val fileName   = name + ".scala"
          val ast        = treeFrom( "package de.sciss.synth.ugen\n" )
-         val ugens: List[ Tree ] = (node \ "ugen").flatMap( node => {
+         val fltNode    = (node \ "ugen").filter( node => filter( name, (node \ "@name").text ))
+         val ugens: List[ Tree ] = fltNode.flatMap( node => {
             val name          = (node \ "@name").text
             val readsBus      = getBoolAttr( node, "readsbus" )
             val writesBus     = getBoolAttr( node, "writesbus" )
@@ -252,11 +258,12 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   val rateNode   = (rateInfo.xml \ "arg").find( n => (n \ "@name").text == name )
                   rateInfo -> createInfo( rateNode, Some( rateInfo ))
                })( breakOut )
-               UGenArgInfo( name, argDefault, argMap, multi ) -> idx
+               UGenArgInfo( name, argDefault, argMap, multi, expandBin ) -> idx
 //               val typ        =
 //               val vParam     = ValDef( Modifiers( Flags.PARAM ), name, TypeTree( typ /* selectedValue.tpt.tpe */ ), EmptyTree ) :: Nil
 //               vParam
             })( breakOut )
+
 //            val argsPoss   = args0.map( _._2 )
             val numArgsIn  = argsTup.size
 //            require( numArgsIn == argsPoss.toSet.size, "Wrong argument positions (" + name + ")" )
@@ -267,6 +274,12 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //               argsIn ::: (argIndiv :: Nil)
 //            } else argsIn
             val argsInS = argsIn  // no exceptions at the moment
+
+            val expandBin = argsIn.map( _.expandBin ).collect { case Some( exp ) => exp } match {
+               case exp :: Nil => Some( exp )
+               case Nil => None
+               case _ => Predef.error( "Can only have one expandBin (" + name + ")" )
+            }
 
             val outputs       = (node \ "outputs").headOption match {
                case Some( n ) => (n \ "@num").text match {
@@ -305,7 +318,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val def0 = rateInfo.methodNames.map( mName => DefDef(
                   NoMods withPosition (Flags.METHOD, NoPosition),
                   mName,
-                  Nil,        // tparams
+                  if( expandBin.isDefined ) typExpandBin else  Nil,        // tparams
                   objectMethodArgs :: Nil,    // vparamss
                   TypeTree( NoType ), // tpt -- empty for testing
                   methodBody // rhs
@@ -546,18 +559,15 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          })( breakOut )
 
          // XXX add UGen class
-
-         val packageDef = PackageDef( Select( Select( Ident( "de" ), "sciss" ), "synth" ),
-            PackageDef( Ident( "ugen" ),
-               Import( Select( Ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, identIIdxSeq.name, -1 ) :: Nil ) ::
-               Import( Ident( "UGenHelper" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) ::
-               ugens ) :: Nil )
-//         println( createText( packageDef ))
-//         println()
-//         println( createText( ugens.head ))
-         println( "Writing " + fileName )
-         val osw = new OutputStreamWriter( new FileOutputStream( new File( dir, fileName )), "UTF-8" )
-         osw.write( """/*
+         if( ugens.nonEmpty ) {
+            val packageDef = PackageDef( Select( Select( Ident( "de" ), "sciss" ), "synth" ),
+               PackageDef( Ident( "ugen" ),
+                  Import( Select( Ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, identIIdxSeq.name, -1 ) :: Nil ) ::
+                  Import( Ident( "UGenHelper" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) ::
+                  ugens ) :: Nil )
+            println( "Writing " + fileName )
+            val osw = new OutputStreamWriter( new FileOutputStream( new File( dir, fileName )), "UTF-8" )
+            osw.write( """/*
  * """ + fileName + """
  * (ScalaCollider-UGens)
  *
@@ -567,8 +577,9 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
  */
 
 """ )
-         osw.write( createText( packageDef ))
-         osw.close()
+            osw.write( createText( packageDef ))
+            osw.close()
+         }
       }
       println( "Done.")
    }
@@ -612,6 +623,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       def name : String
       def argDefault : ArgInfo
       def multi : Boolean
+      def expandBin: Option[ String ]
 
       def arg( rate: RateInfo ) : ArgInfo
 
@@ -653,7 +665,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       } else Ident( s )).getOrElse( EmptyTree )
    }
 
-   private case class UGenArgInfo( name: String, argDefault: ArgInfo, argMap: Map[ RateInfo, ArgInfo ], multi: Boolean )
+   private case class UGenArgInfo( name: String, argDefault: ArgInfo, argMap: Map[ RateInfo, ArgInfo ], multi: Boolean, expandBin: Option[ String ])
    extends UGenArgInfoLike {
       def arg( rate: RateInfo ) : ArgInfo = argMap.getOrElse( rate, Predef.error( "Accessing illegal rate " + rate.name + " (" + name + ")" ))
    }
@@ -662,6 +674,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
    extends UGenArgInfoLike {
       def multi = false
       def arg( rate: RateInfo ) : ArgInfo = argDefault
+      def expandBin = None
    }
 
    private abstract sealed class Outputs {
