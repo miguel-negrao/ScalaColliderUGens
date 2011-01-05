@@ -40,12 +40,14 @@ val _exp = max( ... ) --> maxInt
 [OK] <doc warnpos="true"/>
 [OK] <ugen random="true"/>
 <rate method="apply"/>	// currently no example
-<outputs num="in"/>
+<outputs num="in"/> // DC (currently commented out)
+<ugen readsfft="true"/>
 
 ///////// missing ugens?
 DelayUGens : GrainTap
 Filter: Flip
 LFUGens: Unwrap
+Osc: FoldIndex
 
 /////
 
@@ -58,11 +60,13 @@ MultiOutUGen[ R <: Rate ]( ... ) extends UGen with GE[R, UGenIn[ R ]]{
 DemandUGens
 FFT_UGens
 FFT2_UGens
-MachineListening
 NoiseUGens
-OSCUGens
 PanUGens
 PhysicalModellingUGens
 ReverbUGens
 TestUGens
 UnpackFFTUGens
+
+//////
+
+bufgen : env ??

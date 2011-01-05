@@ -133,6 +133,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       val traitDoneFlag    = TypeDef( Modifiers( Flags.TRAIT ), "HasDoneFlag",   Nil, EmptyTree )
       val traitRandom      = TypeDef( Modifiers( Flags.TRAIT ), "UsesRandSeed",  Nil, EmptyTree )
       val traitIndiv       = TypeDef( Modifiers( Flags.TRAIT ), "IsIndividual",  Nil, EmptyTree )
+//      val traitReadsFFT    = TypeDef( Modifiers( Flags.TRAIT ), "ReadsFFT",      Nil, EmptyTree )
       val traitWritesBuffer= TypeDef( Modifiers( Flags.TRAIT ), "WritesBuffer",  Nil, EmptyTree )
       val traitWritesBus   = TypeDef( Modifiers( Flags.TRAIT ), "WritesBus",     Nil, EmptyTree )
       val identIIdxSeq     = Ident( "IIdxSeq" )
@@ -150,7 +151,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val readsBus      = getBoolAttr( node, "readsbus" )
             val writesBus     = getBoolAttr( node, "writesbus" )
 //if( name == "Out" ) println( " OUT : " + writesBus )
-            val readsBuffer   = getBoolAttr( node, "readsbuf" )
+            val readsBuffer   = getBoolAttr( node, "readsbuf" )   // currently unused
+            val readsFFT      = getBoolAttr( node, "readsfft" )   // currently unused
             val writesBuffer  = getBoolAttr( node, "writesbuf" )
             val sideEffect    = getBoolAttr( node, "sideeffect" ) // || writesBus || writesBuffer
             val indSideEffect = writesBuffer || writesBus
