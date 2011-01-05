@@ -38,6 +38,7 @@ val _exp = max( ... ) --> maxInt
 [OK] <rate><arg name=... default=.../></rate>
 [OK] <rate><arg name=... rate=.../></rate>
 [OK] <doc warnpos="true"/>
+[OK] <ugen random="true"/>
 
 ///////// missing ugens?
 DelayUGens : GrainTap
@@ -48,3 +49,18 @@ Filter: Flip
 Combination MultiOut + HasDoneFlag (PlayBuf) : 
 MultiOutUGen[ R <: Rate ]( ... ) extends UGen with GE[R, UGenIn[ R ]]{
 --> benoetigen GE[R, UGenIn[ R ] with HasDoneFlag ]
+
+/////
+
+DemandUGens
+FFT_UGens
+FFT2_UGens
+LFUGens
+MachineListening
+NoiseUGens
+OSCUGens
+PanUGens
+PhysicalModellingUGens
+ReverbUGens
+TestUGens
+UnpackFFTUGens

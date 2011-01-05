@@ -131,7 +131,12 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //      val traitGE = TypeDef( Modifiers( Flags.TRAIT ), "GE", Nil, EmptyTree )
       val traitSideEffect  = TypeDef( Modifiers( Flags.TRAIT ), "HasSideEffect", Nil, EmptyTree )
       val traitDoneFlag    = TypeDef( Modifiers( Flags.TRAIT ), "HasDoneFlag",   Nil, EmptyTree )
+      val traitRandom      = TypeDef( Modifiers( Flags.TRAIT ), "UsesRandSeed",  Nil, EmptyTree )
+      val traitIndiv       = TypeDef( Modifiers( Flags.TRAIT ), "IsIndividual",  Nil, EmptyTree )
+      val traitWritesBuffer= TypeDef( Modifiers( Flags.TRAIT ), "WritesBuffer",  Nil, EmptyTree )
+      val traitWritesBus   = TypeDef( Modifiers( Flags.TRAIT ), "WritesBus",     Nil, EmptyTree )
       val identIIdxSeq     = Ident( "IIdxSeq" )
+//      val argIndiv         = SyntheticUGenArgInfo( "_indiv", ArgInfo( TypeInfo( ("Int", Nil) :: Nil ), None, None ))
 
       // bug in scala-refactoring : case class constructor arg list cannot be empty
 //      val dummyCaseClassArgs = (NoMods, "", EmptyTree) :: Nil
@@ -144,10 +149,15 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val name          = (node \ "@name").text
             val readsBus      = getBoolAttr( node, "readsbus" )
             val writesBus     = getBoolAttr( node, "writesbus" )
+//if( name == "Out" ) println( " OUT : " + writesBus )
             val readsBuffer   = getBoolAttr( node, "readsbuf" )
             val writesBuffer  = getBoolAttr( node, "writesbuf" )
-            val sideEffect    = getBoolAttr( node, "sideeffect" ) || writesBus || writesBuffer
+            val sideEffect    = getBoolAttr( node, "sideeffect" ) // || writesBus || writesBuffer
+            val indSideEffect = writesBuffer || writesBus
             val doneFlag      = getBoolAttr( node, "doneflag" )
+            val random        = getBoolAttr( node, "random" )
+            val indiv         = getBoolAttr( node, "indiv" ) // || random
+            val indIndiv      = writesBuffer || writesBus || random
             val rates: List[ RateInfo ] = (node \ "rate").map( n => {
                val name       = (n \ "@name").text
                val methodName = name match {
@@ -230,6 +240,10 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val argsOut    = argsTup.map( _._1 ).filter( _.isGE )
             val argsIn     = List.tabulate( numArgsIn )(
                idx => argsTup.find( _._2 == idx ).getOrElse( Predef.error( "Wrong argument positions (" + name + ")" ))._1 )
+//            val argsInS    = if( indiv ) {
+//               argsIn ::: (argIndiv :: Nil)
+//            } else argsIn
+         val argsInS = argsIn  // no exceptions at the moment
 
             val outputs       = (node \ "outputs").headOption match {
                case Some( n ) => (n \ "@num").text match {
@@ -263,7 +277,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   )
                }
 
-               val args0 = argsIn.map( i => Ident( i.name ))
+               val args0 = argsInS.map( i => Ident( i.name ))
                val methodBody = if( impliedRate.isDefined ) {
                   Apply( Ident( "apply" ), args0 )
                } else {
@@ -307,7 +321,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             )
 
             val caseClassConstrArgs  = {
-               val args0 = argsIn map { uArgInfo => (NoMods, uArgInfo.name + ": " + uArgInfo.argDefault.typ, EmptyTree) }
+               val args0 = argsInS map { uArgInfo => (NoMods, uArgInfo.name + ": " + uArgInfo.argDefault.typ, EmptyTree) }
                if( impliedRate.isDefined ) args0 else {
                   (NoMods, "rate: R", EmptyTree) :: args0
                }
@@ -320,6 +334,17 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //            val expArgs    = argsOut.filter( _.isGE )
             val hasArgsOut = argsOut.size > 0
             val ugenName   = if( hasArgsOut ) name + "UGen" else name
+
+            val caseCommonParents : List[ TypeDef ] = {
+               val p1 = if( doneFlag ) (traitDoneFlag :: Nil) else Nil
+               val p2 = if( random ) (traitRandom :: p1) else p1
+               val p3 = if( writesBus ) (traitWritesBus :: p2) else p2
+               val p4 = if( writesBuffer ) (traitWritesBuffer :: p3) else p3
+               val p5 = if( indiv && !indIndiv ) (traitIndiv :: p4) else p4
+//               val p6 = if( sideEffect && !indSideEffect ) ...
+               impliedRate.map( r => TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: p5 ).getOrElse( p5 )
+            }
+
             val classes0   = if( hasArgsOut ) {
 
             val caseClassExpandDef = {
@@ -342,7 +367,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      val app0 = Apply( Apply( Select( identIIdxSeq, "tabulate" ), numId :: Nil ),
                         Function( ValDef( Modifiers( Flags.PARAM ), "i", TypeTree( NoType ), EmptyTree ) :: Nil,
                            Apply( Ident( ugenName ), {
-                              val args0 = argsIn.map( a => {
+                              val args0 = argsInS.map( a => {
                                  if( a.isGE ) {
                                     val apply = Apply( Ident( "_" + a.name ), {
                                        if( moreThanOneArgOut ) {
@@ -375,15 +400,34 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                )
             }
 
+            val caseClassMethods =
+//            if( indiv ) {
+//               caseClassExpandDef :: methodOverrideEquals :: methodOverrideHashCode :: Nil
+//            } else {
+               caseClassExpandDef :: Nil
+//            }
+
             val caseClassDef = myMkCaseClass(
                NoMods,
                name,
 
                caseClassTypeParam, // tparams
                caseClassConstrArgs,
-               caseClassExpandDef :: Nil,
+               caseClassMethods,
                {
-                  val t0 = TypeDef( NoMods, if( outputs == SingleOutput ) "GE" else "Expands", {
+                  val p4 = if( sideEffect && !indSideEffect ) (traitSideEffect :: caseCommonParents) else caseCommonParents
+//                  val t0 = TypeDef( NoMods, if( outputs == SingleOutput ) "GE" else "Expands", {
+//                     val p0 = TypeDef( NoMods, ugenName,
+//                        if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R", Nil, EmptyTree ) :: Nil),
+//                        EmptyTree ) :: Nil
+//                     if( outputs == SingleOutput ) {
+//                        TypeDef( NoMods, impliedRate.map( _.typ ).getOrElse( "R" ): String, Nil, EmptyTree ) :: p0
+//                     } else {
+//                        p0
+//                     }
+//                  }, EmptyTree )
+//                  impliedRate.map( r => t0 :: TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: Nil ).getOrElse( t0 :: Nil )
+                  TypeDef( NoMods, if( outputs == SingleOutput ) "GE" else "Expands", {
                      val p0 = TypeDef( NoMods, ugenName,
                         if( impliedRate.isDefined ) Nil else (TypeDef( NoMods, "R", Nil, EmptyTree ) :: Nil),
                         EmptyTree ) :: Nil
@@ -392,8 +436,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      } else {
                         p0
                      }
-                  }, EmptyTree )
-                  impliedRate.map( r => t0 :: TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: Nil ).getOrElse( t0 :: Nil )
+                  }, EmptyTree ) :: p4
                }
             )
 
@@ -422,13 +465,11 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             }
 
             val ugenCaseClassParents: List[ TypeDef ] = {
-               val p1 = if( doneFlag )   (traitDoneFlag :: Nil) else Nil
                // note: ZeroOutUGen already extends HasSideEffect
-               val p2 = if( sideEffect && (outputs != ZeroOutputs) ) (traitSideEffect :: p1) else p1
-               val p3 = impliedRate.map( r => TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: p2 ).getOrElse( p2 )
+               val p4 = if( sideEffect && !indSideEffect && (outputs != ZeroOutputs) ) (traitSideEffect :: caseCommonParents) else caseCommonParents
                TypeDef( NoMods, outputs.typ, if( outputs != SingleOutput ) Nil else {
                   TypeDef( NoMods, impliedRate.map( _.typ ).getOrElse( "R" ): String, Nil, EmptyTree ) :: Nil
-               }, EmptyTree ) :: p3
+               }, EmptyTree ) :: p4
             }
 //            val ugenCaseClassParents: List[ TypeDef ] = impliedRate.map( r =>
 //               ugenCaseClassParents0 :: TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: Nil
@@ -447,8 +488,14 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      case Some( a ) if( a.multi ) =>
 //                        val rvsArgs = geArgs.dropRight( 1 ).reverse
 //                        rvsArgs.foldLeft[ Tree ]( Select( Ident( a.arg.name ), "expand" ))( (a, b) => Apply( Select( a, "+:" ), Ident( b.arg.name ) :: Nil )) :: Nil
-                        Apply( Select( Apply( TypeApply( identIIdxSeq, Ident( "AnyUGenIn" ) :: Nil ), geArgs.dropRight( 1 ).map( a => Ident( a.name ))),
-                           "++" ), Select( Ident( a.name ), "expand" ) :: Nil ) :: Nil
+                        val args1   = geArgs.dropRight( 1 )
+                        val sel     = Select( Ident( a.name ), "expand" )
+                        (if( args1.nonEmpty ) {
+                           Apply( Select( Apply( TypeApply( identIIdxSeq, Ident( "AnyUGenIn" ) :: Nil ), geArgs.dropRight( 1 ).map( a => Ident( a.name ))),
+                              "++" ), sel :: Nil )
+                        } else {
+                           sel
+                        }) :: Nil
                      case _ => (if( hasArgsOut ) {
                         Apply( identIIdxSeq, geArgs.map( a => Ident( a.name )))
                      } else {
@@ -532,8 +579,12 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       }
    }
    private case class ArgInfo( typ: TypeInfo, default: Option[ String ], doc: Option[ String ])
-   private case class UGenArgInfo( name: String, argDefault: ArgInfo, argMap: Map[ RateInfo, ArgInfo ], multi: Boolean ) {
-      def arg( rate: RateInfo ) : ArgInfo = argMap.getOrElse( rate, Predef.error( "Accessing illegal rate " + rate.name + " (" + name + ")" ))
+   private trait UGenArgInfoLike {
+      def name : String
+      def argDefault : ArgInfo
+      def multi : Boolean
+
+      def arg( rate: RateInfo ) : ArgInfo
 
       def isGE = argDefault.typ.tuples.headOption match {
          case Some( ("GE", _) )        => true
@@ -563,6 +614,17 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          case Some( ("AnyGE", _) )                 => "AnyUGenIn"
          case _                                    => argDefault.typ.toString
       }
+   }
+
+   private case class UGenArgInfo( name: String, argDefault: ArgInfo, argMap: Map[ RateInfo, ArgInfo ], multi: Boolean )
+   extends UGenArgInfoLike {
+      def arg( rate: RateInfo ) : ArgInfo = argMap.getOrElse( rate, Predef.error( "Accessing illegal rate " + rate.name + " (" + name + ")" ))
+   }
+
+   private case class SyntheticUGenArgInfo( name: String, argDefault: ArgInfo )
+   extends UGenArgInfoLike {
+      def multi = false
+      def arg( rate: RateInfo ) : ArgInfo = argDefault
    }
 
    private abstract sealed class Outputs {

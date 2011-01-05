@@ -1,4 +1,190 @@
-<ugens>
+<ugens> <!-- list as of 02-sep-10 -->
+    <file name="ChaosUGens">
+        <ugen name="CuspN">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1"/>
+            <arg name="b" default="1.9"/>
+            <arg name="xi" default="0"/>
+        </ugen>
+        <ugen name="CuspL">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1"/>
+            <arg name="b" default="1.9"/>
+            <arg name="xi" default="0"/>
+        </ugen>
+        <ugen name="FBSineN">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="im" default="1"/>
+            <arg name="fb" default="0.1"/>
+            <arg name="a" default="1.1"/>
+            <arg name="c" default="0.5"/>
+            <arg name="xi" default="0.1"/>
+            <arg name="yi" default="0.1"/>
+        </ugen>
+        <ugen name="FBSineL">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="im" default="1"/>
+            <arg name="fb" default="0.1"/>
+            <arg name="a" default="1.1"/>
+            <arg name="c" default="0.5"/>
+            <arg name="xi" default="0.1"/>
+            <arg name="yi" default="0.1"/>
+        </ugen>
+        <ugen name="FBSineC">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="im" default="1"/>
+            <arg name="fb" default="0.1"/>
+            <arg name="a" default="1.1"/>
+            <arg name="c" default="0.5"/>
+            <arg name="xi" default="0.1"/>
+            <arg name="yi" default="0.1"/>
+        </ugen>
+        <ugen name="GbmanN">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="xi" default="1.2"/>
+            <arg name="yi" default="2.1"/>
+        </ugen>
+        <ugen name="GbmanL">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="xi" default="1.2"/>
+            <arg name="yi" default="2.1"/>
+        </ugen>
+        <ugen name="HenonN">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1.4"/>
+            <arg name="b" default="0.3"/>
+            <arg name="x0" default="0"/>
+            <arg name="x1" default="0"/>
+        </ugen>
+        <ugen name="HenonL">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1.4"/>
+            <arg name="b" default="0.3"/>
+            <arg name="x0" default="0"/>
+            <arg name="x1" default="0"/>
+        </ugen>
+        <ugen name="HenonC">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1.4"/>
+            <arg name="b" default="0.3"/>
+            <arg name="x0" default="0"/>
+            <arg name="x1" default="0"/>
+        </ugen>
+        <ugen name="LatoocarfianN">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1"/>
+            <arg name="b" default="3"/>
+            <arg name="c" default="0.5"/>
+            <arg name="d" default="0.5"/>
+            <arg name="xi" default="0.5"/>
+            <arg name="yi" default="0.5"/>
+        </ugen>
+        <ugen name="LatoocarfianL">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1"/>
+            <arg name="b" default="3"/>
+            <arg name="c" default="0.5"/>
+            <arg name="d" default="0.5"/>
+            <arg name="xi" default="0.5"/>
+            <arg name="yi" default="0.5"/>
+        </ugen>
+        <ugen name="LatoocarfianC">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1"/>
+            <arg name="b" default="3"/>
+            <arg name="c" default="0.5"/>
+            <arg name="d" default="0.5"/>
+            <arg name="xi" default="0.5"/>
+            <arg name="yi" default="0.5"/>
+        </ugen>
+        <ugen name="LinCongN">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1.1"/>
+            <arg name="c" default="0.13"/>
+            <arg name="m" default="1.0"/>
+            <arg name="xi" default="0"/>
+        </ugen>
+        <ugen name="LinCongL">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1.1"/>
+            <arg name="c" default="0.13"/>
+            <arg name="m" default="1.0"/>
+            <arg name="xi" default="0"/>
+        </ugen>
+        <ugen name="LinCongC">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1.1"/>
+            <arg name="c" default="0.13"/>
+            <arg name="m" default="1.0"/>
+            <arg name="xi" default="0"/>
+        </ugen>
+        <ugen name="LorenzL">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="s" default="10"/>
+            <arg name="r" default="28"/>
+            <arg name="b" default="2.667"/>
+            <arg name="h" default="0.05"/>
+            <arg name="xi" default="0.1"/>
+            <arg name="yi" default="0"/>
+            <arg name="zi" default="0"/>
+        </ugen>
+        <ugen name="QuadN">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1"/>
+            <arg name="b" default="-1"/>
+            <arg name="c" default="-0.75"/>
+            <arg name="xi" default="0"/>
+        </ugen>
+        <ugen name="QuadL">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1"/>
+            <arg name="b" default="-1"/>
+            <arg name="c" default="-0.75"/>
+            <arg name="xi" default="0"/>
+        </ugen>
+        <ugen name="QuadC">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="a" default="1"/>
+            <arg name="b" default="-1"/>
+            <arg name="c" default="-0.75"/>
+            <arg name="xi" default="0"/>
+        </ugen>
+        <ugen name="StandardN">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="k" default="1.0"/>
+            <arg name="xi" default="0.5"/>
+            <arg name="yi" default="0"/>
+        </ugen>
+        <ugen name="StandardL">
+            <rate name="audio"/>
+            <arg name="freq" default="SampleRate.ir * 0.5"/>
+            <arg name="k" default="1.0"/>
+            <arg name="xi" default="0.5"/>
+            <arg name="yi" default="0"/>
+        </ugen>
+    </file>
+
     <file name="DelayUGens">
         <ugen name="ControlRate">
             <rate name="scalar" implied="true"/>
@@ -280,60 +466,60 @@
             <arg name="downSample" default="1"/>
         </ugen>
 
-        <ugen name="BufDelayN">
+        <ugen name="BufDelayN" readsbuf="true" writesbuf="true">
             <rate name="audio"/>
             <arg name="buf"/>
             <arg name="in"/>
             <arg name="delayTime" default="0.2"/>
         </ugen>
-        <ugen name="BufDelayL">
+        <ugen name="BufDelayL" readsbuf="true" writesbuf="true">
             <rate name="audio"/>
             <arg name="buf"/>
             <arg name="in"/>
             <arg name="delayTime" default="0.2"/>
         </ugen>
-        <ugen name="BufDelayC">
+        <ugen name="BufDelayC" readsbuf="true" writesbuf="true">
             <rate name="audio"/>
             <arg name="buf"/>
             <arg name="in"/>
             <arg name="delayTime" default="0.2"/>
         </ugen>
-        <ugen name="BufCombN">
-            <rate name="audio"/>
-            <arg name="buf"/>
-            <arg name="in"/>
-            <arg name="delayTime" default="0.2"/>
-            <arg name="decayTime" default="1"/>
-        </ugen>
-        <ugen name="BufCombL">
+        <ugen name="BufCombN" readsbuf="true" writesbuf="true">
             <rate name="audio"/>
             <arg name="buf"/>
             <arg name="in"/>
             <arg name="delayTime" default="0.2"/>
             <arg name="decayTime" default="1"/>
         </ugen>
-        <ugen name="BufCombC">
+        <ugen name="BufCombL" readsbuf="true" writesbuf="true">
             <rate name="audio"/>
             <arg name="buf"/>
             <arg name="in"/>
             <arg name="delayTime" default="0.2"/>
             <arg name="decayTime" default="1"/>
         </ugen>
-        <ugen name="BufAllpassN">
+        <ugen name="BufCombC" readsbuf="true" writesbuf="true">
             <rate name="audio"/>
             <arg name="buf"/>
             <arg name="in"/>
             <arg name="delayTime" default="0.2"/>
             <arg name="decayTime" default="1"/>
         </ugen>
-        <ugen name="BufAllpassL">
+        <ugen name="BufAllpassN" readsbuf="true" writesbuf="true">
             <rate name="audio"/>
             <arg name="buf"/>
             <arg name="in"/>
             <arg name="delayTime" default="0.2"/>
             <arg name="decayTime" default="1"/>
         </ugen>
-        <ugen name="BufAllpassC">
+        <ugen name="BufAllpassL" readsbuf="true" writesbuf="true">
+            <rate name="audio"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+            <arg name="delayTime" default="0.2"/>
+            <arg name="decayTime" default="1"/>
+        </ugen>
+        <ugen name="BufAllpassC" readsbuf="true" writesbuf="true">
             <rate name="audio"/>
             <arg name="buf"/>
             <arg name="in"/>
@@ -421,7 +607,7 @@
         </ugen>
         <!-- this should exist according to plugin sources... <ugen name="GrainTap">
         </ugen> -->
-        <ugen name="TGrains">
+        <ugen name="TGrains" readsbuf="true">
             <rate name="audio" implied="true"/>
             <outputs num="numChannels"/>
             <arg name="numChannels" type="Int"/>
@@ -434,7 +620,7 @@
             <arg name="amp" default="0.1"/>
             <arg name="interp" default="4"/>
         </ugen>
-        <ugen name="ScopeOut"> <!-- XXX zero outputs? -->
+        <ugen name="ScopeOut" writesbuf="true"> <!-- XXX zero outputs? -->
             <rate name="audio"/>
             <rate name="control"/>
             <arg name="buf"/>
@@ -450,13 +636,13 @@
             <arg name="coef" default="0.5"/>
         </ugen>
 
-        <ugen name="DelTapWr">
+        <ugen name="DelTapWr" writesbuf="true">
             <rate name="audio"/>
             <rate name="control"/>
             <arg name="buf"/>
             <arg name="in"/>
         </ugen>
-        <ugen name="DelTapRd">
+        <ugen name="DelTapRd" readsbuf="true">
             <rate name="audio"/>
             <rate name="control"/>
             <arg name="buf"/>
@@ -476,441 +662,201 @@
         </ugen> -->
     </file>
 
-    <file name="TriggerUGens">
-        <ugen name="Trig1">
-            <rate name="audio"/>
-            <rate name="control"/>
-            <arg name="in">
+    <file name="DiskIOUGens">
+        <!-- // side-effect: advancing sf offset -->
+        <ugen name="DiskIn" readsbuf="true" sideeffect="true">
+            <rate name="audio" implied="true"/>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int">
                 <doc>
-                    the trigger. This can be any signal. A trigger happens when the signal changes
-                    from non-positive to positive.
+                    the amount of channels the file and the buffer will have. This is an Int and hence
+                    must be pre-determined. Different SynthDefs must be created for different numbers of channels.
                 </doc>
             </arg>
-            <arg name="dur" default="0.1">
+            <arg name="buf">
                 <doc>
-                    the duration for which the ugens holds the value of 1 when triggered
+                    the id of the buffer with the correct number of channels and frames
+                </doc>
+            </arg>
+            <arg name="loop" default="0">
+                <doc>
+                    whether the file should loop when its end is reached
                 </doc>
             </arg>
             <doc>
                 <text>
-                    A UGen which outputs a value of 1 for a given duration when triggered.
+                    A UGen to stream in a signal from an audio file. Continuously plays a longer audio file
+                    from disk. This requires a buffer to be preloaded with one buffer size of sound. If loop is
+                    set to 1, the file will loop.
 
-                    When a trigger occurs at the input, a value of 1 is output for the specified duration,
-                    otherwise zero is output. When a new trigger occurs while this ugens outputs 1, the
-                    hold-time is reset to the duration.
+                    '''Note''': The buffer size must be a multiple of (2 * the server's block size). See
+                    `Buffer#cue` for details.
                 </text>
-                <see>ugen.Trig</see>
-            </doc>
-        </ugen>
-        <ugen name="Trig">
-            <rate name="audio"/>
-            <rate name="control"/>
-            <arg name="in">
-                <doc>
-                    the trigger. This can be any signal. A trigger happens when the signal changes
-                    from non-positive to positive.
-                </doc>
-            </arg>
-            <arg name="dur" default="0.1">
-                <doc>
-                    the duration for which the ugens holds the value of the input signal when triggered
-                </doc>
-            </arg>
-        </ugen>
-        <ugen name="SendTrig" sideeffect="true">
-            <rate name="audio"/>
-            <rate name="control"/>
-            <arg name="trig">
-                <doc>
-                    the trigger signal causing the value to be read and sent. A trigger occurs
-                    when passing from non-positive to positive.
-                </doc>
-            </arg>
-            <arg name="value" default="0">
-                <doc>
-                    a changing signal or constant that will be polled at the time of trigger,
-                    and its value passed with the trigger message
-                </doc>
-            </arg>
-            <arg name="id" default="0">
-                <doc>
-                    an arbitrary integer that will be sent along with the `"/tr"` message.
-                    This is useful to distinguish between several SendTrig instances per SynthDef.
-                </doc>
-            </arg>
-            <doc>
-                <text>
-                    A UGen that sends a value from the server to all notified clients upon receiving triggers.
-                    The message sent is `OSCMessage( "/tr", &lt;(Int) nodeID&gt;, &lt;(Int) trigID&gt;, &lt;(Float) value&gt; )`.
-
-                    For sending an array of values, or using an arbitrary reply command, see `SendReply`.
-
-                    '''Warning''': We have changed the argument order. While in sclang, `id` precedes `value`,
-                    we are using them in reverse order here!
-                </text>
-                <see>ugen.SendReply</see>
-            </doc>
-        </ugen>
-
-        <!-- XXX TODO
-        <ugen name="SendReply" sideeffect="true">
-        <ugen name="Poll" sideeffect="true">
-        -->
-
-        <ugen name="ToggleFF">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="trig">
-                <doc>
-                    a signal to trigger the flip-flop. a trigger occurs when the signal
-                    changes from non-positive to positive.
-                </doc>
-            </arg>
-            <doc>
-                <text>
-                    A UGen that toggles like a flip-flop between zero and one upon receiving a trigger.
-                    The flip-flop is initially outputing zero, so changes to one when the first trigger
-                    arrives.
-                </text>
-            </doc>
-        </ugen>
-        <ugen name="SetResetFF">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="trig"/>
-            <arg name="reset"/>
-        </ugen>
-        <ugen name="Latch">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="in">
-                <doc>
-                    the input signal
-                </doc>
-            </arg>
-            <arg name="trig">
-                <doc>
-                    the trigger. The can be any signal. A trigger happens when the signal changes from
-                    non-positive to positive.
-                </doc>
-            </arg>
-            <doc>
-                <text>
-                    A sample-and-hold UGen. When triggered, a new value is taken from the input and
-                    hold until the next trigger occurs.
-                </text>
-                <see>ugen.Gate</see>
-                <see>ugen.Demand</see>
-            </doc>
-        </ugen>
-        <ugen name="Gate">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="in">
-                <doc>
-                    the input signal to gate
-                </doc>
-            </arg>
-            <arg name="gate">
-                <doc>
-                    the signal specifying whether to pass the input signal (when greater than zero) or
-                    whether to close the gate and hold the last value (when less than or equal to zero)
-                </doc>
-            </arg>
-            <doc>
-                <text>
-                    A gate or hold UGen.
-                    It allows the input signal value to pass when the `gate` argument is positive,
-                    otherwise it holds last value.
-                </text>
-                <see>ugen.Latch</see>
-            </doc>
-        </ugen>
-        <ugen name="Schmidt">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="trig"/>
-            <arg name="min" default="0"/>
-            <arg name="max" default="0"/>
-        </ugen>
-        <ugen name="PulseDivider">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="trig"/>
-            <arg name="div" default="2"/>
-            <arg name="start" default="0"/>
-        </ugen>
-        <ugen name="PulseCount">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="trig"/>
-            <arg name="reset" default="0"/>
-        </ugen>
-        <ugen name="Stepper">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="trig"/>
-            <arg name="reset" default="0"/>
-            <arg name="min" default="0"/>
-            <arg name="max" default="7"/>
-            <arg name="step" default="1"/>
-            <arg name="resetVal" default="0"/>
-        </ugen>
-        <ugen name="TDelay">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="trig"/>
-            <arg name="dur" default="0.1"/>
-        </ugen>
-        <ugen name="ZeroCrossing">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="in"/>
-        </ugen>
-        <ugen name="Timer">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="trig">
-                <doc>
-                    the trigger to update the output signal.
-                    A trigger occurs when trig signal crosses from non-positive to positive.
-                </doc>
-            </arg>
-            <doc>
-                <text>
-                    A UGen that returns time since last triggered.
-                    The time returned is in seconds and is measured from the last received trigger.
-                    Note that currently it seems the initial memory is at -1 sample, so for
-                    `Impulse.ar(1)` the result (at 44.1 kHz) is 2.26757e-05, followed strangely
-                    by 1.00002, and then (as expected) 1.0.
-                </text>
-            </doc>
-        </ugen>
-        <ugen name="Sweep">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="trig">
-                <doc>
-                    the trigger that restarts the ramp, when passing from
-                    non-positive to positive
-                </doc>
-            </arg>
-            <arg name="speed">
-                <doc>
-                    the amount of increment of the output signal per second.
-                    In SCLang this argument is named `rate`, while ScalaCollider uses
-                    `speed` to avoid conflict with the UGen's calculation rate.
-                </doc>
-            </arg>
-            <doc>
-                <text>
-                    A UGen which starts a linear raise from zero each time it is
-                    triggered.
-                </text>
-                <see>ugen.Ramp</see>
-                <see>ugen.Phasor</see>
-                <see>ugen.Line</see>
-            </doc>
-        </ugen>
-        <ugen name="Phasor">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="trig"/>
-            <arg name="speed" default="1"/>
-            <arg name="min" default="0"/>
-            <arg name="max" default="1"/>
-            <arg name="resetVal" default="0"/>
-        </ugen>
-        <ugen name="Peak">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="in"/>
-            <arg name="trig"/>
-        </ugen>
-        <ugen name="RunningMin">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="in"/>
-            <arg name="trig"/>
-        </ugen>
-        <ugen name="RunningMax">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="in"/>
-            <arg name="trig"/>
-        </ugen>
-        <ugen name="PeakFollower">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="in"/>
-            <arg name="decay" default="0.999"/>
-        </ugen>
-        <ugen name="MostChange">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="a"/>
-            <arg name="b"/>
-        </ugen>
-        <ugen name="LeastChange">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="a"/>
-            <arg name="b"/>
-        </ugen>
-        <ugen name="LastValue">
-            <rate name="control"/>
-            <rate name="audio"/>
-            <arg name="in"/>
-            <arg name="thresh" default="0.01"/>
-        </ugen>
-        <ugen name="Done" sideeffect="true">
-            <rate name="control" implied="true"/>
-            <arg name="src" doneflag="true">
-                <doc>
-                    the UGen to track
-                </doc>
-            </arg>
-            <doc>
-                <text>
-                    A UGen which monitors another UGen to see when it is finished.
-                    Some UGens, such as `PlayBuf`, `RecordBuf`, `Line`, `XLine`, `EnvGen`, `Linen`, `BufRd`, `BufWr`, `DbufRd`,
-                    and the Buffer delay UGens set a 'done' flag when they are finished playing. This UGen echoes that flag
-                    as an explicit output signal when it is set to track a particular UGen. When the tracked UGen changes
-                    to done, the output signal changes from zero to one.
-                </text>
+                <see>Buffer#cue</see>
+                <see>ugen.VDiskIn</see>
                 <see>ugen.PlayBuf</see>
-                <see>ugen.Line</see>
-                <see>ugen.EnvGen</see>
             </doc>
         </ugen>
-        <ugen name="Pause" sideeffect="true">
-            <rate name="control" implied="true"/>
-            <arg name="gate">
-                <doc>
-                    when 0, node is paused, when 1, node is resumed
-                </doc>
-            </arg>
-            <arg name="node">
-                <doc>
-                    the id of the node to be paused or resumed
-                </doc>
-            </arg>
-            <doc>
-                <text>
-                    A UGen which pauses and resumes another node.
-                    Note that the UGen initially assumes the node is running, that is,
-                    if `gate` is initially 1, this will '''not''' resume a paused node.
-                    Instead, the gate must go to zero and back to one to resume the node.
-                    Additionally, this UGen will only cause action if the gate value
-                    changes, that is, if the node is paused or resumed otherwise, this
-                    UGen will not interfere with that action, unless the gate value is
-                    adjusted.
-                </text>
-                <see>ugen.Free</see>
-                <see>ugen.PauseSelf</see>
-            </doc>
-        </ugen>
-        <ugen name="FreeSelf" sideeffect="true">
-            <rate name="control" implied="true"/>
-            <arg name="trig">
-                <doc>
-                    the input signal which will trigger the action.
-                </doc>
-            </arg>
-            <doc>
-                <text>
-                    A UGen that, when triggered, frees enclosing synth.
-                    It frees the enclosing synth when the input signal crosses from non-positive to positive.
 
-                    This UGen outputs its input signal for convenience.
-                </text>
-                <see>ugen.Free</see>
-                <see>ugen.PauseSelf</see>
-            </doc>
-        </ugen>
-        <ugen name="PauseSelf" sideeffect="true">
-            <rate name="control" implied="true"/>
-            <arg name="trig">
+        <ugen name="DiskOut" writesbuf="true">
+            <rate name="audio" implied="true"/>
+            <arg name="buf">
                 <doc>
-                    the input signal which will trigger the action.
+                    the buffer used internally by the UGen. this number of frames in the buffer must
+                    be a power of two (this is currently not checked!). The buffer must have been initialized
+                    with a `write` command whose `leaveOpen` argument is true. Note that the number of channels of
+                    the buffer and of the input signal must be the same, otherwise `DiskOut` will fail silently
+                    (and not write anything to the file).
+                </doc>
+            </arg>
+            <arg name="in" multi="true" rate="ugen">
+                <doc>
+                    the signal to be recorded
                 </doc>
             </arg>
             <doc>
                 <text>
-                    A UGen that, when triggered, pauses enclosing synth.
-                    It pauses the enclosing synth when the input signal crosses from non-positive to positive.
+                    A UGen which writes a signal to a soundfile on disk. To achieve this efficiently, a buffer is
+                    needs to be provides which is used to buffer the incoming signal.
 
-                    This UGen outputs its input signal for convenience.
+                    '''Note''': It might be that the buffer size must be a multiple of (2 * the server's block size).
+                    We haven't currently verified this, but to be safe, you should make sure this property is met.
+
+                    The signal output by the UGen represents the number of frames written.
                 </text>
-                <see>ugen.Pause</see>
-                <see>ugen.FreeSelf</see>
+                <see>Buffer#write</see>
+                <see>ugen.DiskIn</see>
+                <see>ugen.RecordBuf</see>
             </doc>
         </ugen>
-        <ugen name="Free" sideeffect="true">
-            <rate name="control" implied="true"/>
-            <arg name="trig">
+
+        <!-- // side-effect: advancing sf offset -->
+        <ugen name="VDiskIn" readsbuf="true" sideeffect="true">
+            <!-- note: argument 'rate' renamed to 'speed' -->
+            <rate name="audio" implied="true"/>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int">
                 <doc>
-                    the trigger to cause the action
+                    the amount of channels the file and the buffer will have. This is an Int and hence
+                    must be pre-determined. Different SynthDefs must be created for different numbers of channels
                 </doc>
             </arg>
-            <arg name="node">
+            <arg name="buf">
                 <doc>
-                    the id of the target node to free upon receiving the trigger
+                    the id of the buffer with the correct number of channels and frames
+                </doc>
+            </arg>
+            <arg name="speed" default="1">
+                <doc>
+                    controls the speed of playback. Values below 4 are probably fine, but the higher the value,
+                    the more disk activity there is, and the more likelihood there will be a problem.
+                    The following must be true: `rate &lt; bufFrames / (2 * blockSize)`, e.g with typical default
+                    values, this will be `32768 / (2 * 64) = 256`.
+                </doc>
+            </arg>
+            <arg name="loop" default="0">
+                <doc>
+                    whether the file should loop when its end is reached
+                </doc>
+            </arg>
+            <arg name="sendID" default="0">
+                <doc>
+                    If a value other than zero is used, the UGen sends an OSC message with this id and the
+                    file position each time it reloads the buffer: `OSCMessage( "/diskin", nodeID, sendID, frame )`
                 </doc>
             </arg>
             <doc>
                 <text>
-                    A UGen that, when triggered, frees a given node.
+                    A UGen to stream in a signal from an audio file with variable playback speed.
+                    Continuously plays a longer audio file
+                    from disk. This requires a buffer to be preloaded with one buffer size of sound. If loop is
+                    set to 1, the file will loop.
 
-                    This UGen outputs its trig input signal for convenience.
+                    '''Note''': The buffer size must be a multiple of (2 * the server's block size). See
+                    `Buffer#cue` for details.
+
+                    If the speed is too high, the UGen will not execute, posting a warning.
                 </text>
-                <see>ugen.Pause</see>
-                <see>ugen.FreeSelf</see>
             </doc>
+            <see>Buffer#cue</see>
+            <see>ugen.DiskIn</see>
+            <see>ugen.DiskOut</see>
+            <see>ugen.PlayBuf</see>
         </ugen>
-        <ugen name="FreeSelfWhenDone" sideeffect="true">
-            <rate name="control" implied="true"/>
-            <arg name="src" doneflag="true">
+    </file>
+
+    <file name="DynNoiseUGens">
+        <ugen name="LFDNoise0" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="500">
                 <doc>
-                    the input UGen which when finished will trigger the action.
+                    rate at which to generate random values.
                 </doc>
             </arg>
             <doc>
                 <text>
-                    A UGen that, when its input UGen is finished, frees enclosing synth.
-                    This is essentially a shortcut for `FreeSelf.kr( Done.kr( src ))`, so instead
-                    of providing a trigger signal it reads directly the done flag of an
-                    appropriate ugen (such as `Line` or `PlayBuf`).
+                    A dynamic step noise UGen. Like `LFNoise0`, it generates abruptly changing random values
+                    between `-1` and `+1` at a rate given by the `freq` argument, with two differences:
+                    There is no time quantization, and it there is fast recovery from low freq values.
 
-                    This UGen outputs its input signal for convenience.
+                    In contrast, `LFNoise0`, `LFNoise1`, and `LFNoise2` quantize to the nearest integer division
+                    of the samplerate, and they poll the freq argument only when scheduled, and thus seem
+                    to hang when freqs get very low.
+
+                    If very high or very low freqs are not needed, or fixed freqs are used,
+                    `LFNoise0` is more efficient.
                 </text>
-                <see>ugen.Free</see>
-                <see>ugen.FreeSelf</see>
-                <see>ugen.PauseSelfWhenDone</see>
-                <see>ugen.Done</see>
+                <see>ugen.LFNoise0</see>
+                <see>ugen.LFDNoise1</see>
+                <see>ugen.LFDNoise2</see>
+                <see>ugen.TRand</see>
             </doc>
         </ugen>
-        <ugen name="PauseSelfWhenDone" sideeffect="true">
-            <rate name="control" implied="true"/>
-            <arg name="src" doneflag="true">
+        <ugen name="LFDNoise1" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="500">
                 <doc>
-                    the input UGen which when finished will trigger the action.
+                    rate at which to generate random values.
                 </doc>
             </arg>
             <doc>
                 <text>
-                    A UGen that, when its input UGen is finished, pauses enclosing synth.
-                    This is essentially a shortcut for `PauseSelf.kr( Done.kr( src ))`, so instead
-                    of providing a trigger signal it reads directly the done flag of an
-                    appropriate ugen (such as `Line` or `PlayBuf`).
+                    A dynamic ramp noise UGen. Like `LFNoise1`, it generates linearly interpolated random values
+                    between `-1` and `+1` at a rate given by the `freq` argument, with two differences:
+                    There is no time quantization, and it there is fast recovery from low freq values.
 
-                    This UGen outputs its input signal for convenience.
+                    In contrast, `LFNoise0`, `LFNoise1`, and `LFNoise2` quantize to the nearest integer division
+                    of the samplerate, and they poll the freq argument only when scheduled, and thus seem
+                    to hang when freqs get very low.
+
+                    If very high or very low freqs are not needed, or fixed freqs are used,
+                    `LFNoise1` is more efficient.
                 </text>
-                <see>ugen.Pause</see>
-                <see>ugen.PauseSelf</see>
-                <see>ugen.FreeSelfWhenDone</see>
-                <see>ugen.Done</see>
+                <see>ugen.LFNoise1</see>
+                <see>ugen.LFDNoise0</see>
+                <see>ugen.LFDNoise2</see>
+                <see>ugen.Ramp</see>
             </doc>
+        </ugen>
+        <ugen name="LFDNoise3" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="500">
+                <doc>
+                    rate at which to generate random values.
+                </doc>
+            </arg>
+        </ugen>
+        <ugen name="LFDClipNoise" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="500">
+                <doc>
+                    rate at which to generate random values.
+                </doc>
+            </arg>
         </ugen>
     </file>
 
@@ -1830,7 +1776,156 @@
         </ugen>
     </file>
 
-    <file name="InOut">
+    <file name="GendynUGens">
+        <ugen name="Gendy1" random="true">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="ampDist" default="1"/>
+            <arg name="durDist" default="1"/>
+            <arg name="adParam" default="1"/>
+            <arg name="ddParam" default="1"/>
+            <arg name="minFreq" default="440"/>
+            <arg name="maxFreq" default="660"/>
+            <arg name="ampScale" default="0.5"/>
+            <arg name="durScale" default="0.5"/>
+            <arg name="initCPs" default="12"/>
+            <arg name="kNum" default="12"/>
+        </ugen>
+        <ugen name="Gendy2" random="true">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="ampDist" default="1"/>
+            <arg name="durDist" default="1"/>
+            <arg name="adParam" default="1"/>
+            <arg name="ddParam" default="1"/>
+            <arg name="minFreq" default="440"/>
+            <arg name="maxFreq" default="660"/>
+            <arg name="ampScale" default="0.5"/>
+            <arg name="durScale" default="0.5"/>
+            <arg name="initCPs" default="12"/>
+            <arg name="kNum" default="12"/>
+            <arg name="a" default="1.17"/>
+            <arg name="c" default="0.31"/>
+        </ugen>
+        <ugen name="Gendy3" random="true">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="ampDist" default="1"/>
+            <arg name="durDist" default="1"/>
+            <arg name="adParam" default="1"/>
+            <arg name="ddParam" default="1"/>
+            <arg name="freq" default="440"/>
+            <arg name="ampScale" default="0.5"/>
+            <arg name="durScale" default="0.5"/>
+            <arg name="initCPs" default="12"/>
+            <arg name="kNum" default="12"/>
+        </ugen>
+    </file>
+
+    <file name="GrainUGens">
+        <ugen name="GrainIn" readsbuf="true">
+            <rate name="audio" implied="true"/>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int" default="1" pos="1"/>
+            <arg name="trig" default="0" pos="2"/>
+            <arg name="dur" default="1" pos="3"/>
+            <arg name="in" pos="0"/>
+            <arg name="pan" default="0" pos="4"/>
+            <arg name="envBuf" default="-1" pos="5"/>
+            <arg name="maxGrains" default="512" pos="6"/>
+            <doc warnpos="true"/>
+        </ugen>
+        <ugen name="GrainSin" readsbuf="true">
+            <rate name="audio" implied="true"/>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int" default="1"/>
+            <arg name="trig" default="0"/>
+            <arg name="dur" default="1"/>
+            <arg name="freq" default="440"/>
+            <arg name="pan" default="0"/>
+            <arg name="envBuf" default="-1"/>
+            <arg name="maxGrains" default="512"/>
+        </ugen>
+        <ugen name="GrainFM" readsbuf="true">
+            <rate name="audio" implied="true"/>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int" default="1"/>
+            <arg name="trig" default="0"/>
+            <arg name="dur" default="1"/>
+            <arg name="carFreq" default="440"/>
+            <arg name="modFreq" default="200"/>
+            <arg name="index" default="1"/>
+            <arg name="pan" default="0"/>
+            <arg name="envBuf" default="-1"/>
+            <arg name="maxGrains" default="512"/>
+        </ugen>
+        <ugen name="GrainBuf" readsbuf="true">
+            <rate name="audio" implied="true"/>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int" default="1" pos="1"/>
+            <arg name="trig" default="0" pos="2"/>
+            <arg name="dur" default="1" pos="3"/>
+            <arg name="buf" pos="0"/>
+            <arg name="speed" default="1" pos="4"/>
+            <arg name="pos" default="0" pos="5"/>
+            <arg name="pan" default="0" pos="6"/>
+            <arg name="envBuf" default="-1" pos="7"/>
+            <arg name="maxGrains" default="512" pos="8"/>
+            <doc warnpos="true"/>
+        </ugen>
+        <ugen name="Warp1" readsbuf="true">
+            <rate name="audio" implied="true"/>
+            <outputs num="numChannels"/>
+            <arg name="numChannels" type="Int"/>
+            <arg name="buf"/>
+            <arg name="pos" default="0"/>
+            <arg name="speed" default="1"/>
+            <arg name="winSize" default="0.2"/>
+            <arg name="envBuf" default="-1"/>
+            <arg name="overlaps" default="8"/>
+            <arg name="winRand" default="0"/>
+            <arg name="interp" default="1"/>
+        </ugen>
+    </file>
+
+    <file name="IOUGens">
+        <ugen name="OffsetOut" writesbus="true">
+            <outputs num="0"/>
+            <rate name="audio" implied="true"/>
+            <arg name="bus"/>
+            <arg name="in" multi="true" rate="ugen"/>
+        </ugen>
+        <ugen name="LocalIn">
+            <outputs num="numChannels"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="numChannels" type="Int" default="1"/>
+        </ugen>
+        <ugen name="XOut" writesbus="true">
+            <outputs num="0"/>
+            <rate name="audio">
+                <arg name="in" rate="ugen"/>
+            </rate>
+            <rate name="control"/>
+            <arg name="bus" pos="0"/>
+            <arg name="xfade" pos="2"/>
+            <arg name="in" multi="true" pos="1"/>
+            <doc warnpos="true"/>
+        </ugen>
+
+        <!-- TODO: these could well be here, and only the ProxyFactories are manually coded...
+        <ugen name="LagControl"/>
+        <ugen name="AudioControl"/>
+        <ugen name="Control"/>
+        <ugen name="TrigControl"/>
+        -->
+
+        <ugen name="ReplaceOut" writesbus="true">
+            <outputs num="0"/>
+            <rate name="audio" implied="true"/>
+            <arg name="bus"/>
+            <arg name="in" multi="true" rate="ugen"/>
+        </ugen>
         <ugen name="Out" writesbus="true">
             <outputs num="0"/>
             <rate name="audio">
@@ -1840,6 +1935,112 @@
             <rate name="scalar"/>
             <arg name="bus"/>
             <arg name="in" multi="true"/>
+        </ugen>
+        <ugen name="LocalOut">
+            <outputs num="0"/>
+            <rate name="control"/>
+            <rate name="audio">
+                <arg name="in" rate="ugen"/>
+            </rate>
+            <arg name="in" multi="true"/>
+        </ugen>
+        <ugen name="In" readsbus="true">
+            <outputs num="numChannels"/>
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="bus"/>
+            <arg name="numChannels" type="Int" default="1"/>
+        </ugen>
+        <ugen name="LagIn" readsbus="true">
+            <outputs num="numChannels"/>
+            <rate name="control"/>
+            <arg name="bus"/>
+            <arg name="numChannels" type="Int" default="1"/>
+            <arg name="lag" default="0.1"/>
+        </ugen>
+        <ugen name="InFeedback" readsbus="true">
+            <outputs num="numChannels"/>
+            <rate name="audio" implied="true"/>
+            <arg name="bus">
+                <doc>
+                    the index of the audio bus to read in from.
+                </doc>
+            </arg>
+            <arg name="numChannels" type="Int" default="1">
+                <doc>
+                    the number of channels (i.e. adjacent buses) to read in. Since
+                    this is a constant, a change in number of channels of the underlying bus must
+                    be reflected by creating different SynthDefs.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen which reads a signal from an audio bus with a current or one cycle old timestamp
+
+                    Audio buses adhere to the concept of a cycle timestamp, which increases for each audio block
+                    calculated. When the various output ugens (`Out`, `OffsetOut`, `XOut`) write data to a bus,
+                    they mix it with any data from the current cycle, but overwrite any data from the previous cycle.
+                    (`ReplaceOut` overwrites all data regardless.) Thus depending on node order and what synths are
+                    writing to the bus, the data on a given bus may be from the current cycle or be one cycle old at
+                    the time of reading.
+
+                    `In.ar` checks the timestamp of any data it reads in and zeros any data from the previous
+                    cycle (for use within that node; the data remains on the bus). This is fine for audio data,
+                    as it avoids feedback, but for control data it is useful to be able to read data from any place
+                    in the node order. For this reason `In.kr` also reads data that is older than the current cycle.
+
+                    In some cases one might also want to read audio from a node later in the current node order.
+                    This can be achieved with `InFeedback`. It reads from the previous cycle, and hence introduces
+                    a '''delay''' of one block size, which by default is 64 sample frames (equal to about 1.45 ms
+                    at 44.1 kHz sample rate).
+                </text>
+                <see>ugen.In</see>
+                <see>ugen.LocalIn</see>
+                <see>ugen.ControlDur</see>
+            </doc>
+        </ugen>
+        <ugen name="InTrig" readsbus="true">
+            <outputs num="numChannels"/>
+            <rate name="control" implied="true"/>
+            <arg name="bus">
+                <doc>
+                    the index of the control bus to read in from.
+                </doc>
+            </arg>
+            <arg name="numChannels" type="Int" default="1">
+                <doc>
+                    the number of channels (i.e. adjacent buses) to read in. Since
+                    this is a constant, a change in number of channels of the underlying bus must
+                    be reflected by creating different SynthDefs.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen which generates a trigger anytime a control bus is set.
+
+                    Any time the bus is "touched" i.e. has its value set (using `"/c_set"` etc.), a single
+                    impulse trigger will be generated. Its amplitude is the value that the bus was set to.
+                    Note that if a signal is continuously written to that bus, for instance using
+                    `Out.kr`, only one initial trigger is generated once that ugen starts writing, but
+                    no successive triggers are generated.
+                </text>
+                <see>ugen.In</see>
+            </doc>
+        </ugen>
+        <!-- TODO:
+        <ugen name="SharedOut"/>
+        <ugen name="SharedIn"/>
+        -->
+    </file>
+
+    <file name="KeyboardUGens">
+        <ugen name="KeyState">
+            <rate name="control" implied="true"/>
+            <arg name="keyCode"/>
+            <arg name="minVal" default="0"/>
+            <arg name="maxVal" default="1"/>
+            <arg name="lag" default="0.2"/>
         </ugen>
     </file>
 
@@ -1876,6 +2077,29 @@
                 <see>ugen.EnvGen</see>
                 <see>ugen.Ramp</see>
             </doc>
+        </ugen>
+    </file>
+
+    <file name="MouseUGens">
+        <ugen name="MouseX">
+            <rate name="control" implied="true"/>
+            <arg name="minVal" default="0"/>
+            <arg name="maxVal" default="1"/>
+            <arg name="warp" default="0"/>
+            <arg name="lag" default="0.2"/>
+        </ugen>
+        <ugen name="MouseY">
+            <rate name="control" implied="true"/>
+            <arg name="minVal" default="0"/>
+            <arg name="maxVal" default="1"/>
+            <arg name="warp" default="0"/>
+            <arg name="lag" default="0.2"/>
+        </ugen>
+        <ugen name="MouseButton">
+            <rate name="control" implied="true"/>
+            <arg name="minVal" default="0"/>
+            <arg name="maxVal" default="1"/>
+            <arg name="lag" default="0.2"/>
         </ugen>
     </file>
 
@@ -1930,126 +2154,441 @@
         </ugen>
     </file>
 
-    <file name="DiskIOUGens">
-        <!-- // side-effect: advancing sf offset -->
-        <ugen name="DiskIn" sideeffect="true">
-            <rate name="audio" implied="true"/>
-            <outputs num="numChannels"/>
-            <arg name="numChannels" type="Int">
+    <file name="TriggerUGens">
+        <ugen name="Trig1">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="in">
                 <doc>
-                    the amount of channels the file and the buffer will have. This is an Int and hence
-                    must be pre-determined. Different SynthDefs must be created for different numbers of channels.
+                    the trigger. This can be any signal. A trigger happens when the signal changes
+                    from non-positive to positive.
                 </doc>
             </arg>
-            <arg name="buf">
+            <arg name="dur" default="0.1">
                 <doc>
-                    the id of the buffer with the correct number of channels and frames
-                </doc>
-            </arg>
-            <arg name="loop" default="0">
-                <doc>
-                    whether the file should loop when its end is reached
+                    the duration for which the ugens holds the value of 1 when triggered
                 </doc>
             </arg>
             <doc>
                 <text>
-                    A UGen to stream in a signal from an audio file. Continuously plays a longer audio file
-                    from disk. This requires a buffer to be preloaded with one buffer size of sound. If loop is
-                    set to 1, the file will loop.
+                    A UGen which outputs a value of 1 for a given duration when triggered.
 
-                    '''Note''': The buffer size must be a multiple of (2 * the server's block size). See
-                    `Buffer#cue` for details.
+                    When a trigger occurs at the input, a value of 1 is output for the specified duration,
+                    otherwise zero is output. When a new trigger occurs while this ugens outputs 1, the
+                    hold-time is reset to the duration.
                 </text>
-                <see>Buffer#cue</see>
-                <see>ugen.VDiskIn</see>
+                <see>ugen.Trig</see>
+            </doc>
+        </ugen>
+        <ugen name="Trig">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="in">
+                <doc>
+                    the trigger. This can be any signal. A trigger happens when the signal changes
+                    from non-positive to positive.
+                </doc>
+            </arg>
+            <arg name="dur" default="0.1">
+                <doc>
+                    the duration for which the ugens holds the value of the input signal when triggered
+                </doc>
+            </arg>
+        </ugen>
+        <ugen name="SendTrig" sideeffect="true">
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="trig">
+                <doc>
+                    the trigger signal causing the value to be read and sent. A trigger occurs
+                    when passing from non-positive to positive.
+                </doc>
+            </arg>
+            <arg name="value" default="0">
+                <doc>
+                    a changing signal or constant that will be polled at the time of trigger,
+                    and its value passed with the trigger message
+                </doc>
+            </arg>
+            <arg name="id" default="0">
+                <doc>
+                    an arbitrary integer that will be sent along with the `"/tr"` message.
+                    This is useful to distinguish between several SendTrig instances per SynthDef.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that sends a value from the server to all notified clients upon receiving triggers.
+                    The message sent is `OSCMessage( "/tr", &lt;(Int) nodeID&gt;, &lt;(Int) trigID&gt;, &lt;(Float) value&gt; )`.
+
+                    For sending an array of values, or using an arbitrary reply command, see `SendReply`.
+
+                    '''Warning''': We have changed the argument order. While in sclang, `id` precedes `value`,
+                    we are using them in reverse order here!
+                </text>
+                <see>ugen.SendReply</see>
+            </doc>
+        </ugen>
+
+        <!-- XXX TODO
+        <ugen name="SendReply" sideeffect="true">
+        <ugen name="Poll" sideeffect="true">
+        -->
+
+        <ugen name="ToggleFF">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig">
+                <doc>
+                    a signal to trigger the flip-flop. a trigger occurs when the signal
+                    changes from non-positive to positive.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that toggles like a flip-flop between zero and one upon receiving a trigger.
+                    The flip-flop is initially outputing zero, so changes to one when the first trigger
+                    arrives.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="SetResetFF">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="reset"/>
+        </ugen>
+        <ugen name="Latch">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in">
+                <doc>
+                    the input signal
+                </doc>
+            </arg>
+            <arg name="trig">
+                <doc>
+                    the trigger. The can be any signal. A trigger happens when the signal changes from
+                    non-positive to positive.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A sample-and-hold UGen. When triggered, a new value is taken from the input and
+                    hold until the next trigger occurs.
+                </text>
+                <see>ugen.Gate</see>
+                <see>ugen.Demand</see>
+            </doc>
+        </ugen>
+        <ugen name="Gate">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in">
+                <doc>
+                    the input signal to gate
+                </doc>
+            </arg>
+            <arg name="gate">
+                <doc>
+                    the signal specifying whether to pass the input signal (when greater than zero) or
+                    whether to close the gate and hold the last value (when less than or equal to zero)
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A gate or hold UGen.
+                    It allows the input signal value to pass when the `gate` argument is positive,
+                    otherwise it holds last value.
+                </text>
+                <see>ugen.Latch</see>
+            </doc>
+        </ugen>
+        <ugen name="Schmidt">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="minVal" default="0"/>
+            <arg name="maxVal" default="0"/>
+        </ugen>
+        <ugen name="PulseDivider">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="div" default="2"/>
+            <arg name="start" default="0"/>
+        </ugen>
+        <ugen name="PulseCount">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="reset" default="0"/>
+        </ugen>
+        <ugen name="Stepper">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="reset" default="0"/>
+            <arg name="minVal" default="0"/>
+            <arg name="maxVal" default="7"/>
+            <arg name="step" default="1"/>
+            <arg name="resetVal" default="0"/>
+        </ugen>
+        <ugen name="TDelay">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="dur" default="0.1"/>
+        </ugen>
+        <ugen name="ZeroCrossing">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+        </ugen>
+        <ugen name="Timer">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig">
+                <doc>
+                    the trigger to update the output signal.
+                    A trigger occurs when trig signal crosses from non-positive to positive.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that returns time since last triggered.
+                    The time returned is in seconds and is measured from the last received trigger.
+                    Note that currently it seems the initial memory is at -1 sample, so for
+                    `Impulse.ar(1)` the result (at 44.1 kHz) is 2.26757e-05, followed strangely
+                    by 1.00002, and then (as expected) 1.0.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="Sweep">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig">
+                <doc>
+                    the trigger that restarts the ramp, when passing from
+                    non-positive to positive
+                </doc>
+            </arg>
+            <arg name="speed">
+                <doc>
+                    the amount of increment of the output signal per second.
+                    In SCLang this argument is named `rate`, while ScalaCollider uses
+                    `speed` to avoid conflict with the UGen's calculation rate.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen which starts a linear raise from zero each time it is
+                    triggered.
+                </text>
+                <see>ugen.Ramp</see>
+                <see>ugen.Phasor</see>
+                <see>ugen.Line</see>
+            </doc>
+        </ugen>
+        <ugen name="Phasor">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig"/>
+            <arg name="speed" default="1"/>
+            <arg name="minVal" default="0"/>
+            <arg name="maxVal" default="1"/>
+            <arg name="resetVal" default="0"/>
+        </ugen>
+        <ugen name="Peak">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="trig"/>
+        </ugen>
+        <ugen name="RunningMin">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="trig"/>
+        </ugen>
+        <ugen name="RunningMax">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="trig"/>
+        </ugen>
+        <ugen name="PeakFollower">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="decay" default="0.999"/>
+        </ugen>
+        <ugen name="MostChange">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="a"/>
+            <arg name="b"/>
+        </ugen>
+        <ugen name="LeastChange">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="a"/>
+            <arg name="b"/>
+        </ugen>
+        <ugen name="LastValue">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="thresh" default="0.01"/>
+        </ugen>
+        <ugen name="Done" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="src" doneflag="true">
+                <doc>
+                    the UGen to track
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen which monitors another UGen to see when it is finished.
+                    Some UGens, such as `PlayBuf`, `RecordBuf`, `Line`, `XLine`, `EnvGen`, `Linen`, `BufRd`, `BufWr`, `DbufRd`,
+                    and the Buffer delay UGens set a 'done' flag when they are finished playing. This UGen echoes that flag
+                    as an explicit output signal when it is set to track a particular UGen. When the tracked UGen changes
+                    to done, the output signal changes from zero to one.
+                </text>
                 <see>ugen.PlayBuf</see>
+                <see>ugen.Line</see>
+                <see>ugen.EnvGen</see>
             </doc>
         </ugen>
-        
-        <ugen name="DiskOut" writesbuf="true">
-            <rate name="audio" implied="true"/>
-            <arg name="buf">
+        <ugen name="Pause" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="gate">
                 <doc>
-                    the buffer used internally by the UGen. this number of frames in the buffer must
-                    be a power of two (this is currently not checked!). The buffer must have been initialized
-                    with a `write` command whose `leaveOpen` argument is true. Note that the number of channels of
-                    the buffer and of the input signal must be the same, otherwise `DiskOut` will fail silently
-                    (and not write anything to the file).
+                    when 0, node is paused, when 1, node is resumed
                 </doc>
             </arg>
-            <arg name="in" multi="true" rate="ugen">
+            <arg name="node">
                 <doc>
-                    the signal to be recorded
+                    the id of the node to be paused or resumed
                 </doc>
             </arg>
             <doc>
                 <text>
-                    A UGen which writes a signal to a soundfile on disk. To achieve this efficiently, a buffer is
-                    needs to be provides which is used to buffer the incoming signal.
-
-                    '''Note''': It might be that the buffer size must be a multiple of (2 * the server's block size).
-                    We haven't currently verified this, but to be safe, you should make sure this property is met.
-
-                    The signal output by the UGen represents the number of frames written.
+                    A UGen which pauses and resumes another node.
+                    Note that the UGen initially assumes the node is running, that is,
+                    if `gate` is initially 1, this will '''not''' resume a paused node.
+                    Instead, the gate must go to zero and back to one to resume the node.
+                    Additionally, this UGen will only cause action if the gate value
+                    changes, that is, if the node is paused or resumed otherwise, this
+                    UGen will not interfere with that action, unless the gate value is
+                    adjusted.
                 </text>
-                <see>Buffer#write</see>
-                <see>ugen.DiskIn</see>
-                <see>ugen.RecordBuf</see>
+                <see>ugen.Free</see>
+                <see>ugen.PauseSelf</see>
             </doc>
         </ugen>
-
-        <!-- // side-effect: advancing sf offset -->
-        <ugen name="VDiskIn" readsbuf="true" sideeffect="true">
-            <!-- note: argument 'rate' renamed to 'speed' -->
-            <rate name="audio" implied="true"/>
-            <outputs num="numChannels"/>
-            <arg name="numChannels" type="Int">
+        <ugen name="FreeSelf" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="trig">
                 <doc>
-                    the amount of channels the file and the buffer will have. This is an Int and hence
-                    must be pre-determined. Different SynthDefs must be created for different numbers of channels
-                </doc>
-            </arg>
-            <arg name="buf">
-                <doc>
-                    the id of the buffer with the correct number of channels and frames
-                </doc>
-            </arg>
-            <arg name="speed" default="1">
-                <doc>
-                    controls the speed of playback. Values below 4 are probably fine, but the higher the value,
-                    the more disk activity there is, and the more likelihood there will be a problem.
-                    The following must be true: `rate &lt; bufFrames / (2 * blockSize)`, e.g with typical default
-                    values, this will be `32768 / (2 * 64) = 256`.
-                </doc>
-            </arg>
-            <arg name="loop" default="0">
-                <doc>
-                    whether the file should loop when its end is reached
-                </doc>
-            </arg>
-            <arg name="sendID" default="0">
-                <doc>
-                    If a value other than zero is used, the UGen sends an OSC message with this id and the
-                    file position each time it reloads the buffer: `OSCMessage( "/diskin", nodeID, sendID, frame )`
+                    the input signal which will trigger the action.
                 </doc>
             </arg>
             <doc>
                 <text>
-                    A UGen to stream in a signal from an audio file with variable playback speed.
-                    Continuously plays a longer audio file
-                    from disk. This requires a buffer to be preloaded with one buffer size of sound. If loop is
-                    set to 1, the file will loop.
+                    A UGen that, when triggered, frees enclosing synth.
+                    It frees the enclosing synth when the input signal crosses from non-positive to positive.
 
-                    '''Note''': The buffer size must be a multiple of (2 * the server's block size). See
-                    `Buffer#cue` for details.
-
-                    If the speed is too high, the UGen will not execute, posting a warning.
+                    This UGen outputs its input signal for convenience.
                 </text>
+                <see>ugen.Free</see>
+                <see>ugen.PauseSelf</see>
             </doc>
-            <see>Buffer#cue</see>
-            <see>ugen.DiskIn</see>
-            <see>ugen.DiskOut</see>
-            <see>ugen.PlayBuf</see>
+        </ugen>
+        <ugen name="PauseSelf" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="trig">
+                <doc>
+                    the input signal which will trigger the action.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that, when triggered, pauses enclosing synth.
+                    It pauses the enclosing synth when the input signal crosses from non-positive to positive.
+
+                    This UGen outputs its input signal for convenience.
+                </text>
+                <see>ugen.Pause</see>
+                <see>ugen.FreeSelf</see>
+            </doc>
+        </ugen>
+        <ugen name="Free" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="trig">
+                <doc>
+                    the trigger to cause the action
+                </doc>
+            </arg>
+            <arg name="node">
+                <doc>
+                    the id of the target node to free upon receiving the trigger
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that, when triggered, frees a given node.
+
+                    This UGen outputs its trig input signal for convenience.
+                </text>
+                <see>ugen.Pause</see>
+                <see>ugen.FreeSelf</see>
+            </doc>
+        </ugen>
+        <ugen name="FreeSelfWhenDone" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="src" doneflag="true">
+                <doc>
+                    the input UGen which when finished will trigger the action.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that, when its input UGen is finished, frees enclosing synth.
+                    This is essentially a shortcut for `FreeSelf.kr( Done.kr( src ))`, so instead
+                    of providing a trigger signal it reads directly the done flag of an
+                    appropriate ugen (such as `Line` or `PlayBuf`).
+
+                    This UGen outputs its input signal for convenience.
+                </text>
+                <see>ugen.Free</see>
+                <see>ugen.FreeSelf</see>
+                <see>ugen.PauseSelfWhenDone</see>
+                <see>ugen.Done</see>
+            </doc>
+        </ugen>
+        <ugen name="PauseSelfWhenDone" sideeffect="true">
+            <rate name="control" implied="true"/>
+            <arg name="src" doneflag="true">
+                <doc>
+                    the input UGen which when finished will trigger the action.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen that, when its input UGen is finished, pauses enclosing synth.
+                    This is essentially a shortcut for `PauseSelf.kr( Done.kr( src ))`, so instead
+                    of providing a trigger signal it reads directly the done flag of an
+                    appropriate ugen (such as `Line` or `PlayBuf`).
+
+                    This UGen outputs its input signal for convenience.
+                </text>
+                <see>ugen.Pause</see>
+                <see>ugen.PauseSelf</see>
+                <see>ugen.FreeSelfWhenDone</see>
+                <see>ugen.Done</see>
+            </doc>
         </ugen>
     </file>
 </ugens>
