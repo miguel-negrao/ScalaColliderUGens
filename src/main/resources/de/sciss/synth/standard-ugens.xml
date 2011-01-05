@@ -861,6 +861,51 @@
         </ugen>
     </file>
 
+    <file name="FFT_UGens">
+        <ugen name="FFT" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="buf"/>
+            <arg name="in"/>
+            <arg name="hop" default="0.5"/>
+            <arg name="winType" default="0"/>
+            <arg name="active" default="1"/>
+            <arg name="winSize" default="0"/>
+        </ugen>
+        <ugen name="IFFT" readsfft="true">
+            <rate name="control"/>
+            <rate name="audio" methodalias="apply"/>
+            <arg name="chain"/>
+            <arg name="winType" default="0"/>
+            <arg name="winSize" default="0"/>
+        </ugen>
+        <ugen name="FFTTrigger" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="buf">
+                <doc>
+                    the identifier of the buffer to use
+                </doc>
+            </arg>
+            <arg name="hop" default="0.5">
+                <doc>
+                    the hop size for timing triggers
+                </doc>
+            </arg>
+            <arg name="polar" default="0">
+                <doc>
+                    whether the complex buffer content is given in cartesian coordinates (0) or
+                    in polar coordinates (1)
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that takes a buffer and prepares it to be used in FFT chains,
+                    without doing an actual FFT on a signal. This is useful if you want to provide
+                    a buffer whose content had already been transformed into the Fourier domain.
+                </text>
+            </doc>
+        </ugen>
+    </file>
+
     <file name="FilterUGens">
         <ugen name="Ramp">
             <rate name="control"/>
@@ -2448,7 +2493,7 @@
                     1024 at 44.1 or 48 kHz and 2048 at 88.2 or 96 kHz sampling rate.
                 </doc>
             </arg>
-            <arg name="numCoeffs" default="13">
+            <arg name="numCoeffs" type="Int" default="13">
                 <doc>
                     the number of coefficients, defaults to 13, maximum of 42; more efficient to use less of course!
                     Since this number determines the number of output channels of the UGen, it has to be an `Int`.
@@ -2722,7 +2767,7 @@
         </ugen>
     </file>
 
-    <file name="OscUGens">
+    <file name="OSCUGens">
         <ugen name="DegreeToKey" readsbuf="true">
             <rate name="control"/>
             <rate name="audio"/>
@@ -3222,6 +3267,38 @@
             <arg name="earlyRefLevel" default="0.7"/>
             <arg name="tailLevel" default="0.5"/>
             <arg name="maxRoomSize" default="300"/>
+        </ugen>
+    </file>
+
+    <file name="TestUGens">
+        <ugen name="CheckBadValues" sideeffect="true">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in">
+                <doc>
+                    the signal to be tested
+                </doc>
+            </arg>
+            <arg name="id" default="0">
+                <doc>
+                    an identifier showing up with the values in the console
+                </doc>
+            </arg>
+            <arg name="post" default="2">
+                <doc>
+                    One of three post modes: 0 = no posting; 1 = post a line for every bad value;
+                    2 = post a line only when the floating-point classification changes (e.g., normal -&gt; NaN and vice versa)
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen to test for infinity, not-a-number (NaN), and denormals.
+                    Its output is as follows: 0 = a normal float, 1 = NaN, 2 = infinity, and 3 = a denormal.
+                    According to the post settings it will print the information to the console along
+                    with a given identifier.
+                </text>
+            </doc>
         </ugen>
     </file>
 

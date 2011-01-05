@@ -135,6 +135,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       val traitIndiv       = TypeDef( Modifiers( Flags.TRAIT ), "IsIndividual",  Nil, EmptyTree )
 //      val traitReadsFFT    = TypeDef( Modifiers( Flags.TRAIT ), "ReadsFFT",      Nil, EmptyTree )
       val traitWritesBuffer= TypeDef( Modifiers( Flags.TRAIT ), "WritesBuffer",  Nil, EmptyTree )
+      val traitWritesFFT   = TypeDef( Modifiers( Flags.TRAIT ), "WritesFFT",     Nil, EmptyTree )
       val traitWritesBus   = TypeDef( Modifiers( Flags.TRAIT ), "WritesBus",     Nil, EmptyTree )
       val identIIdxSeq     = Ident( "IIdxSeq" )
 //      val argIndiv         = SyntheticUGenArgInfo( "_indiv", ArgInfo( TypeInfo( ("Int", Nil) :: Nil ), None, None ))
@@ -154,22 +155,30 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val readsBuffer   = getBoolAttr( node, "readsbuf" )   // currently unused
             val readsFFT      = getBoolAttr( node, "readsfft" )   // currently unused
             val writesBuffer  = getBoolAttr( node, "writesbuf" )
+            val writesFFT     = getBoolAttr( node, "writesfft" )
             val sideEffect    = getBoolAttr( node, "sideeffect" ) // || writesBus || writesBuffer
-            val indSideEffect = writesBuffer || writesBus
+            val indSideEffect = writesBuffer || writesFFT || writesBus
             val doneFlag      = getBoolAttr( node, "doneflag" )
             val random        = getBoolAttr( node, "random" )
             val indiv         = getBoolAttr( node, "indiv" ) // || random
-            val indIndiv      = writesBuffer || writesBus || random
+            val indIndiv      = indSideEffect || random
             val rates: List[ RateInfo ] = (node \ "rate").map( n => {
                val name       = (n \ "@name").text
-               val methodName = name match {
+               val mName0     = (n \ "@method").text
+               val mName1     = (n \ "@methodalias").text
+               val mName2     = if( mName0 != "" ) mName0 else name match {
                   case "audio"   => "ar"
                   case "control" => "kr"
                   case "scalar"  => "ir"
                   case "demand"  => "dr"
                }
+               val methodNames   = if( mName1 != "" ) {
+                  mName1 :: mName2 :: Nil
+               } else {
+                  mName2 :: Nil
+               }
                val implied    = getBoolAttr( n, "implied" )
-               RateInfo( name, methodName, implied, n )
+               RateInfo( name, methodNames, implied, n )
             })( breakOut )
             val impliedRate   = rates.find( _.implied )
             if( impliedRate.isDefined ) require( rates.size == 1, "Can only have one implied rate (" + name + ")" )
@@ -288,20 +297,21 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   Apply( TypeApply( Ident( "apply" ), Ident( rateInfo.typ ) :: Nil ), Ident( rateInfo.name ) :: args0 )
 //                  Apply( Ident( "apply" ), Ident( rateInfo.name ) :: args0 )
                }
-               val def0 = DefDef(
+               val def0 = rateInfo.methodNames.map( mName => DefDef(
                   NoMods withPosition (Flags.METHOD, NoPosition),
-                  rateInfo.methodName,
+                  mName,
                   Nil,        // tparams
                   objectMethodArgs :: Nil,    // vparamss
                   TypeTree( NoType ), // tpt -- empty for testing
                   methodBody // rhs
-               ) :: Nil
+               ))
                val allDefaults = argsIn.nonEmpty && argsIn.forall( _.arg( rateInfo ).default.isDefined )
                if( allDefaults ) {
-                  val methodBody = Apply( Ident( rateInfo.methodName ), Ident( " " ) :: Nil )  // XXX how to get ar() with the parentheses?
+                  val mName = rateInfo.methodNames.head
+                  val methodBody = Apply( Ident( mName ), Ident( " " ) :: Nil )  // XXX how to get ar() with the parentheses?
                   DefDef(
                      NoMods withPosition (Flags.METHOD, NoPosition),
-                     rateInfo.methodName,
+                     mName,
                      Nil,        // tparams
                      Nil,        // vparams
                      TypeDef( NoMods, name, if( impliedRate.isDefined ) Nil else {
@@ -338,13 +348,14 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val ugenName   = if( hasArgsOut ) name + "UGen" else name
 
             val caseCommonParents : List[ TypeDef ] = {
-               val p1 = if( doneFlag ) (traitDoneFlag :: Nil) else Nil
-               val p2 = if( random ) (traitRandom :: p1) else p1
-               val p3 = if( writesBus ) (traitWritesBus :: p2) else p2
-               val p4 = if( writesBuffer ) (traitWritesBuffer :: p3) else p3
-               val p5 = if( indiv && !indIndiv ) (traitIndiv :: p4) else p4
+               val p1 = if( doneFlag )             (traitDoneFlag :: Nil)     else Nil
+               val p2 = if( random )               (traitRandom :: p1)        else p1
+               val p3 = if( writesBus )            (traitWritesBus :: p2)     else p2
+               val p4 = if( writesBuffer )         (traitWritesBuffer :: p3)  else p3
+               val p5 = if( writesFFT )            (traitWritesFFT :: p4)     else p4
+               val p6 = if( indiv && !indIndiv )   (traitIndiv :: p5)         else p5
 //               val p6 = if( sideEffect && !indSideEffect ) ...
-               impliedRate.map( r => TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: p5 ).getOrElse( p5 )
+               impliedRate.map( r => TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: p6 ).getOrElse( p6 )
             }
 
             val classes0   = if( hasArgsOut ) {
@@ -552,7 +563,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
    private def getIntAttr( n: Node, name: String, default: Int ) =
       (n \ ("@" + name)).headOption.map( _.text.toInt ).getOrElse( default )
 
-   private case class RateInfo( name: String, methodName: String, implied: Boolean, xml: Node ) {
+   private case class RateInfo( name: String, methodNames: List[ String ], implied: Boolean, xml: Node ) {
 //      def typ = name + ".type"
       def typ = name // + ".type"
       def traitTyp = name.capitalize + "Rated"

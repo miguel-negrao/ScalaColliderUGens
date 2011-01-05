@@ -39,7 +39,8 @@ val _exp = max( ... ) --> maxInt
 [OK] <rate><arg name=... rate=.../></rate>
 [OK] <doc warnpos="true"/>
 [OK] <ugen random="true"/>
-<rate method="apply"/>	// currently no example
+[OK] <rate method="apply"/>
+[OK] <rate methodalias="apply"/>
 <outputs num="in"/> // DC (currently commented out)
 [OK] <ugen readsfft="true"/>
 
@@ -61,7 +62,6 @@ DemandUGens
 FFT_UGens
 FFT2_UGens
 NoiseUGens
-TestUGens
 UnpackFFTUGens
 
 //////
