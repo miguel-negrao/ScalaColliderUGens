@@ -904,6 +904,900 @@
                 </text>
             </doc>
         </ugen>
+
+        <ugen name="PV_MagAbove" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="thresh" default="0">
+                <doc>
+                    magnitude threshold.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that passes only those bins whose magnitudes are above a given threshold.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_MagBelow" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="thresh" default="0">
+                <doc>
+                    magnitude threshold.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that passes only those bins whose magnitudes are below a given threshold.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_MagClip" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="thresh" default="0">
+                <doc>
+                    magnitude threshold. Each bin's magnitude is limited to
+                    be not greater than this threshold.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that limits (clips) the magnitude of the bins to a given threshold.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_MagMul" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by
+                    the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that multiplies the magnitudes of two inputs and keeps the
+                    phases of the first input.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_MagDiv" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by
+                    the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="zeroes" default="0.0001">
+                <doc>
+                    the noise floor to assume when detecting zero bins in
+                    chainB that would cause a division by zero and hence blow up. The ugen
+                    will use divide by this magnitude instead when zeroes are detected,
+                    resulting in a maximum boost of `zeroes.reciprocal`.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that divides magnitudes of two inputs and keeps the
+                    phases of the first input.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_MagSquared" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that squares the magnitudes and re-normalizes to previous peak.
+                    This makes weak bins weaker.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_MagNoise" readsfft="true" writesfft="true" random="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that multiplies the magnitudes by random noise.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_Copy" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by
+                    the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that copies the spectral frames from chainA
+                    to chainB. This allows for parallel processing of spectral data without the
+                    need for multiple FFT UGens, and to copy out data at that point in the chain
+                    for other purposes. chainA and chainB must be the same size. The output
+                    will carry further chainA, so you chan insert the ugen at the appropriate
+                    place in the signal chain.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_CopyPhase" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by
+                    the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that combines the magnitudes of first input and phases of the second input.
+                    phases of the first input.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_PhaseShift" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="shift">
+                <doc>
+                    phase shift in radians
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that shifts the phase of each bins by a given amount.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_PhaseShift90" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that shift the phase of all bins by 90 degrees.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_PhaseShift270" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that shift the phase of all bins by 270 (or -90) degrees.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_Min" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by
+                    the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that outputs the bins with the minimum magnitude
+                    of the two inputs.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_Max" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by
+                    the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that outputs the bins with the maximum magnitude
+                    of the two inputs.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_Mul" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by
+                    the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that performs a complex multiplication of the
+                    two inputs. The formula
+                    is `(Re(A) * Re(B) - Im(A) * Im(B)) + i(Im(A) * Re(B) + Re(A) * Im(B))`.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_Div" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by
+                    the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that performs a complex division of the
+                    two inputs. Be careful that `chainB`, the divisor, does not
+                    contain zeroes as they would obviously blow up the division.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_Add" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by
+                    the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that performs a complex addition of the
+                    two inputs. The formula
+                    is `(Re(A) + Re(B)) + i(Im(A) + Im(B))`.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_RectComb" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="numTeeth" default="1">
+                <doc>
+                    the number of periods in the rectangle wave, where
+                    zero would mean the input signal is not affected, one means that
+                    there is exactly one period of the wave across the spectrum,
+                    hence one pass-band and one stop-band.
+                </doc>
+            </arg>
+            <arg name="phase" default="0">
+                <doc>
+                    the phase offset of the rectangle wave, where
+                    1.0 is one full period. This is like the offset into the wavetable
+                    holding the rectangle, so a value of 0.25 means we start 25%
+                    into the basic waveform, and after 0.75 periods the next
+                    full period (high slope) begins.
+                </doc>
+            </arg>
+            <arg name="width" default="0.5">
+                <doc>
+                    the pulse width between 0.0 (infinitely small
+                    high slope, so all bins filtered out) to 0.5 (half period is
+                    high slope, half period is low slope) to 1.0 (maximally
+                    wide high slope, no bins filtered out).
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that makes a series of gaps in a spectrum.
+                    This is done by multiplying the spectrum with a kind of
+                    rectangle wave that goes from zero to nyquist. The high slope
+                    of the rectangle lets the input bins pass (quasi pass-band),
+                    the low slope filteres them out (quasi stop-band).
+                </text>
+                <see>ugen.PV_RectComb2</see>
+            </doc>
+        </ugen>
+        <ugen name="PV_RectComb2" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="numTeeth" default="1">
+                <doc>
+                    the number of periods in the rectangle wave, where
+                    zero would mean the first input signal is fully passed through, one means that
+                    there is exactly one period of the wave across the spectrum,
+                    hence one pass-band (first signal passed through) and one stop-band
+                    (second signal passed through).
+                </doc>
+            </arg>
+            <arg name="phase" default="0">
+                <doc>
+                    the phase offset of the rectangle wave, where
+                    1.0 is one full period. This is like the offset into the wavetable
+                    holding the rectangle, so a value of 0.25 means we start 25%
+                    into the basic waveform, and after 0.75 periods the next
+                    full period (high slope) begins.
+                </doc>
+            </arg>
+            <arg name="width" default="0.5">
+                <doc>
+                    the pulse width between 0.0 (infinitely small
+                    high slope, so all bins are copied from the second input) to 0.5
+                    (half period is high slope -- copied from first input --, half period is
+                    low slope -- copied from second input) to 1.0 (maximally
+                    wide high slope, so all bins passed from the first input).
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that switches between two input spectra
+                    according to a rectangle wave.
+                    This is basically identical to `PV_RectComb`, however during the
+                    low slopes of the rectangle wavewave, instead of clearing out the bins,
+                    it copies over the corresponding bins of the second fft input buffer.
+                </text>
+                <see>ugen.PV_RectComb</see>
+            </doc>
+        </ugen>
+        <ugen name="PV_BrickWall" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="wipe">
+                <doc>
+                    can range between -1 and +1.
+                    if wipe == 0 then there is no effect.
+                    if  wipe &gt; 0 then it acts like a high pass filter, clearing bins from the bottom up.
+                    if  wipe &lt; 0 then it acts like a low pass filter, clearing bins from the top down.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that clears bins above or below a cutoff point.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_BinWipe" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="wipe">
+                <doc>
+                    can range between -1 and +1.
+                    if wipe == 0 then the output is the same as inA.
+                    if  wipe &gt; 0 then it begins replacing with bins from inB from the bottom up.
+                    if  wipe &lt; 0 then it begins replacing with bins from inB from the top down.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that combine low and high bins from two inputs.
+                    It does so by copiying low bins from one input and the high bins of the other,
+                    thus realizes a kind of "wipe" between the two input signals.
+                </text>
+                <see>ugen.PV_RandWipe</see>
+            </doc>
+        </ugen>
+        <ugen name="PV_LocalMax" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="thresh" default="0">
+                <doc>
+                    magnitude threshold used for general filtering, prior to
+                    the local-maximum-filtering
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that passes only those bins whose magnitudes constitute local maxima.
+                    Additionally, the given threshold is also used to filter out bins whose magnitude
+                    lies below this threshold.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_Conj" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that converts the bins into their
+                    complex conjugate counterparts. The complex conjugate
+                    is equal to the input, but with reversed sign of the imaginary part.
+                </text>
+            </doc>
+        </ugen>
+
+        <ugen name="PV_BinScramble" readsfft="true" writesfft="true" random="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="wipe" default="0.5">
+                <doc>
+                    the amount of bins scrambled, from 0 (none) to 1 (all bins scrambled).
+                </doc>
+            </arg>
+            <arg name="width" default="0.2">
+                <doc>
+                    a value from zero to one, indicating the maximum randomized distance of a bin from its
+                    original location in the spectrum.
+                </doc>
+            </arg>
+            <arg name="trig" default="1">
+                <doc>
+                    causes a new random bin re-ordering to be made. a trigger
+                    occurs when passing from non-positive to positive value.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that randomizes the order of the bins.
+                    The trigger will select a new random ordering.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_MagSmear" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="bins" default="1">
+                <doc>
+                    number of bins to average on each side of bin. As this number rises, so will CPU usage.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that averages each bin's magnitude with its neighbors.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_MagShift" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="stretch" default="1">
+                <doc>
+                    the factor to multiply each bin position with
+                </doc>
+            </arg>
+            <arg name="shift" default="0">
+                <doc>
+                    the translation of the spectrum, in number of bins
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that stretches and shifts the magnitudes of the spectrum.
+                    This is live `PV_BinShift` but instead of scaling and shifting the whole complex
+                    bins (magnitude and phase), this only operates on the magnitudes and leaves
+                    the phases in their original bins.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_BinShift" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="stretch" default="1">
+                <doc>
+                    the factor to multiply each bin position with, where 0.5 kind of
+                    transposes the signal down by an octave, and 2 transposes it up by an octave.
+                </doc>
+            </arg>
+            <arg name="shift" default="0">
+                <doc>
+                    the translation of the spectrum, in number of bins. Since the
+                    FFT produces a linear frequency axis, the will produce harmonic distortion.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that stretches and shifts the spectrum.
+                    It takes each bin, first stretches (scales) its position (bin number)
+                    with a given factor, and then adds a shift to it.
+                </text>
+            </doc>
+        </ugen>
+
+        <ugen name="PV_RandWipe" readsfft="true" writesfft="true" random="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chainA">
+                <doc>
+                    the first FFT'ed buffer (this gets replaced by the output signal)
+                </doc>
+            </arg>
+            <arg name="chainB">
+                <doc>
+                    the second FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="wipe">
+                <doc>
+                    the crossfader position from 0.0 (all bins are
+                    taken from `chainA`) to 1.0 (all bins are taken from `chainB`).
+                    For instance, if wipe is 0.5, half of the bins are taken from
+                    either input. The decision whether a bin is taken from A or B
+                    is random, however remains constant between two triggers.
+                </doc>
+            </arg>
+            <arg name="trig">
+                <doc>
+                    a signal the triggers the re-newed process of
+                    determining for each bin whether it will be taken from input
+                    A or B. A trigger occurs when passing from non-positive to
+                    positive value.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that crossfades between two input spectra
+                    by taking bins randomly from them according to a given probability.
+                </text>
+                <see>ugen.PV_BinWipe</see>
+            </doc>
+        </ugen>
+        <ugen name="PV_Diffuser" readsfft="true" writesfft="true" random="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="trig" default="1">
+                <doc>
+                    to trigger a new selection of random phases. A trigger occurs when
+                    passing from non-positive to positive value.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that adds a different constant random phase shift to each bin.
+                    The trigger will select a new set of random phases.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_RandComb" readsfft="true" writesfft="true" random="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="wipe" default="0.5">
+                <doc>
+                    the probability (from 0 to 1) of bins being wiped out,
+                    hence 0 means no bins are wiped out, 1 means all bins are wiped out
+                    (output will be silence).
+                </doc>
+            </arg>
+            <arg name="trig" default="1">
+                <doc>
+                    causes a new random bin selection to be made. a trigger
+                    occurs when passing from non-positive to positive value.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that randomly clears out bins of the signal.
+                    Which bins are wiped out is subject to a random choice (only the amount is
+                    specified) that remains constant between triggers.
+                </text>
+            </doc>
+        </ugen>
+        <ugen name="PV_MagFreeze" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain">
+                <doc>
+                    the FFT'ed buffer
+                </doc>
+            </arg>
+            <arg name="freeze" default="1">
+                <doc>
+                    whether the current levels are frozen (&gt; 0) or not (0).
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A phase vocoder UGen that freezes the magnitudes at current levels.
+                    Freezing happens when the freeze input has a value of &gt; 0.
+                </text>
+            </doc>
+        </ugen>
+
+        <ugen name="PartConv" readsbuf="true">
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="fftSize"/>
+            <arg name="buf"/>
+        </ugen>
+    </file>
+
+    <file name="FFT2_UGens">
+        <ugen name="Convolution" readsbuf="true">
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="kernel"/>
+            <arg name="frameSize"/>
+            <doc>
+                <see>ugen.Convolution2L</see>
+                <see>ugen.Convolution3</see>
+                <see>ugen.Convolution2</see>
+                <see>ugen.StereoConvolution2L</see>
+            </doc>
+        </ugen>
+        <ugen name="Convolution2" readsbuf="true">
+            <rate name="audio"/>
+            <arg name="in">
+                <doc>
+                    the realtime input to be convolved
+                </doc>
+            </arg>
+            <arg name="kernel">
+                <doc>
+                    buffer identifier for the fixed kernel, which may be modulated in combination with the trigger
+                </doc>
+            </arg>
+            <arg name="trig" default="1">
+                <doc>
+                    updates the kernel on a change from non-positive to positive (&lt;= 0 to &gt;0)
+                </doc>
+            </arg>
+            <arg name="frameSize">
+                <doc>
+                    size of the kernel. this must be a power of two. the FFT calculated internally
+                    by the UGen has a size of twice this value. The maximum allowed frameSize
+                    is 65536(?).
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A frequency-domain convolution UGen using a fixed kernel which can be updated
+                    by a trigger signal. The delay caused by the convolution when the kernel is a dirac impulse
+                    is equal to `frameSize - (controlBlockSize + 1)` (measured august 2010), so for a frameSize
+                    of 2048 and a controlBlockSize of 64, this is 1983 sample frames.
+                </text>
+                <see>ugen.Convolution2L</see>
+                <see>ugen.Convolution3</see>
+                <see>ugen.Convolution</see>
+                <see>ugen.StereoConvolution2L</see>
+            </doc>
+        </ugen>
+        <ugen name="Convolution2L" readsbuf="true">
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="kernel"/>
+            <arg name="trig" default="1"/>
+            <arg name="frameSize"/>
+            <arg name="fadePeriods" default="1"/>
+            <doc>
+                <see>ugen.Convolution2</see>
+                <see>ugen.Convolution3</see>
+                <see>ugen.Convolution</see>
+                <see>ugen.StereoConvolution2L</see>
+            </doc>
+        </ugen>
+        <ugen name="StereoConvolution2L" readsbuf="true">
+            <rate name="audio"/>
+            <outputs num="2"/>
+            <arg name="in">
+                <doc>
+                    the realtime input to be convolved
+                </doc>
+            </arg>
+            <arg name="kernelL">
+                <doc>
+                    buffer identifier for the left channel's fixed kernel, which may be modulated in combination
+                    with the trigger
+                </doc>
+            </arg>
+            <arg name="kernelR">
+                <doc>
+                    buffer identifier for the right channel's fixed kernel, which may be modulated in combination
+                    with the trigger
+                </doc>
+            </arg>
+            <arg name="trig" default="1">
+                <doc>
+                    updates the kernel on a change from non-positive to positive (&lt;= 0 to &gt;0), and starts a new
+                    crossfade from the previous kernel to the new one over the given amount of periods.
+                </doc>
+            </arg>
+            <arg name="frameSize">
+                <doc>
+                    size of each kernel. this must be a power of two. the FFT calculated internally
+                    by the UGen has a size of twice this value. The maximum allowed frameSize
+                    is 65536(?).
+                </doc>
+            </arg>
+            <arg name="fadePeriods" default="1">
+                <doc>
+                    The number of periods over which a crossfade is performed. This must be an integer
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A frequency domain stereo convolution UGen, capable of performing linear crossfades between kernel updates.
+                    When receiving a trigger, there is a linear crossfade between the old kernel the new buffer contents.
+                    It operates similar to Convolution2L, however uses two buffers and outputs a stereo signal, resulting
+                    in better CPU usage than two discrete instances of Convolution2L as this way one FFT transformation per period
+                    is saved.
+                </text>
+                <see>ugen.Convolution2</see>
+                <see>ugen.Convolution3</see>
+                <see>ugen.Convolution</see>
+                <see>ugen.Convolution2L</see>
+            </doc>
+        </ugen>
+        <ugen name="Convolution3" readsbuf="true">
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="kernel"/>
+            <arg name="trig" default="1"/>
+            <arg name="frameSize"/>
+            <doc>
+                <text>
+                    A UGen for triggered convolution in the time domain.
+                </text>
+            </doc>
+        </ugen>
+
+        <ugen name="PV_ConformalMap" readsfft="true" writesfft="true">
+            <rate name="control" implied="true" method="apply"/>
+            <arg name="chain"/>
+            <arg name="real" default="0"/>
+            <arg name="imag" default="0"/>
+        </ugen>
+
+        <ugen name="PV_JensenAndersen" readsfft="true">
+            <rate name="audio"/>
+            <arg name="chain"/>
+            <arg name="propSC" default="0.25"/>
+            <arg name="propHFE" default="0.25"/>
+            <arg name="propHFC" default="0.25"/>
+            <arg name="propSF" default="0.25"/>
+            <arg name="thresh" default="1.0"/>
+            <arg name="wait" default="0.04"/>
+        </ugen>
+        <ugen name="PV_HainsworthFoote" readsfft="true">
+            <rate name="audio"/>
+            <arg name="chain"/>
+            <arg name="propH" default="0.0"/>
+            <arg name="propF" default="0.0"/>
+            <arg name="thresh" default="1.0"/>
+            <arg name="wait" default="0.04"/>
+        </ugen>
+
+        <ugen name="RunningSum">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in" rate="ugen">
+                <doc>
+                    the input signal to sum up
+                </doc>
+            </arg>
+            <arg name="winSize" default="440">
+                <doc>
+                    the length of the sliding window over the input signal.
+                    these are the number of audio sample-frames for audio-rate calculation,
+                    or the number of blocks for control-rate calculation summed up.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen calculating the running sum of an input signal over a given number of samples.
+                </text>
+            </doc>
+        </ugen>
     </file>
 
     <file name="FilterUGens">
@@ -2767,6 +3661,179 @@
         </ugen>
     </file>
 
+    <file name="NoiseUGens">
+        <ugen name="WhiteNoise" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="mul" default="1" expandbin="*"/>
+        </ugen>
+        <ugen name="GrayNoise" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="mul" default="1" expandbin="*"/>
+        </ugen>
+        <ugen name="ClipNoise" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="mul" default="1" expandbin="*"/>
+        </ugen>
+        <ugen name="PinkNoise" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="mul" default="1" expandbin="*"/>
+        </ugen>
+        <ugen name="BrownNoise" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="mul" default="1" expandbin="*"/>
+        </ugen>
+        <ugen name="Dust" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="density" default="1">
+                <doc>
+                    the average number of impulses per second
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen generating random impulses with values ranging from
+                    `0` to `+1`. The pulse duration is one sample for audio-rate
+                    and one block for control-rate operation.
+                </text>
+                <see>ugen.Dust2</see>
+                <see>ugen.TRand</see>
+            </doc>
+        </ugen>
+        <ugen name="Dust2" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="density" default="1">
+                <doc>
+                    the average number of impulses per second
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen generating random impulses with values ranging from
+                    `-1` to `+1`. The pulse duration is one sample for audio-rate
+                    and one block for control-rate operation.
+                </text>
+                <see>ugen.Dust</see>
+                <see>ugen.TRand</see>
+            </doc>
+        </ugen>
+        <ugen name="Crackle">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="chaos" default="1.5"/>
+        </ugen>
+        <ugen name="Logistic">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="chaos" default="3"/>
+            <arg name="freq" default="1000"/>
+            <arg name="init" default="0.5"/>
+        </ugen>
+        <ugen name="Hasher">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+        </ugen>
+        <ugen name="MantissaMask">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="in"/>
+            <arg name="bits" default="3"/>
+        </ugen>
+        <ugen name="LFClipNoise" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="500"/>
+        </ugen>
+        <ugen name="LFNoise0" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="500"/>
+        </ugen>
+        <ugen name="LFNoise1" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="500"/>
+        </ugen>
+        <ugen name="LFNoise2" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="freq" default="500"/>
+        </ugen>
+        <ugen name="Rand" random="true">
+            <rate name="scalar" implied="true" method="apply"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
+        </ugen>
+        <ugen name="IRand" random="true">
+            <rate name="scalar" implied="true" method="apply"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="127"/>
+        </ugen>
+        <ugen name="TRand" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
+            <arg name="trig"/>
+        </ugen>
+        <ugen name="TExpRand" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="lo" default="0.01"/>
+            <arg name="hi" default="1.0"/>
+            <arg name="trig"/>
+        </ugen>
+        <ugen name="TIRand" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="127"/>
+            <arg name="trig"/>
+        </ugen>
+        <ugen name="NRand" random="true">
+            <rate name="scalar" implied="true" method="apply"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="127"/>
+            <arg name="n" default="0"/>
+        </ugen>
+        <ugen name="LinRand" random="true">
+            <rate name="scalar" implied="true" method="apply"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="127"/>
+            <arg name="minMax" default="0"/>
+        </ugen>
+        <ugen name="ExpRand" random="true">
+            <rate name="scalar" implied="true" method="apply"/>
+            <arg name="lo" default="0.01"/>
+            <arg name="hi" default="1.0"/>
+        </ugen>
+        <ugen name="CoinGate" random="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="prob" default="0.5" pos="1"/>
+            <arg name="in" pos="0"/>
+            <doc warnpos="true"/>
+        </ugen>
+        <ugen name="RandSeed" sideeffect="true">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <arg name="trig" default="1"/>
+            <arg name="seed" default="56789"/>
+        </ugen>
+        <ugen name="RandID" sideeffect="true">
+            <rate name="scalar"/>
+            <rate name="control"/>
+            <arg name="id" default="0"/>
+        </ugen>
+    </file>
+
     <file name="OSCUGens">
         <ugen name="DegreeToKey" readsbuf="true">
             <rate name="control"/>
@@ -3738,5 +4805,19 @@
                 <see>ugen.Done</see>
             </doc>
         </ugen>
+    </file>
+
+    <file name="UnpackFFTUGens">
+        <ugen name="Unpack1FFT" readsfft="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="chain"/>
+            <arg name="fftSize"/>
+            <arg name="bin"/>
+            <arg name="which" default="0"/>
+        </ugen>
+
+        <!-- TODO:
+        <ugen name="PackFFT"/>
+        -->
     </file>
 </ugens>

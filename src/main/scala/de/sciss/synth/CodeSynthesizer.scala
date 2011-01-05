@@ -201,6 +201,11 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val name       = (n \ "@name").text
                val multi      = getBoolAttr( n, "multi" )
                val doneFlagArg= getBoolAttr( n, "doneflag" )
+               val expandBin  = (n \ "@expandbin").text match {
+                  case ""  => None
+                  case x => Some( x )
+//                  case x   => Predef.error( "Illegal expandbin value '" + x + "' (" + name + ")" )
+               }
                val rateAttr   = (n \ "@rate").text
                if( multi ) require( !doneFlagArg, "Multi arguments cannot have done flag (" + name + ")" )
 
@@ -261,7 +266,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //            val argsInS    = if( indiv ) {
 //               argsIn ::: (argIndiv :: Nil)
 //            } else argsIn
-         val argsInS = argsIn  // no exceptions at the moment
+            val argsInS = argsIn  // no exceptions at the moment
 
             val outputs       = (node \ "outputs").headOption match {
                case Some( n ) => (n \ "@num").text match {
@@ -306,7 +311,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   methodBody // rhs
                ))
                val allDefaults = argsIn.nonEmpty && argsIn.forall( _.arg( rateInfo ).default.isDefined )
-               if( allDefaults ) {
+               if( allDefaults && rateInfo.methodNames.nonEmpty ) {
+//                  require( rateInfo.methodNames.nonEmpty, "No method names for rate " + rateInfo.name + " (" + name + ")" )
                   val mName = rateInfo.methodNames.head
                   val methodBody = Apply( Ident( mName ), Ident( " " ) :: Nil )  // XXX how to get ar() with the parentheses?
                   DefDef(

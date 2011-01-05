@@ -43,6 +43,7 @@ val _exp = max( ... ) --> maxInt
 [OK] <rate methodalias="apply"/>
 <outputs num="in"/> // DC (currently commented out)
 [OK] <ugen readsfft="true"/>
+<arg ... expandbin="*"/>
 
 ///////// missing ugens?
 DelayUGens : GrainTap
@@ -59,9 +60,6 @@ MultiOutUGen[ R <: Rate ]( ... ) extends UGen with GE[R, UGenIn[ R ]]{
 /////
 
 DemandUGens
-FFT2_UGens
-NoiseUGens
-UnpackFFTUGens
 
 //////
 
