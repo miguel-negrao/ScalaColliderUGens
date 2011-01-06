@@ -523,9 +523,10 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //                     }
 //                  }, EmptyTree )
 //                  impliedRate.map( r => t0 :: TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: Nil ).getOrElse( t0 :: Nil )
-                  TypeDef( NoMods, if( outputs == SingleOutput ) "GE" else "Expands", {
+                  TypeDef( NoMods, outputs.sourceName, {
                      val p0 = if( expandBin.isDefined ) {
-                        TypeDef( NoMods, "UGenIn", (TypeDef( NoMods, "T", Nil, EmptyTree ) :: Nil), EmptyTree ) :: Nil
+                        // XXX should not put BinaryOpUGen here...
+                        TypeDef( NoMods, "BinaryOpUGen", (TypeDef( NoMods, "T", Nil, EmptyTree ) :: Nil), EmptyTree ) :: Nil
                      } else {
                         TypeDef( NoMods, ugenName,
                            if( impliedRate.isEmpty ) (TypeDef( NoMods, "R", Nil, EmptyTree ) :: Nil) else Nil,
@@ -746,15 +747,19 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
    private abstract sealed class Outputs {
       def typ: String
+      def sourceName: String
    }
    private case object ZeroOutputs extends Outputs {
-      val typ = "ZeroOutUGen"
+      val typ        = "ZeroOutUGen"
+      val sourceName = "UGenSource"
    }
    private case object SingleOutput extends Outputs {
-      val typ = "SingleOutUGen"
+      val typ        = "SingleOutUGen"
+      val sourceName = "SingleOutUGenSource"
    }
    private trait MultiOutputLike extends Outputs {
-      val typ = "MultiOutUGen"
+      val typ        = "MultiOutUGen"
+      val sourceName = "UGenSource"
       def tree: Tree
    }
    private case class FixedMultiOutput( num: Int ) extends MultiOutputLike {

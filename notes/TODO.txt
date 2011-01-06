@@ -81,3 +81,29 @@ extends GE[T, UGenIn[T]] with UsesRandSeed {
    }
 }
 case class WhiteNoiseUGen[R <: Rate](rate: R) extends SingleOutUGen[R](IIdxSeq.empty) with UsesRandSeed
+
+/////////////// EnvGen relaxation:
+
+object EnvGen {
+   def kr(envelope: Expands[MultiGE], gate: AnyGE = 1.0f, levelScale: AnyGE = 1.0f, levelBias: AnyGE = 0.0f, timeScale: AnyGE = 1.0f, doneAction: AnyGE = doNothing) = apply[control](control, envelope, gate, levelScale, levelBias, timeScale, doneAction)
+   def ar(envelope: Expands[MultiGE], gate: AnyGE = 1.0f, levelScale: AnyGE = 1.0f, levelBias: AnyGE = 0.0f, timeScale: AnyGE = 1.0f, doneAction: AnyGE = doNothing) = apply[audio](audio, envelope, gate, levelScale, levelBias, timeScale, doneAction)
+}
+case class EnvGen[R <: Rate](rate: R, envelope: Expands[MultiGE], gate: AnyGE, levelScale: AnyGE, levelBias: AnyGE, timeScale: AnyGE, doneAction: AnyGE) extends GE[R, EnvGenUGen[R]] {
+   def expand = {
+      val _gate: IIdxSeq[AnyUGenIn] = gate.expand
+      val _levelScale: IIdxSeq[AnyUGenIn] = levelScale.expand
+      val _levelBias: IIdxSeq[AnyUGenIn] = levelBias.expand
+      val _timeScale: IIdxSeq[AnyUGenIn] = timeScale.expand
+      val _doneAction: IIdxSeq[AnyUGenIn] = doneAction.expand
+      val _envelope: IIdxSeq[MultiGE] = envelope.expand
+      val _sz_gate = _gate.size
+      val _sz_levelScale = _levelScale.size
+      val _sz_levelBias = _levelBias.size
+      val _sz_timeScale = _timeScale.size
+      val _sz_doneAction = _doneAction.size
+      val _sz_envelope = _envelope.size
+      val _exp_ = maxInt(_sz_gate, _sz_levelScale, _sz_levelBias, _sz_timeScale, _sz_doneAction, _sz_envelope)
+      IIdxSeq.tabulate(_exp_)(i => EnvGenUGen(rate, _envelope(i.%(_sz_envelope)).expand, _gate(i.%(_sz_gate)), _levelScale(i.%(_sz_levelScale)), _levelBias(i.%(_sz_levelBias)), _timeScale(i.%(_sz_timeScale)), _doneAction(i.%(_sz_doneAction))))
+   }
+}
+case class EnvGenUGen[R <: Rate](rate: R, envelope: IIdxSeq[AnyUGenIn], gate: AnyUGenIn, levelScale: AnyUGenIn, levelBias: AnyUGenIn, timeScale: AnyUGenIn, doneAction: AnyUGenIn) extends SingleOutUGen[R](IIdxSeq[AnyUGenIn](gate, levelScale, levelBias, timeScale, doneAction).++(envelope))
