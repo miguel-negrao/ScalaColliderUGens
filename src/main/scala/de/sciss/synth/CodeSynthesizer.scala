@@ -142,7 +142,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
       // XXX the extra closing ] bracket is due to a bug in scala-refactoring (05-jan-10)
       val typExpandBinDf   = TypeDef( NoMods, "S <: Rate", Nil, EmptyTree ) :: TypeDef( NoMods, "T <: Rate", Nil, EmptyTree ) :: Nil
-      val typExpandBinDfBUG= TypeDef( NoMods, "S <: Rate", Nil, EmptyTree ) :: TypeDef( NoMods, "T <: Rate]", Nil, EmptyTree ) :: Nil
+//      val typExpandBinDfBUG= TypeDef( NoMods, "S <: Rate", Nil, EmptyTree ) :: TypeDef( NoMods, "T <: Rate]", Nil, EmptyTree ) :: Nil
       val typExpandBin     = TypeDef( NoMods, "S", Nil, EmptyTree ) :: TypeDef( NoMods, "T", Nil, EmptyTree ) :: Nil
 //      val argIndiv         = SyntheticUGenArgInfo( "_indiv", ArgInfo( TypeInfo( ("Int", Nil) :: Nil ), None, None ))
       val identApply        = Ident( "apply" )
@@ -292,7 +292,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val outputs       = (node \ "outputs").headOption match {
                case Some( n ) => (n \ "@num").text match {
                   case "0" => ZeroOutputs
-                  case t   => MultiOutput( t )
+                  case t   => argsIn.find( _.name == t ).map( a => ArgMultiOutput( a )).getOrElse( FixedMultiOutput( t.toInt ))
                }
                case None      => SingleOutput
             }
@@ -315,10 +315,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                })
                val objectMethodArgs = if( expandBin.isDefined ) {
                   val curry = ValDef(
-// other bug... implicit has no effect
-//                     Modifiers( Flags.PARAM | Flags.IMPLICIT ),
-                     Modifiers( Flags.PARAM ),
-                     "implicit " + identRateOrder.toString, // XXX dirty
+                     NoMods withPosition (Flags.PARAM, NoPosition) withPosition (Flags.IMPLICIT, NoPosition),
+                     identRateOrder.toString, // XXX dirty
 // stupid bug... this would result in a closing bracket missing in the method's type parameter...
                      TypeDef( NoMods, "RateOrder", TypeDef( NoMods, rateInfo.typ, Nil, EmptyTree ) :: typExpandBin, EmptyTree ),
 //                     Ident( "RateOrder<" + rateInfo.typ + ",S,T>" ), // XXX dirty
@@ -341,14 +339,15 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 // BUG: TypeApply trennt typen nicht durch kommas
 //                  val apply0 = Apply( if( typApply1.nonEmpty ) TypeApply( identApply, typApply1 ) else identApply, args1 )
                   val apply0 = if( typApply1.nonEmpty ) {
-                     Apply( TypeDef( NoMods, "apply", typApply1, EmptyTree ), args1 )  // XXX dirty
+//                     Apply( TypeDef( NoMods, "apply", typApply1, EmptyTree ), args1 )  // XXX dirty
+                     Apply( TypeApply( Ident( "apply" ), typApply1 ), args1 )  // XXX dirty
                   } else Apply( identApply, args1 )
                   if( expandBin.isDefined ) Apply( apply0, identRateOrder :: Nil ) else apply0
                }
                val def0 = rateInfo.methodNames.map( mName => DefDef(
                   NoMods withPosition (Flags.METHOD, NoPosition),
                   mName,
-                  if( expandBin.isDefined ) typExpandBinDfBUG else Nil,        // tparams
+                  if( expandBin.isDefined ) typExpandBinDf else Nil,        // tparams
                   objectMethodArgs,    // vparamss
                   EmptyTree, // TypeTree( NoType ), // tpt -- empty for testing
                   methodBody // rhs
@@ -434,7 +433,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val methodBody = Block(
 //                  (expArgs.map( a => ValDef( NoMods, "_" + a.arg.name, TypeTree( NoType ), Select( Ident( a.arg.name ), "expand" )))
                   // XXX dirty
-                  (argsOut.map( a => ValDef( NoMods, "_" + a.name + ": IIdxSeq[" + a.deriveGE + "]", TypeTree( NoType ), Select( Ident( a.name ), "expand" ))) ++
+                  (argsOut.map( a => ValDef( NoMods, "_" + a.name + ": IIdxSeq[" + a.deriveGE( false ) + "]", TypeTree( NoType ), Select( Ident( a.name ), "expand" ))) ++
                    (if( moreThanOneArgOut ) {
                       argsOut.map( a => ValDef( NoMods, "_sz_" + a.name, TypeTree( NoType ), Select( Ident( "_" + a.name ), "size" )))
                    } else {
@@ -454,8 +453,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                                           Ident( "i" )
                                        }
                                     }  :: Nil )
-//                                    if( a.multi ) Select( apply, "expand" ) else apply
-                                    apply
+                                    if( a.multi ) Select( apply, "expand" ) else apply
+//                                    apply
                                  } else Ident( a.name )
                               })
                               if( impliedRate.isDefined ) args0 else (if( expandBin.isDefined ) Select( identRateOrder, "in1" ) else Ident( "rate" )) :: args0
@@ -503,8 +502,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                caseClassTypeParam, // tparams
                caseClassConstrArgs :: (if( expandBin.isDefined ) {
                   List( ( // curry
-                     Modifiers( Flags.PARAM ),
-                     "implicit " + identRateOrder.toString + ": RateOrder[" + impliedRate.map( _.typ ).getOrElse( "R" ) + ", S, T]",  // XXX dirty
+                     NoMods withPosition (Flags.PARAM, NoPosition) withPosition (Flags.IMPLICIT, NoPosition),
+                     /* "implicit " + */ identRateOrder.toString + ": RateOrder[" + impliedRate.map( _.typ ).getOrElse( "R" ) + ", S, T]",  // XXX dirty
                      EmptyTree
                   ) ) :: Nil
                } else Nil),
@@ -557,7 +556,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
             val ugenCaseClassConstrArgs = {
                val args0 = argsIn.filterNot( _.expandBin.isDefined ) map { uArgInfo =>
-                  (NoMods, uArgInfo.name + ": " + uArgInfo.deriveGE, EmptyTree)
+                  (NoMods, uArgInfo.name + ": " + uArgInfo.deriveGE( true ), EmptyTree)
                }
                if( impliedRate.isDefined ) args0 else {
                   (NoMods, "rate: R", EmptyTree) :: args0
@@ -589,7 +588,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //                        val rvsArgs = geArgs.dropRight( 1 ).reverse
 //                        rvsArgs.foldLeft[ Tree ]( Select( Ident( a.arg.name ), "expand" ))( (a, b) => Apply( Select( a, "+:" ), Ident( b.arg.name ) :: Nil )) :: Nil
                         val args1   = geArgs.dropRight( 1 )
-                        val sel     = Select( Ident( a.name ), "expand" )
+//                        val sel     = Select( Ident( a.name ), "expand" )
+                        val sel     = Ident( a.name ) // already expanded to IIdxSeq!
                         (if( args1.nonEmpty ) {
                            Apply( Select( Apply( TypeApply( identIIdxSeq, Ident( "AnyUGenIn" ) :: Nil ), geArgs.dropRight( 1 ).map( a => Ident( a.name ))),
                               "++" ), sel :: Nil )
@@ -603,8 +603,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      }) :: Nil
                   }
                   outputs match {
-                     case m: MultiOutput =>
-                        Apply( Apply( Select( identIIdxSeq, "fill" ), Ident( m.num ) :: Nil ),
+                     case m: MultiOutputLike =>
+                        Apply( Apply( Select( identIIdxSeq, "fill" ), m.tree :: Nil ),
                            Ident( impliedRate.map( _.typ ).getOrElse( "rate" )) :: Nil ) :: args0
                      case _ => args0
                   }
@@ -697,7 +697,14 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          case _                        => false
       }
 
-      def deriveGE = argDefault.typ.tuples.headOption match {
+      def isExpands = argDefault.typ.tuples.headOption match {
+         case Some( ("Expands", _ ) ) => true
+         case _ => false
+      }
+
+      def deriveGE( geToSeq: Boolean ) : String = deriveGEFrom( argDefault.typ, geToSeq )
+
+      private def deriveGEFrom( typ: TypeInfo, geToSeq: Boolean ) : String = typ.tuples.headOption match {
          case Some( ("GE", List( r, sub, _* )))    => argDefault.typ.exist.map( tup => {
 //            println( "Jo. derive with existential '" + sub + "'" )
             val res = sub match {
@@ -709,7 +716,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //            println( "res = " + res )
             res.toString
          }).getOrElse( sub.toString )
-         case Some( ("Expands", List( sub, _* )))  => sub.toString
+         case Some( ("Expands", List( sub, _* )))  => if( geToSeq ) "IIdxSeq[" + deriveGEFrom( sub, false ) + "]" else sub.toString
          case Some( ("AnyGE", _) )                 => "AnyUGenIn"
          case _                                    => argDefault.typ.toString
       }
@@ -744,7 +751,22 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
    private case object SingleOutput extends Outputs {
       val typ = "SingleOutUGen"
    }
-   private case class MultiOutput( num: String ) extends Outputs {
+   private trait MultiOutputLike extends Outputs {
       val typ = "MultiOutUGen"
+      def tree: Tree
+   }
+   private case class FixedMultiOutput( num: Int ) extends MultiOutputLike {
+      def tree = Literal( Constant( num ))
+   }
+   private case class ArgMultiOutput( arg: UGenArgInfoLike ) extends MultiOutputLike {
+      def tree = if( arg.isGE ) {
+         if( arg.isExpands) {
+            Select( Ident( arg.name ), "size" )
+         } else {
+            Predef.error( "Not yet supported" )
+         }
+      } else {
+         Ident( arg.name )
+      }
    }
 }

@@ -3122,14 +3122,12 @@
             <rate name="audio" implied="true"/>
             <arg name="in"/>
         </ugen>
-        <!-- TODO: outputs num=in
         <ugen name="DC">
             <rate name="control"/>
             <rate name="audio"/>
             <outputs num="in"/>
             <arg name="in" multi="true"/>
         </ugen>
-        -->
         <ugen name="Silent">
             <rate name="audio" implied="true"/>
             <outputs num="numChannels"/>
@@ -3260,9 +3258,16 @@
             <arg name="dstLo" default="0"/>
             <arg name="dstHi" default="1"/>
         </ugen>
-        <!-- TODO:
-        <ugen name="EnvGen"/>
-        -->
+        <ugen name="EnvGen">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="gate" default="1" pos="1"/>
+            <arg name="levelScale" default="1" pos="2"/>
+            <arg name="levelBias" default="0" pos="3"/>
+            <arg name="timeScale" default="1" pos="4"/>
+            <arg name="doneAction" default="doNothing" pos="5"/>
+            <arg name="envelope" multi="true" pos="0"/>
+        </ugen>
         <ugen name="Linen">
             <rate name="control"/>
             <rate name="audio"/>
@@ -3272,10 +3277,12 @@
             <arg name="release" default="1"/>
             <arg name="doneAction" default="doNothing"/>
         </ugen>
-
-        <!-- TODO:
-        <ugen name="IEnvGen"/>
-        -->
+        <ugen name="IEnvGen">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="index" default="1" pos="1"/>
+            <arg name="envelope" multi="true" pos="0"/>
+        </ugen>
     </file>
 
     <file name="MachineListening">

@@ -5,3 +5,7 @@ h3. statement
 An extension project to ScalaCollider which aims at providing a language-neutral (XML based) UGen description database as well as a code synthesizer that generates class files for ScalaCollider. It is (C)opyright 2008-2011 by Hanns Holger Rutz. All rights reserved. ScalaCollider-UGens is released under the "GNU General Public License":http://github.com/Sciss/ScalaColliderUGens/blob/master/licenses/ScalaCollider-License.txt and comes with absolutely no warranties. To contact the author, send an email to @contact at sciss.de@
 
 Big thanks to Mirko Stocker for the "Scala-Refactoring Library":http://scala-refactoring.org/ which provides the AST-to-source code converter.
+
+h3. compilation
+
+to compile run @sbt update compile@. in order to keep up with the scala-refactoring snapshots, you may need to wipe the Ivy2 cache before updating: @rm -r ~/.ivy2/cache/org.scala-refactoring@
