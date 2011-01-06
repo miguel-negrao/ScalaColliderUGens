@@ -315,7 +315,9 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                })
                val objectMethodArgs = if( expandBin.isDefined ) {
                   val curry = ValDef(
-                     NoMods withPosition (Flags.PARAM, NoPosition) withPosition (Flags.IMPLICIT, NoPosition),
+// the next line would produce implicit val... for reasons beyond my imagination
+//                     NoMods withPosition (Flags.PARAM, NoPosition) withPosition (Flags.IMPLICIT, NoPosition),
+                     Modifiers( Flags.PARAM ) withPosition (Flags.IMPLICIT, NoPosition),
                      identRateOrder.toString, // XXX dirty
 // stupid bug... this would result in a closing bracket missing in the method's type parameter...
                      TypeDef( NoMods, "RateOrder", TypeDef( NoMods, rateInfo.typ, Nil, EmptyTree ) :: typExpandBin, EmptyTree ),
