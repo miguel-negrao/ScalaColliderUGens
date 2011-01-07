@@ -481,8 +481,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                )
 //                  Apply( Ident( "apply" ), Ident( rateInfo.name ) :: args.map( i => Ident( i.arg.name )))
                DefDef(
-                  NoMods withPosition (Flags.METHOD, NoPosition),
-                  "expand",
+                  NoMods withPosition (Flags.PROTECTED, NoPosition) withPosition (Flags.METHOD, NoPosition),
+                  "expandUGens",
                   Nil, // tparams
                   Nil,        // vparamss
                   TypeTree( NoType ), // tpt -- empty for testing
