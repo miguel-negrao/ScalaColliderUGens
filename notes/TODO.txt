@@ -107,3 +107,31 @@ case class EnvGen[R <: Rate](rate: R, envelope: Expands[MultiGE], gate: AnyGE, l
    }
 }
 case class EnvGenUGen[R <: Rate](rate: R, envelope: IIdxSeq[AnyUGenIn], gate: AnyUGenIn, levelScale: AnyUGenIn, levelBias: AnyUGenIn, timeScale: AnyUGenIn, doneAction: AnyUGenIn) extends SingleOutUGen[R](IIdxSeq[AnyUGenIn](gate, levelScale, levelBias, timeScale, doneAction).++(envelope))
+
+/////////// Out
+
+object Out {
+   def ar(bus: AnyGE, in: Multi[GE[audio, UGenIn[audio]]])     = apply[audio](audio, bus, in)
+   def kr(bus: AnyGE, in: Multi[AnyGE]) = apply[control](control, bus, in)
+   def ir(bus: AnyGE, in: Multi[AnyGE])   = apply[scalar](scalar, bus, in)
+}
+case class Out[R <: Rate](rate: R, bus: AnyGE, in: Multi[AnyGE]) extends UGenSource[OutUGen[R]] with WritesBus {
+   protected def expandUGens = {
+      val _bus: IIdxSeq[AnyUGenIn] = bus.expand
+      val _in: IIdxSeq[AnyGE] = in.mexpand
+      val _sz_bus = _bus.size
+      val _sz_in = _in.size
+      val _exp_ = maxInt(_sz_bus, _sz_in)
+      IIdxSeq.tabulate(_exp_)(i => OutUGen(rate, _bus(i.%(_sz_bus)), _in(i.%(_sz_in)).expand))
+   }
+}
+case class OutUGen[R <: Rate](rate: R, bus: AnyUGenIn, in: IIdxSeq[AnyUGenIn]) extends ZeroOutUGen(IIdxSeq[AnyUGenIn](bus).++(in)) with WritesBus
+
+////// the kind of mistakes that happen in dynamic typing:
+
+XFade2 : XFade {
+	*ar { arg inA, inB = 0.0 /* !! */, pan = 0.0, level = 1.0;
+		^this.multiNew('audio', inA, inB, pan, level)
+...
+ 	checkInputs { ^this.checkNInputs(2) }
+}

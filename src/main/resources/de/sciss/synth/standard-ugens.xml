@@ -4102,17 +4102,22 @@
             <arg name="pos" default="0"/>
         </ugen>
         <ugen name="XFade2">
-            <rate name="control"/>
+            <rate name="control">
+                <arg name="inB" default="0"/>
+            </rate>
             <rate name="audio">
                 <arg name="inA" rate="ugen"/>
-                <arg name="inB" rate="ugen"/>
+                <!-- DC.ar(0) and K2A.ar(0) take about the same amount of CPU,
+                  where the latter is favorable as it is a singleout ugen.
+                  In contrast, Silent.ar takes about 20% more CPU (measured 07-jan-10) -->
+                <arg name="inB" rate="ugen" default="K2A.ar(0)"/>
             </rate>
             <arg name="inA">
                 <doc>
                     The first input signal
                 </doc>
             </arg>
-            <arg name="inB" default="0">
+            <arg name="inB">
                 <doc>
                     The second input signal
                 </doc>
@@ -4136,17 +4141,22 @@
             </doc>
         </ugen>
         <ugen name="LinXFade2">
-            <rate name="control"/>
+            <rate name="control">
+                <arg name="inB" default="0"/>
+            </rate>
             <rate name="audio">
                 <arg name="inA" rate="ugen"/>
-                <arg name="inB" rate="ugen"/>
+                <!-- DC.ar(0) and K2A.ar(0) take about the same amount of CPU,
+                  where the latter is favorable as it is a singleout ugen.
+                  In contrast, Silent.ar takes about 20% more CPU (measured 07-jan-10) -->
+                <arg name="inB" rate="ugen" default="K2A.ar(0)"/>
             </rate>
             <arg name="inA">
                 <doc>
                     The first input signal
                 </doc>
             </arg>
-            <arg name="inB" default="0">
+            <arg name="inB">
                 <doc>
                     The second input signal
                 </doc>
