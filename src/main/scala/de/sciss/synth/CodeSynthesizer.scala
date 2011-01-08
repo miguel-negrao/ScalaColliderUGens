@@ -548,7 +548,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                            if( impliedRate.isEmpty ) (TypeDef( NoMods, "R", Nil, EmptyTree ) :: Nil) else Nil,
                            EmptyTree ) :: Nil
                      }
-                     if( outputs == SingleOutput ) {
+                     if( outputs != ZeroOutputs ) {
                         TypeDef( NoMods, (if( expandBin.isDefined ) "T" else impliedRate.map( _.typ ).getOrElse( "R" )): String,
                            Nil, EmptyTree ) :: p0
                      } else {
@@ -585,7 +585,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val ugenCaseClassParents: List[ TypeDef ] = {
                // note: ZeroOutUGen already extends HasSideEffect
                val p4 = if( sideEffect && !indSideEffect && (outputs != ZeroOutputs) ) (traitSideEffect :: caseCommonParents) else caseCommonParents
-               TypeDef( NoMods, outputs.typ, if( outputs != SingleOutput ) Nil else {
+               TypeDef( NoMods, outputs.typ, if( outputs == ZeroOutputs ) Nil else {
                   TypeDef( NoMods, impliedRate.map( _.typ ).getOrElse( "R" ): String, Nil, EmptyTree ) :: Nil
                }, EmptyTree ) :: p4
             }
@@ -767,7 +767,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
    }
    private case object ZeroOutputs extends Outputs {
       val typ        = "ZeroOutUGen"
-      val sourceName = "UGenSource"
+      val sourceName = "ZeroOutUGenSource"
    }
    private case object SingleOutput extends Outputs {
       val typ        = "SingleOutUGen"
@@ -775,7 +775,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
    }
    private trait MultiOutputLike extends Outputs {
       val typ        = "MultiOutUGen"
-      val sourceName = "UGenSource"
+      val sourceName = "MultiOutUGenSource"
       def tree: Tree
    }
    private case class FixedMultiOutput( num: Int ) extends MultiOutputLike {
