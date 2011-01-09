@@ -153,6 +153,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       val identApply        = Ident( "apply" )
       val identRateOrder    = Ident( "rateOrder" )
       val identRateOrderClass = Ident( "RateOrder" )
+      val dateString       = new java.util.Date().toString
 
 //         def *[ S <: Rate, T <: Rate ]( b: GE[ S, UGenIn[ S ]])( implicit r: RateOrder[ R, S, T ]) =
 //            Times.make[ R, S, T ]( r.rate, this, b )
@@ -165,6 +166,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          val fileName   = name + ".scala"
          val ast        = treeFrom( "package de.sciss.synth.ugen\n" )
          val fltNode    = (node \ "ugen").filter( node => filter( name, (node \ "@name").text ))
+         var importFloat = false
          val ugens: List[ Tree ] = fltNode.flatMap( node => {
             val name          = (node \ "@name").text
             val readsBus      = getBoolAttr( node, "readsbus" )
@@ -271,6 +273,12 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                         }
                      })
                   val default    = getEitherAttr( "default" ).map( _.text )
+                  if( default == Some( "inf" ) || default == Some( "-inf" )) {
+                     importFloat = true
+//                     println( "importFloat is true" )
+//                  } else if( name == "Dseries" ) {
+//                     println( "NOT INF?? '" + default + "'" )
+                  }
                   val doc        = getEitherAttr( "doc" ).map( _.text )
                   ArgInfo( typInfo, default, doc )
                }
@@ -637,11 +645,13 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
          // XXX add UGen class
          if( ugens.nonEmpty ) {
+            val imports0 = if( importFloat ) {
+               Import( Ident( "Float" ), ImportSelector( "PositiveInfinity", -1, "inf", -1 ) :: Nil ) :: Nil
+            } else Nil
+            val imports1 = Import( Select( Ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, identIIdxSeq.name, -1 ) :: Nil ) ::
+                  Import( Ident( "UGenHelper" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) :: imports0
             val packageDef = PackageDef( Select( Select( Ident( "de" ), "sciss" ), "synth" ),
-               PackageDef( Ident( "ugen" ),
-                  Import( Select( Ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, identIIdxSeq.name, -1 ) :: Nil ) ::
-                  Import( Ident( "UGenHelper" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) ::
-                  ugens ) :: Nil )
+               PackageDef( Ident( "ugen" ), imports1 ::: ugens ) :: Nil )
             println( "Writing " + fileName )
             val osw = new OutputStreamWriter( new FileOutputStream( new File( dir, fileName )), "UTF-8" )
             osw.write( """/*
@@ -649,7 +659,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
  * (ScalaCollider-UGens)
  *
  * This is a synthetically generated file.
- * Created: """ + (new java.util.Date()).toString + """
+ * Created: """ + dateString + """
  * ScalaCollider-UGen version: """ + UGens.versionString + """
  */
 
@@ -786,7 +796,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          if( arg.isExpands) {
             Select( Ident( arg.name ), "size" )
          } else {
-            Predef.error( "Not yet supported" )
+            Predef.error( "Not yet supported ("+ arg.name + ")" )
          }
       } else {
          Ident( arg.name )

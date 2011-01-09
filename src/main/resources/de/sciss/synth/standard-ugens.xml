@@ -408,7 +408,7 @@
                     the identifier of the buffer to use
                 </doc>
             </arg>
-            <arg name="phase" default="0">
+            <arg name="index" default="0">
                 <doc>
                     audio rate frame-index into the buffer.
                 </doc>
@@ -447,7 +447,7 @@
             <rate name="control"/>
             <rate name="audio"/>
             <arg name="buf" pos="1"/>
-            <arg name="phase" default="0" pos="2"/>
+            <arg name="index" default="0" pos="2"/>
             <arg name="loop" default="1" pos="3"/>
             <arg name="in" multi="true" pos="0"/>
         </ugen>
@@ -608,7 +608,7 @@
         <!-- this should exist according to plugin sources...
         <ugen name="GrainTap"/>
         -->
-        <ugen name="TGrains" readsbuf="true">
+        <ugen name="TGrains" readsbuf="true">  <!-- accepts demand rate -->
             <rate name="audio" implied="true"/>
             <outputs num="numChannels"/>
             <arg name="numChannels" type="Int"/>
@@ -661,6 +661,338 @@
         </ugen>
         <ugen name="ClearBuf">
         </ugen> -->
+    </file>
+
+    <file name="DemandUGens">
+        <ugen name="Demand">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <outputs num="in"/>
+            <arg name="trig" pos="0">
+                <doc>
+                    trigger. Can be any signal. A trigger happens when the signal changes from non-positive to positive.
+                </doc>
+            </arg>
+            <arg name="reset" default="0" pos="2">
+                <doc>
+                    trigger. Resets the list of ugens (`multi`) when triggered.
+                </doc>
+            </arg>
+            <arg name="in" multi="true" pos="1">
+                <doc>
+                    a demand-rate signal (possibly multi-channel) which is read at each trigger
+                </doc>
+            </arg>
+            <doc warnpos="true">
+                A UGen which polls results from demand-rate ugens when receiving a trigger.
+                When there is a trigger at the `trig` input, a value is demanded from each ugen in the `in` input
+                and output. The unit generators in the list should be demand-rate.
+                When there is a trigger at the reset input, the demand rate ugens in the list are reset.
+
+                Note: By design, a reset trigger only resets the demand ugens; it does not reset the value at Demand's output.
+                Demand continues to hold its value until the next value is demanded, at which point its output value will
+                be the first expected item in the `in` argument.
+
+                Note: One demand-rate ugen represents a single stream of values, so that embedding the same ugen twice
+                calls this stream twice per demand, possibly yielding different values. To embed the same sequence
+                twice, either make sure the ugen is demanded only once, or create two instances of the ugen.
+
+                '''Warning''': Demand currently seems to have problems with infinite sequences. As a workaround
+                use a very large length instead. E.g. instead of `Dbrown( 0, 1, inf )` use `Dbrown( 0, 1, 0xFFFFFFFF )`!
+            </doc>
+            <see>ugen.Duty</see>
+            <see>ugen.TDuty</see>
+        </ugen>
+        <ugen name="Duty">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="dur" default="1">
+                <doc>
+                    the provider of time values. Can be a demand-rate ugen or any signal.
+                    The next poll is acquired after the previous duration.
+                </doc>
+            </arg>
+            <arg name="reset" default="0">
+                <doc>
+                    a trigger which resets the dur input (if demand-rated) and the
+                    the level input ugen. The reset input may also be a demand-rate ugen, in this case
+                    providing a stream of reset times.
+                </doc>
+            </arg>
+            <arg name="level">
+                <doc>
+                    a demand-rate ugen providing the output values.
+                </doc>
+            </arg>
+            <arg name="doneAction" default="doNothing">
+                <doc>
+                    a doneAction that is evaluated when the duration stream ends.
+                </doc>
+            </arg>
+            <doc>
+                A UGen which polls results from demand-rate ugens in intervals specified by a durational input.
+                A value from the `level` ugen is demanded and output according to a stream
+                of duration values. When there is a trigger at the reset input, the `level`
+                and the `dur` input are reset.
+            </doc>
+            <see>ugen.TDuty</see>
+            <see>ugen.Demand</see>
+            <see>DoneAction</see>
+        </ugen>
+        <ugen name="TDuty">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="dur" default="1">
+                <doc>
+                    the provider of time values. Can be a demand-rate ugen or any signal.
+                    The next poll is acquired after the previous duration.
+                </doc>
+            </arg>
+            <arg name="reset" default="0">
+                <doc>
+                    a trigger which resets the dur input (if demand-rated) and the
+                    the level input ugen. The reset input may also be a demand-rate ugen, in this case
+                    providing a stream of reset times.
+                </doc>
+            </arg>
+            <arg name="level" default="1">
+                <doc>
+                    a demand-rate ugen providing the output values.
+                </doc>
+            </arg>
+            <arg name="doneAction" default="doNothing">
+                <doc>
+                    a doneAction that is evaluated when the duration stream ends.
+                </doc>
+            </arg>
+            <arg name="gapFirst" default="0">
+                <doc>
+                    when 0 (default), the UGen does the first level poll immediately and then
+                    waits for the first durational value. When this is 1, the UGen initially polls the first
+                    durational value, waits for that duration, and then polls the first level
+                    (along with polling the next durational value).
+                </doc>
+            </arg>
+            <doc>
+                A UGen which polls results from demand-rate ugens in intervals specified by a durational input,
+                and outputs them as trigger values.
+                A value from the `level` ugen is demanded and output for one sample (when
+                running at audio-rate) or one block (when running at control-rate) according to a stream
+                of duration values. When there is a trigger at the reset input, the `level` and
+                the `dur` input are reset.
+            </doc>
+            <see>ugen.Duty</see>
+            <see>ugen.Demand</see>
+            <see>DoneAction</see>
+        </ugen>
+        <ugen name="DemandEnvGen">
+            <!-- XXX TODO: tricky rate constraint: if either of gate
+            and reset is audio-rate, the other needs to be, too -->
+            <rate name="audio"/>
+            <arg name="levels">
+                <doc>
+                    demand-rate ugen (or other ugen) returning level values
+                </doc>
+            </arg>
+            <arg name="durs">
+                <doc>
+                    demand-rate ugen (or other ugen) returning durational values
+                </doc>
+            </arg>
+            <arg name="shapes" default="1">
+                <doc>
+                    demand-rate ugen (or other ugen) returning shape number for the envelope segment.
+                </doc>
+            </arg>
+            <arg name="curvatures" default="0">
+                <doc>
+                    demand-rate ugen (or other ugen) returning curvature values. these are
+                    used for curveShape segments (shape number 5) and should be zero for other shapes.
+                </doc>
+            </arg>
+            <arg name="gate" default="1">
+                <doc>
+                    a control rate gate: if gate is x &gt;= 1, the ugen runs.
+                    if gate is 0 &gt; x &gt; 1, the ugen is released at the next level (according to doneAction).
+                    if gate is x &lt;= 0, the ugen is sampled end held.
+                </doc>
+            </arg>
+            <arg name="reset" default="1">
+                <doc>
+                    a trigger signal. a trigger occurs when passing from non-positive to positive.
+                    when the trigger amplitude is &lt; 1, the input ugens (those that are demand-rated)
+                    are reset when the current segment ends. if the trigger amplitude is &gt; 1,
+                    the reset is performed immediately.
+                </doc>
+            </arg>
+            <arg name="levelScale" default="1">
+                <doc>
+                    demand-rate ugen returning level scaling values
+                </doc>
+            </arg>
+            <arg name="levelBias" default="0">
+                <doc>
+                    demand-rate ugen returning level offset values
+                </doc>
+            </arg>
+            <arg name="timeScale" default="1">
+                <doc>
+                    demand-rate ugen returning time scaling values
+                </doc>
+            </arg>
+            <arg name="doneAction" default="doNothing">
+                <doc>
+                    a done action performed when one of the demand-rated series ends
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    An envelope generator UGen using demand-rate inputs for the envelope segments.
+                    For each parameter of the envelope (levels, durations and shapes), values are polled
+                    every time a new segment starts.
+                </text>
+            </doc>
+            <see>ugen.EnvGen</see>
+            <see>EnvShape</see>
+            <see>DoneAction</see>
+        </ugen>
+        <ugen name="Dseries" indiv="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="start" default="0">
+                <doc>
+                    the start value of the series
+                </doc>
+            </arg>
+            <arg name="step" default="1">
+                <doc>
+                    the incremental step by which the series changes. the step is
+                    added to the previous value on each demand.
+                </doc>
+            </arg>
+            <arg name="length" default="inf">
+                <doc>
+                    the number of elements to produces (maybe be infinite)
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A demand-rate UGen which produces an arithmetic (linear) series.
+
+                    The arguments can be constant or any other ugens.
+                </text>
+                <see>ugen.Dgeom</see>
+                <see>ugen.Dseq</see>
+            </doc>
+        </ugen>
+        <ugen name="Dgeom" indiv="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="start" default="1"/>
+            <arg name="grow" default="2"/>
+            <arg name="length" default="inf"/>
+        </ugen>
+        <ugen name="Dwhite" indiv="true" random="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
+            <arg name="length" default="inf"/>
+        </ugen>
+        <ugen name="Dbrown" indiv="true" random="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
+            <arg name="step" default="0.01"/>
+            <arg name="length" default="inf"/>
+        </ugen>
+        <ugen name="Diwhite" indiv="true" random="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="lo" default="0"/>
+            <arg name="hi" default="1"/>
+            <arg name="length" default="inf"/>
+        </ugen>
+        <ugen name="Dseq" indiv="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="repeats" default="1" pos="1"/>
+            <arg name="seq" multi="true" pos="0"/>
+        </ugen>
+        <ugen name="Dser" indiv="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="repeats" default="1" pos="1"/>
+            <arg name="seq" multi="true" pos="0"/>
+        </ugen>
+        <ugen name="Dbufrd" indiv="true" readsbuf="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="buf">
+                <doc>
+                    the identifier of the buffer to read out
+                </doc>
+            </arg>
+            <arg name="index" default="0">
+                <doc>
+                    the frame index into the buffer
+                </doc>
+            </arg>
+            <arg name="loop" default="1">
+                <doc>
+                    whether to wrap an exceeding phase around the buffer length (1) or not (0)
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A demand-rate UGen that reads out a buffer. All inputs can be either demand ugen or any other ugen.
+                </text>
+                <see>ugen.BufRd</see>
+                <see>ugen.Dbufwr</see>
+            </doc>
+        </ugen>
+        <ugen name="Dbufwr" indiv="true" writesbuf="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="in"/>
+            <arg name="buf"/>
+            <arg name="index" default="0"/>
+            <arg name="loop" default="1"/>
+        </ugen>
+        <ugen name="Drand" indiv="true" random="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="repeats" default="1" pos="1"/>
+            <arg name="seq" multi="true" pos="0"/>
+        </ugen>
+        <ugen name="Dxrand" indiv="true" random="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="repeats" default="1" pos="1"/>
+            <arg name="seq" multi="true" pos="0"/>
+        </ugen>
+        <ugen name="Dshuf" indiv="true" random="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="repeats" default="1" pos="1"/>
+            <arg name="seq" multi="true" pos="0"/>
+        </ugen>
+        <ugen name="Dswitch1" indiv="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="index" pos="1"/>
+            <arg name="seq" multi="true" pos="0"/>
+        </ugen>
+        <ugen name="Dswitch" indiv="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="index" pos="1"/>
+            <arg name="seq" multi="true" pos="0"/>
+        </ugen>
+        <ugen name="Dstutter" indiv="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="n"/>
+            <arg name="in"/>
+        </ugen>
+        <ugen name="Donce" indiv="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="in"/>
+        </ugen>
+        <ugen name="Dreset" indiv="true">
+            <rate name="demand" implied="true" method="apply"/>
+            <arg name="in"/>
+            <arg name="reset"/>
+        </ugen>
+        <!-- XXX TODO:
+        <ugen name="Dpoll"/>
+        -->
     </file>
 
     <file name="DiskIOUGens">
@@ -1801,7 +2133,7 @@
     </file>
 
     <file name="FilterUGens">
-        <ugen name="Ramp">
+            <ugen name="Ramp">
             <rate name="control"/>
             <rate name="audio"/>
             <arg name="in" rate="ugen">
@@ -2764,7 +3096,7 @@
     </file>
 
     <file name="GrainUGens">
-        <ugen name="GrainIn" readsbuf="true">
+        <ugen name="GrainIn" readsbuf="true">  <!-- accepts demand rate -->
             <rate name="audio" implied="true"/>
             <outputs num="numChannels"/>
             <arg name="numChannels" type="Int" default="1" pos="1"/>
@@ -2776,7 +3108,7 @@
             <arg name="maxGrains" default="512" pos="6"/>
             <doc warnpos="true"/>
         </ugen>
-        <ugen name="GrainSin" readsbuf="true">
+        <ugen name="GrainSin" readsbuf="true">  <!-- accepts demand rate -->
             <rate name="audio" implied="true"/>
             <outputs num="numChannels"/>
             <arg name="numChannels" type="Int" default="1"/>
@@ -2787,7 +3119,7 @@
             <arg name="envBuf" default="-1"/>
             <arg name="maxGrains" default="512"/>
         </ugen>
-        <ugen name="GrainFM" readsbuf="true">
+        <ugen name="GrainFM" readsbuf="true"> <!-- accepts demand rate -->
             <rate name="audio" implied="true"/>
             <outputs num="numChannels"/>
             <arg name="numChannels" type="Int" default="1"/>
@@ -2800,7 +3132,7 @@
             <arg name="envBuf" default="-1"/>
             <arg name="maxGrains" default="512"/>
         </ugen>
-        <ugen name="GrainBuf" readsbuf="true">
+        <ugen name="GrainBuf" readsbuf="true">  <!-- accepts demand rate -->
             <rate name="audio" implied="true"/>
             <outputs num="numChannels"/>
             <arg name="numChannels" type="Int" default="1" pos="1"/>
@@ -2814,7 +3146,7 @@
             <arg name="maxGrains" default="512" pos="8"/>
             <doc warnpos="true"/>
         </ugen>
-        <ugen name="Warp1" readsbuf="true">
+        <ugen name="Warp1" readsbuf="true">  <!-- accepts demand rate -->
             <rate name="audio" implied="true"/>
             <outputs num="numChannels"/>
             <arg name="numChannels" type="Int"/>
@@ -2854,7 +3186,7 @@
             <doc warnpos="true"/>
         </ugen>
 
-        <!-- TODO: these could well be here, and only the ProxyFactories are manually coded...
+        <!-- XXX TODO: these could well be here, and only the ProxyFactories are manually coded...
         <ugen name="LagControl"/>
         <ugen name="AudioControl"/>
         <ugen name="Control"/>
@@ -2969,7 +3301,7 @@
                 <see>ugen.In</see>
             </doc>
         </ugen>
-        <!-- TODO:
+        <!-- XXX TODO:
         <ugen name="SharedOut"/>
         <ugen name="SharedIn"/>
         -->
@@ -4040,7 +4372,7 @@
             <arg name="width" default="0.5"/>
         </ugen>
 
-        <!-- TODO:
+        <!-- XXX TODO:
         <ugen name="Klang"/>
         <ugen name="Klank"/>
         -->
@@ -4539,9 +4871,27 @@
         <ugen name="Schmidt">
             <rate name="control"/>
             <rate name="audio"/>
-            <arg name="trig"/>
-            <arg name="lo" default="0"/>
-            <arg name="hi" default="1"/>
+            <arg name="in">
+                The input signal to be analyzed.
+            </arg>
+            <arg name="lo" default="0">
+                <doc>
+                    The low threshold.
+                </doc>
+            </arg>
+            <arg name="hi" default="1">
+                <doc>
+                    The high threshold.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A Schmidt trigger UGen. Initially it outputs zero. When the input signal rises above `hi`,
+                    its output switches to 1.0, which is hold until the signal falls below `lo`, switching the
+                    output again to 0.0. The produces a kind of hysteresis behavior, preventing heavy
+                    oscillations in a noisy system which might occur with a single-threshold trigger.
+                </text>
+            </doc>
         </ugen>
         <ugen name="PulseDivider">
             <rate name="control"/>
@@ -4569,8 +4919,26 @@
         <ugen name="TDelay">
             <rate name="control"/>
             <rate name="audio"/>
-            <arg name="trig"/>
-            <arg name="dur" default="0.1"/>
+            <arg name="trig">
+                <doc>
+                    The input trigger. A trigger is recognized when the signal passes from
+                    non-positive to positive. Note that, no matter what the amplitude of
+                    the input trigger is, the UGen will output a delayed trigger of
+                    amplitude 1.0.
+                </doc>
+            </arg>
+            <arg name="dur" default="0.1">
+                <doc>
+                    The delay time in seconds.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A delay UGen for trigger signals. Other than a normal buffer delay,
+                    any new trigger arriving in the time between the previous trigger
+                    and the passing of the delay time is ignored.
+                </text>
+            </doc>
         </ugen>
         <ugen name="ZeroCrossing">
             <rate name="control"/>
@@ -4833,8 +5201,8 @@
             <arg name="which" default="0"/>
         </ugen>
 
-        <!-- TODO:
+        <!-- XXX TODO:
         <ugen name="PackFFT"/>
-        -->
+        -->  <!-- accepts demand rate -->
     </file>
 </ugens>

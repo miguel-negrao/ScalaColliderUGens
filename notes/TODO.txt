@@ -44,6 +44,7 @@ val _exp = max( ... ) --> maxInt
 <outputs num="in"/> // DC (currently commented out)
 [OK] <ugen readsfft="true"/>
 <arg ... expandbin="*"/>
+<arg ... default="inf"/>
 
 ///////// missing ugens?
 DelayUGens : GrainTap

@@ -1,0 +1,160 @@
+val buf = Buffer.read(s, "sounds/a11wlk01.wav")
+val x = play {
+    var speed: GE[ control, UGenIn[ control ]] = MouseX.kr(-10, 10)
+    speed = speed - DelayN.kr(speed, 0.1, 0.1)
+    speed = MouseButton.kr(1, 0, 0.3) + speed
+    val sig = PlayBuf.ar(1, buf.id, speed * BufRateScale.kr(buf.id), loop = 1)
+    sig // mce( List( sig, sig ))
+}
+
+"---"
+
+val x = (SynthDef( "test" ) {
+    val y = Pan2.ar( WhiteNoise.ar( 0.05 ), SinOsc.kr( 1 ) * 0.5 + 0.5 )
+    val z = Pan2.ar( Dust.ar( 100 ), SinOsc.kr( 0.7 ) * 0.5 + 0.5 )
+    val a = mce2( y :: z :: Nil )
+//    println( a )
+    Out.ar( 0, a )
+}).play
+
+x.free
+s.freeAll
+
+"---"
+
+import collection.immutable.{ IndexedSeq => IIdxSeq }
+
+implicit def fuck[ R <: Rate ]( g: Multi[ GE[ R, UGenIn[ R ]]])( implicit r: R ) : GE[ R, UGenIn[ R ]] = new GE[ R, UGenIn[ R ]] {
+   def rate = r
+   def expand : IIdxSeq[ UGenIn[ R ]] = {
+      g.mexpand.flatMap( _.expand )
+   }
+}
+
+Out.ar( 0, Pan2
+
+implicit def mce2[ R <: Rate, G ]( x: Seq[ G ])( implicit view: G => GE[ R, UGenIn[ R ]], rate: R ) = new Multi[ GE[ R, UGenIn[ R ]]] {
+   def mexpand: IIdxSeq[ GE[ R, UGenIn[ R ]]] = x.toIndexedSeq.map( view )
+}
+
+// TODO : GE cannot extends Multi; should instead have an implicit conversion from GE to Multi[ GE ]
+
+////
+
+a multi-input means:
+	- each mexpand ends up with one particular ugen
+	- thus, the implicit GE -> Multi is Multi.none( ge )
+          Multi.joint( ge )
+
+a mce of ge
+	- should _not_ create a multi, that is : 
+	  Out.ar( 0, SinOsc.ar( 440 ) :: Saw.ar( 333 ))
+	  should be wrapped into a Multi.none aka GE.group
+          Multi.joint( a, b, c )	
+
+a ge-input means:
+	- a multi should be automatically flattened.
+	  thus SinOsc.ar( DC.ar( 330 :: 440 :: Nil ))
+	  should expand normally
+
+
+how about Multi.join and Multi.disjoin ?
+or GE.join and GE.disjoin ?
+// other : union <--> split
+           combine <--> break
+	   keep <--> splice
+           group <--> ungroup
+                      divide
+
+Out.ar( 0, Pan2 :: Pan2 )
+mce of multi : should be multi such that
+     a flippa-di-flop happens?
+     - should not be possible without a strategy, thus
+     Multi.joint( m1, m2 ) is one where m1 and m2 are expanded and then concatenated
+     Multi.disjoint( m1, m2 ) is one where 
+
+Multi.joint( ge: GE* )
+hence Multi.joint( m1, m2 ) automatically becomes Multi.joint( Flatten( m1 ), Flatten( m2 ))
+
+Multi.disjoint( m: Multi* )
+   mexpand =
+
+Out.ar( 0 :: 2 :: 4 :: Nil, Multi.disjoint( SinOsc.ar( 222 ), SinOsc.ar( 333 ), SinOsc.ar( 444 ))
+    mexpand = Seq[ SinOsc.ar( 222 ), SinOsc.ar( 333 ), SinOsc.ar( 444 )]
+Out.ar( 0 :: 2 :: 4 :: Nil, Multi.split( SinOsc.ar( 222 :: 333 :: 444 :: Nil )))
+    mexpand = Seq[ SinOsc.ar( 222 ), SinOsc.ar( 333 ), SinOsc.ar( 444 )]
+Out.ar( 0 :: 2 :: 4 :: Nil, SinOsc.ar( 222 :: 333 :: 444 :: Nil ))
+= Out.ar( 0 :: 2 :: 4 :: Nil, Multi.joint( SinOsc.ar( 222 :: 333 :: 444 :: Nil )))
+    mexpand = Seq[ SinOsc.ar( 222 :: 333 :: 444 )]
+
+
+Mix.apply( ... )
+Mix.fill/ tab[ R <: Rate ]( n: Int )( thunk: => GE[ R, UGenIn[ R ]])
+
+
+/////////////
+
+Panner
+XFade2
+
+x = { XFade2.ar( WhiteNoise.ar( 0.2 ), Silent.ar, pan: SinOsc.kr( 0.5 ) * 0.5 + 0.5 )}.play
+
+SynthDef( \test, {
+	50.do({ K2A.ar(0)})
+}).send( s )
+
+SynthDef( \tesv, {
+	50.do({ Silent.ar(1)})
+}).send( s )
+
+SynthDef( \tesu, {
+	50.do({ DC.ar(0)})
+}).send( s )
+
+200.do({ Synth( \test )})	// peak approx. 25
+200.do({ Synth( \tesv )})	// peak approx. 30
+200.do({ Synth( \tesu )})	// peak approx. 25
+s.defaultGroup.freeAll
+
+30.0/25
+
+Mix( SinOsc.ar([ 440, 660 ])) --> SinOsc.ar( 440 ) + SinOsc.ar( 660 )
+Mix( SinOsc.ar( 440 )) --> SinOsc.ar( 440 )
+Mix( DiskIn.ar( 2, 0 )) --> DiskIn.ar( 2, 0 ) \ 0 + DiskIn.ar( 2, 0 ) \ 1
+Mix([ DiskIn.ar( 2, 0 ), DiskIn.ar( 2, 1 )])
+   [ DiskIn.ar( 2, 0 ) \ 0 + DiskIn.ar( 2, 1 ) \ 0,
+     DiskIn.ar( 2, 0 ) \ 1 + DiskIn.ar( 2, 1 ) \ 1 ]
+
+Mix([ DiskIn.ar( 2, 0 ), DiskIn.ar( 2, 1 )])[0].inputs.source.inputs --> DiskIn
+Mix([ DiskIn.ar( 2, 0 ), DiskIn.ar( 2, 1 )])[0].inputs[1].outputIndex
+Mix([ DiskIn.ar( 2, 0 ), DiskIn.ar( 2, 1 )])[1].inputs[1].outputIndex
+
+     
+/////
+
+import collection.immutable.{ IndexedSeq => IIdxSeq }
+
+case class Mix2[ R <: Rate ]( elem: GE[ R, UGenIn[ R ]])( implicit r: RateOrder[ R, R, R ])
+extends LazyGE with GE[ R, UGenIn[ R ]] {
+   def rate = r.out
+
+   final def force( b: UGenGraphBuilder ) { expand( b )}
+   def expand: IIdxSeq[ UGenIn[ R ]] = {
+      expand( UGenGraph.builder )
+   }
+   private def expand( b: UGenGraphBuilder ): IIdxSeq[ UGenIn[ R ]] = b.visit( this /* cache */, expandUGens )
+   protected def expandUGens : IIdxSeq[ UGenIn[ R ]] = {
+      val _elems     = elem.expand
+      val _sz_elems  = _elems.size
+      if( _sz_elems > 0 ) {
+         val summed = _elems.reduceLeft( (a, b) => BinaryOpUGen( r.out, BinaryOp.Plus, a, b ))
+         println( "summed: " + summed )
+//         summed.expand
+         IIdxSeq( summed )
+      } else IIdxSeq.empty
+   }
+}
+
+viewDef( SynthDef( "test" ) { Out.ar( 0, Mix2( Line.ar( mce( 440 :: 660 :: Nil ))))})
+viewDef( SynthDef( "test" ) { Out.ar( 0, Mix2( Line.ar( 440 )))})
+viewDef( SynthDef( "test" ) { Out.ar( 0, Mix2( Pan2.ar( SinOsc.ar )))})
