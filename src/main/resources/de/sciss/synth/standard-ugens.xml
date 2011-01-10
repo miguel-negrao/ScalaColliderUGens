@@ -4993,7 +4993,12 @@
         <ugen name="Phasor">
             <rate name="control"/>
             <rate name="audio"/>
-            <arg name="trig"/>
+            <arg name="trig">
+                <doc>
+                    Warning: SC 3.4 has a bug where an initial trig value of 1 will
+                    be ignored (you need to feed it zero first)
+                </doc>
+            </arg>
             <arg name="speed" default="1"/>
             <arg name="lo" default="0"/>
             <arg name="hi" default="1"/>

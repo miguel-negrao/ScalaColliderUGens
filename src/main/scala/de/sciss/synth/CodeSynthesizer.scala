@@ -447,14 +447,13 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                impliedRate.map( r => TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: p6 ).getOrElse( p6 )
             }
 
-            val classes0   = if( hasArgsOut ) {
-
             val caseClassExpandDef = {
 //               val bufE    = buf.expand
 //               val multiE  = multi.expand
 //               val numExp  = math.max( bufE.size, multiE.size )
 //               IIdxSeq.tabulate( numExp )( i => DiskOutUGen( bufE( i % numExp ), multiE( i % numExp ).expand ))
-               val moreThanOneArgOut = argsOut.size > 1
+               val moreThanZeroArgOut = argsOut.size > 0
+               val moreThanOneArgOut  = argsOut.size > 1
                val methodBody = Block(
 //                  (expArgs.map( a => ValDef( NoMods, "_" + a.arg.name, TypeTree( NoType ), Select( Ident( a.arg.name ), "expand" )))
                   // XXX dirty
@@ -466,41 +465,45 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                       Nil
                    }) ++ {
 //                     if( !moreThanOneArgOut ) println( name + " " + expArgs + " / " + args )
-                     val numId = if( moreThanOneArgOut ) Ident( "_exp_" ) else Select( Ident( "_" + argsOut.head.name ), "size" )
-                     val app0 = Apply( Apply( Select( identIIdxSeq, "tabulate" ), numId :: Nil ),
-                        Function( ValDef( Modifiers( Flags.PARAM ), "i", TypeTree( NoType ), EmptyTree ) :: Nil, {
-                           val app1 = Apply( Ident( ugenName ), {
-                              val args0 = argsInS.filterNot( _.expandBin.isDefined ).map( a => {
-                                 if( a.isGE ) {
-                                    val apply = Apply( Ident( "_" + a.name ), {
+                     if( moreThanZeroArgOut ) {
+                        val numId = if( moreThanOneArgOut ) Ident( "_exp_" ) else Select( Ident( "_" + argsOut.head.name ), "size" )
+                        val app0 = Apply( Apply( Select( identIIdxSeq, "tabulate" ), numId :: Nil ),
+                           Function( ValDef( Modifiers( Flags.PARAM ), "i", TypeTree( NoType ), EmptyTree ) :: Nil, {
+                              val app1 = Apply( Ident( ugenName ), {
+                                 val args0 = argsInS.filterNot( _.expandBin.isDefined ).map( a => {
+                                    if( a.isGE ) {
+                                       val apply = Apply( Ident( "_" + a.name ), {
+                                          if( moreThanOneArgOut ) {
+                                             Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.name ) :: Nil )
+                                          } else {
+                                             Ident( "i" )
+                                          }
+                                       }  :: Nil )
+                                       if( a.multi ) Select( apply, "expand" ) else apply
+   //                                    apply
+                                    } else Ident( a.name )
+                                 })
+                                 if( impliedRate.isDefined ) args0 else (if( expandBin.isDefined ) Select( identRateOrder, "in1" ) else Ident( "rate" )) :: args0
+                              })
+                              expandBin.map( binSel => { // XXX should call make1 to collapse multiplication with one
+                                 val a = argsInS.find( _.expandBin.isDefined ).get
+                                 Apply( TypeApply( Ident( "BinaryOpUGen" ), Ident( "T" ) :: Nil ), Select( identRateOrder, "out" ) ::
+                                    Select( Ident( "BinaryOp" ), binSel ) :: app1 :: Apply( Ident( "_" + a.name ), {
                                        if( moreThanOneArgOut ) {
                                           Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.name ) :: Nil )
                                        } else {
                                           Ident( "i" )
                                        }
-                                    }  :: Nil )
-                                    if( a.multi ) Select( apply, "expand" ) else apply
-//                                    apply
-                                 } else Ident( a.name )
-                              })
-                              if( impliedRate.isDefined ) args0 else (if( expandBin.isDefined ) Select( identRateOrder, "in1" ) else Ident( "rate" )) :: args0
-                           })
-                           expandBin.map( binSel => { // XXX should call make1 to collapse multiplication with one
-                              val a = argsInS.find( _.expandBin.isDefined ).get
-                              Apply( TypeApply( Ident( "BinaryOpUGen" ), Ident( "T" ) :: Nil ), Select( identRateOrder, "out" ) ::
-                                 Select( Ident( "BinaryOp" ), binSel ) :: app1 :: Apply( Ident( "_" + a.name ), {
-                                    if( moreThanOneArgOut ) {
-                                       Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.name ) :: Nil )
-                                    } else {
-                                       Ident( "i" )
-                                    }
-                                 } :: Nil ) :: Nil )
-                           }).getOrElse( app1 )
-                        }) :: Nil
-                     ) :: Nil
-                     if( moreThanOneArgOut ) {
-                        ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "maxInt" ), argsOut.map( a => Ident( "_sz_" + a.name )))) :: app0
-                     } else app0
+                                    } :: Nil ) :: Nil )
+                              }).getOrElse( app1 )
+                           }) :: Nil
+                        ) :: Nil
+                        if( moreThanOneArgOut ) {
+                           ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "maxInt" ), argsOut.map( a => Ident( "_sz_" + a.name )))) :: app0
+                        } else app0
+                     } else {
+                        Apply( identIIdxSeq, Apply( Ident( ugenName ), Nil ) :: Nil ) :: Nil
+                     }
                   }): _*
                )
 //                  Apply( Ident( "apply" ), Ident( rateInfo.name ) :: args.map( i => Ident( i.arg.name )))
@@ -576,10 +579,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
 //            case class SinOscUGen[ R <: Rate ]( freq: AnyUGenIn, phase: AnyUGenIn )
 //            extends SingleOutUGen[ R ]( List( freq, phase ))
-               objectDef ::: (caseClassDef :: Nil)
-            } else {
-               objectDef
-            }
+
+            val classes0 = objectDef ::: (caseClassDef :: Nil)
 
             val ugenCaseClassConstrArgs = {
                val args0 = argsIn.filterNot( _.expandBin.isDefined ) map { uArgInfo =>
