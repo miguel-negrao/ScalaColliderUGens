@@ -3683,6 +3683,10 @@
                     summing excitation in ERB bands. It models simple spectral and temporal masking, with equal loudness contour
                     correction in ERB bands to obtain phons (relative dB), then a phon to sone transform. The final output is
                     typically in the range of 0 to 64 sones, though higher values can occur with specific synthesised stimuli.
+
+                    Note that despite running at control-rate, the output remains constant for each FFT frame. E.g.
+                    with an FFT size of 1024 and 50% overlap, a new measure is generated every 512 audio frames,
+                    or (at control block size 64) every 8 control blocks.
                 </text>
             </doc>
         </ugen>
@@ -3745,6 +3749,10 @@
                     conformance to this. Commonly, the first coefficient will be the highest value.
                     The number of output channels corresponds to the number of coefficients specified.
                     Technical note: The 0th coefficient is not generated as it consists of multiplying all bands by 1 and summing
+
+                    Note that despite running at control-rate, the output remains constant for each FFT frame. E.g.
+                    with an FFT size of 1024 and 50% overlap, a new measure is generated every 512 audio frames,
+                    or (at control block size 64) every 8 control blocks.
                 </text>
             </doc>
         </ugen>
@@ -3921,6 +3929,10 @@
                     The measure is calculated linearly. For some applications you may wish to convert the value to a decibel
                     scale. '''Note''' that this UGen may output NaN when the input is zero (probably due to division by zero).
                     In that case, `CheckBadValues` can be used to prevent further problems.
+
+                    Note that despite running at control-rate, the output remains constant for each FFT frame. E.g.
+                    with an FFT size of 1024 and 50% overlap, a new measure is generated every 512 audio frames,
+                    or (at control block size 64) every 8 control blocks.
                 </text>
                 <see>ugen.CheckBadValues</see>
             </doc>
@@ -3951,6 +3963,10 @@
                     which 90% of the spectral energy lies below that frequency, you want the 90-percentile, which means
                     the value of `percent` should be 0.9. The 90-percentile or 95-percentile is often used as a measure of
                     spectral roll-off.
+
+                    Note that despite running at control-rate, the output remains constant for each FFT frame. E.g.
+                    with an FFT size of 1024 and 50% overlap, a new measure is generated every 512 audio frames,
+                    or (at control block size 64) every 8 control blocks.
                 </text>
             </doc>
         </ugen>
@@ -3971,6 +3987,10 @@
                     Note that the output frequency is pretty close to the correct value when feeding in a
                     sine signal, but the estimate is usually too high when using for example filtered noise.
                     In that case, you will get better results using `SpecPcile` at 50%.
+
+                    Note that despite running at control-rate, the output remains constant for each FFT frame. E.g.
+                    with an FFT size of 1024 and 50% overlap, a new measure is generated every 512 audio frames,
+                    or (at control block size 64) every 8 control blocks.
                 </text>
                 <see>ugen.SpecPcile</see>
             </doc>
