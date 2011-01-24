@@ -3378,9 +3378,9 @@
             <arg name="iphase" default="0">
                 <doc>
                     initial phase offset. For efficiency reasons this is a
-                    value ranging from 0 to 2. Note that a phase of zero (default) means
-                    the wave starts at 0 and rises to +1 before jumping down to -1. Use
-                    a phase of 1 to have the wave start at -1.
+                    value ranging from -1 to 1 (thus equal to the initial output value).
+                    Note that a phase of zero (default) means the wave starts at 0 and
+                    rises to +1 before jumping down to -1. Use a phase of 1 to have the wave start at -1.
                 </doc>
             </arg>
             <doc>
