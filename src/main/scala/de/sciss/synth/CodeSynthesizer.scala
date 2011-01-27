@@ -519,45 +519,47 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                       Nil
                    }) ++ {
 //                     if( !moreThanOneArgOut ) println( name + " " + expArgs + " / " + args )
+//                     if( moreThanZeroArgOut ) {
+                     val funBody = {
+                        val app1 = Apply( Ident( ugenName ), {
+                           val args0 = argsInS.filterNot( _.expandBin.isDefined ).map( a => {
+                              if( a.isGE ) {
+                                 val apply = Apply( Ident( "_" + a.name ), {
+                                    if( moreThanOneArgOut ) {
+                                       Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.name ) :: Nil )
+                                    } else {
+                                       Ident( "i" )
+                                    }
+                                 }  :: Nil )
+                                 if( a.multi ) Select( apply, "expand" ) else apply
+//                                    apply
+                              } else Ident( a.name )
+                           })
+                           if( impliedRate.isDefined ) args0 else (if( expandBin.isDefined ) Select( identRateOrder, "in1" ) else Ident( "rate" )) :: args0
+                        })
+                        expandBin.map( binSel => { // XXX should call make1 to collapse multiplication with one
+                           val a = argsInS.find( _.expandBin.isDefined ).get
+                           // ZZZ
+                           Apply( TypeApply( Ident( "BinaryOpUGen" ), Ident( "T" ) :: Nil ), Select( identRateOrder, "out" ) ::
+                              Select( Ident( "BinaryOp" ), binSel ) :: app1 :: Apply( Ident( "_" + a.name ), {
+                                 if( moreThanOneArgOut ) {
+                                    Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.name ) :: Nil )
+                                 } else {
+                                    Ident( "i" )
+                                 }
+                              } :: Nil ) :: Nil )
+                        }).getOrElse( app1 )
+                     }
                      if( moreThanZeroArgOut ) {
                         val numId = if( moreThanOneArgOut ) Ident( "_exp_" ) else Select( Ident( "_" + argsOut.head.name ), "size" )
                         val app0 = Apply( Apply( Select( identIIdxSeq, "tabulate" ), numId :: Nil ),
-                           Function( ValDef( Modifiers( Flags.PARAM ), "i", TypeTree( NoType ), EmptyTree ) :: Nil, {
-                              val app1 = Apply( Ident( ugenName ), {
-                                 val args0 = argsInS.filterNot( _.expandBin.isDefined ).map( a => {
-                                    if( a.isGE ) {
-                                       val apply = Apply( Ident( "_" + a.name ), {
-                                          if( moreThanOneArgOut ) {
-                                             Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.name ) :: Nil )
-                                          } else {
-                                             Ident( "i" )
-                                          }
-                                       }  :: Nil )
-                                       if( a.multi ) Select( apply, "expand" ) else apply
-   //                                    apply
-                                    } else Ident( a.name )
-                                 })
-                                 if( impliedRate.isDefined ) args0 else (if( expandBin.isDefined ) Select( identRateOrder, "in1" ) else Ident( "rate" )) :: args0
-                              })
-                              expandBin.map( binSel => { // XXX should call make1 to collapse multiplication with one
-                                 val a = argsInS.find( _.expandBin.isDefined ).get
-                                 // ZZZ
-                                 Apply( TypeApply( Ident( "BinaryOpUGen" ), Ident( "T" ) :: Nil ), Select( identRateOrder, "out" ) ::
-                                    Select( Ident( "BinaryOp" ), binSel ) :: app1 :: Apply( Ident( "_" + a.name ), {
-                                       if( moreThanOneArgOut ) {
-                                          Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.name ) :: Nil )
-                                       } else {
-                                          Ident( "i" )
-                                       }
-                                    } :: Nil ) :: Nil )
-                              }).getOrElse( app1 )
-                           }) :: Nil
+                           Function( ValDef( Modifiers( Flags.PARAM ), "i", TypeTree( NoType ), EmptyTree ) :: Nil, funBody ) :: Nil
                         ) :: Nil
                         if( moreThanOneArgOut ) {
                            ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "maxInt" ), argsOut.map( a => Ident( "_sz_" + a.name )))) :: app0
                         } else app0
                      } else {
-                        Apply( identIIdxSeq, Apply( Ident( ugenName ), Nil ) :: Nil ) :: Nil
+                        Apply( identIIdxSeq, funBody :: Nil ) :: Nil
                      }
                   }) // : _*
 
