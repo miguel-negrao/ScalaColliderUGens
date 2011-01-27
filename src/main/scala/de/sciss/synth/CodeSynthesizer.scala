@@ -46,7 +46,7 @@ object CodeSynthesizer {
 
 class CodeSynthesizer extends Refactoring
 with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with TreeFactory {
-   val rateTypes  = true
+   val rateTypes  = false
    val docs       = true
 
    override val defaultIndentationStep = "   "
@@ -185,6 +185,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       val traitWritesFFT   = TypeDef( Modifiers( Flags.TRAIT ), "WritesFFT",     Nil, EmptyTree )
       val traitWritesBus   = TypeDef( Modifiers( Flags.TRAIT ), "WritesBus",     Nil, EmptyTree )
       val identIIdxSeq     = Ident( "IIdxSeq" )
+      val identBinOpUGen   = Ident( "BinaryOpUGen" )
 
       // XXX the extra closing ] bracket is due to a bug in scala-refactoring (05-jan-10)
       val typExpandBinDf   = TypeDef( NoMods, "S <: Rate", Nil, EmptyTree ) :: TypeDef( NoMods, "T <: Rate", Nil, EmptyTree ) :: Nil
@@ -194,6 +195,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       val identApply        = Ident( "apply" )
       val identRateOrder    = Ident( "rateOrder" )
       val identRateOrderClass = Ident( "RateOrder" )
+      val identRate        = Ident( "rate" )
       val dateString       = new java.util.Date().toString
 
 //         def *[ S <: Rate, T <: Rate ]( b: GE[ S, UGenIn[ S ]])( implicit r: RateOrder[ R, S, T ]) =
@@ -250,7 +252,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val rateInfo   = rates0.head
                val hasApply   = rateInfo.methodNames.contains( "apply" )
                ((if( hasApply ) {
-                  rateInfo.copy( methodNames = rateInfo.methodNames - "apply" ) :: Nil
+                  rateInfo.copy( methodNames = rateInfo.methodNames.filterNot( _ == "apply" )) :: Nil
                } else rates0), hasApply)
             }).getOrElse( (rates0, false) )
 
@@ -415,7 +417,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //                     Apply( TypeDef( NoMods, "apply", typApply1, EmptyTree ), args1 )  // XXX dirty
                      Apply( TypeApply( Ident( "apply" ), typApply1 ), args1 )  // XXX dirty
                   } else Apply( identApply, args1 )
-                  if( expandBin.isDefined ) Apply( apply0, identRateOrder :: Nil ) else apply0
+                  if( expandBin.isDefined && rateTypes ) Apply( apply0, identRateOrder :: Nil ) else apply0
                }
                val mdocs = collectMethodDocs( argsIn, Some( rateInfo ))
 //if( mdocs.nonEmpty ) println( "GOT SOME MDOCS : " + mdocs )
@@ -425,7 +427,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      mName,
                      if( expandBin.isDefined && rateTypes ) typExpandBinDf else Nil,        // tparams
                      objectMethodArgs,    // vparamss
-                     EmptyTree, // TypeTree( NoType ), // tpt -- empty for testing
+                     if( rateTypes || mName != "apply" ) EmptyTree else TypeDef( NoMods, name, Nil, EmptyTree ), // TypeTree( NoType ), // tpt -- empty for testing
                      methodBody // rhs
                   )
                   wrapDoc( df, 1, methodDocs = mdocs )
@@ -537,12 +539,13 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //                                    apply
                               } else Ident( a.name )
                            })
-                           if( impliedRate.isDefined ) args0 else (if( expandBin.isDefined ) Select( identRateOrder, "in1" ) else Ident( "rate" )) :: args0
+                           if( impliedRate.isDefined ) args0 else (if( expandBin.isDefined && rateTypes ) Select( identRateOrder, "in1" ) else identRate) :: args0
                         })
                         expandBin.map( binSel => { // XXX should call make1 to collapse multiplication with one
                            val a = argsInS.find( _.expandBin.isDefined ).get
-                           // ZZZ
-                           Apply( TypeApply( Ident( "BinaryOpUGen" ), Ident( "T" ) :: Nil ), Select( identRateOrder, "out" ) ::
+                           val u = if( rateTypes ) TypeApply( identBinOpUGen, Ident( "T" ) :: Nil ) else identBinOpUGen
+                           val r = if( rateTypes ) Select( identRateOrder, "out" ) else identRate
+                           Apply( u, r ::
                               Select( Ident( "BinaryOp" ), binSel ) :: app1 :: Apply( Ident( "_" + a.name ), {
                                  if( moreThanOneArgOut ) {
                                     Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.name ) :: Nil )
