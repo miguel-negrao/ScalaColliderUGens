@@ -127,9 +127,11 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                (if( idx == 0 ) ("@param " + tup._1 + "              ").take( 21 ) + "  " else "                       ") + ln
             })
          })
-         // note: @warn is not recognized by scaladoc. we use @note instead
          val txt2    = if( sees.isEmpty ) txt1 else ensureEmptyTrail( txt1 ) ++ sees.map( "@see [[de.sciss.synth." + _ + "]]" )
-         val txt3    = txt2 // if( !docWarnPos ) txt2 else txt2 :+ "@note The argument order is different from its sclang counterpart."
+         // note: @warn is not recognized by scaladoc. we use @note instead
+         // fucking scaladoc just ignores @note
+//         val txt3    = if( !docWarnPos ) txt2 else ensureEmptyTrail( txt2 ) :+ "@note  The argument order is different from its sclang counterpart."
+         val txt3    = if( !docWarnPos ) txt2 else ensureEmptyTrail( txt2 ) :+ "'''Warning''': The argument order is different from its sclang counterpart."
 
          DocDef( DocComment(
 //            txt3.mkString( "\n" + ind + "/**\n" + ind + " * ", "\n" + ind + " * ", "\n" + ind + " */\n" ), NoPosition ),
