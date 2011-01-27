@@ -684,21 +684,23 @@
                 </doc>
             </arg>
             <doc warnpos="true">
-                A UGen which polls results from demand-rate ugens when receiving a trigger.
-                When there is a trigger at the `trig` input, a value is demanded from each ugen in the `in` input
-                and output. The unit generators in the list should be demand-rate.
-                When there is a trigger at the reset input, the demand rate ugens in the list are reset.
+                <text>
+                    A UGen which polls results from demand-rate ugens when receiving a trigger.
+                    When there is a trigger at the `trig` input, a value is demanded from each ugen in the `in` input
+                    and output. The unit generators in the list should be demand-rate.
+                    When there is a trigger at the reset input, the demand rate ugens in the list are reset.
 
-                Note: By design, a reset trigger only resets the demand ugens; it does not reset the value at Demand's output.
-                Demand continues to hold its value until the next value is demanded, at which point its output value will
-                be the first expected item in the `in` argument.
+                    Note: By design, a reset trigger only resets the demand ugens; it does not reset the value at Demand's output.
+                    Demand continues to hold its value until the next value is demanded, at which point its output value will
+                    be the first expected item in the `in` argument.
 
-                Note: One demand-rate ugen represents a single stream of values, so that embedding the same ugen twice
-                calls this stream twice per demand, possibly yielding different values. To embed the same sequence
-                twice, either make sure the ugen is demanded only once, or create two instances of the ugen.
+                    Note: One demand-rate ugen represents a single stream of values, so that embedding the same ugen twice
+                    calls this stream twice per demand, possibly yielding different values. To embed the same sequence
+                    twice, either make sure the ugen is demanded only once, or create two instances of the ugen.
 
-                '''Warning''': Demand currently seems to have problems with infinite sequences. As a workaround
-                use a very large length instead. E.g. instead of `Dbrown( 0, 1, inf )` use `Dbrown( 0, 1, 0xFFFFFFFF )`!
+                    '''Warning''': Demand currently seems to have problems with infinite sequences. As a workaround
+                    use a very large length instead. E.g. instead of `Dbrown( 0, 1, inf )` use `Dbrown( 0, 1, 0xFFFFFFFF )`!
+                </text>
             </doc>
             <see>ugen.Duty</see>
             <see>ugen.TDuty</see>
@@ -730,14 +732,16 @@
                 </doc>
             </arg>
             <doc>
-                A UGen which polls results from demand-rate ugens in intervals specified by a durational input.
-                A value from the `level` ugen is demanded and output according to a stream
-                of duration values. When there is a trigger at the reset input, the `level`
-                and the `dur` input are reset.
+                <text>
+                    A UGen which polls results from demand-rate ugens in intervals specified by a durational input.
+                    A value from the `level` ugen is demanded and output according to a stream
+                    of duration values. When there is a trigger at the reset input, the `level`
+                    and the `dur` input are reset.
+                </text>
+                <see>ugen.TDuty</see>
+                <see>ugen.Demand</see>
+                <see>DoneAction</see>
             </doc>
-            <see>ugen.TDuty</see>
-            <see>ugen.Demand</see>
-            <see>DoneAction</see>
         </ugen>
         <ugen name="TDuty">
             <rate name="control"/>
@@ -774,16 +778,18 @@
                 </doc>
             </arg>
             <doc>
-                A UGen which polls results from demand-rate ugens in intervals specified by a durational input,
-                and outputs them as trigger values.
-                A value from the `level` ugen is demanded and output for one sample (when
-                running at audio-rate) or one block (when running at control-rate) according to a stream
-                of duration values. When there is a trigger at the reset input, the `level` and
-                the `dur` input are reset.
+                <text>
+                    A UGen which polls results from demand-rate ugens in intervals specified by a durational input,
+                    and outputs them as trigger values.
+                    A value from the `level` ugen is demanded and output for one sample (when
+                    running at audio-rate) or one block (when running at control-rate) according to a stream
+                    of duration values. When there is a trigger at the reset input, the `level` and
+                    the `dur` input are reset.
+                </text>
+                <see>ugen.Duty</see>
+                <see>ugen.Demand</see>
+                <see>DoneAction</see>
             </doc>
-            <see>ugen.Duty</see>
-            <see>ugen.Demand</see>
-            <see>DoneAction</see>
         </ugen>
         <ugen name="DemandEnvGen">
             <!-- XXX TODO: tricky rate constraint: if either of gate
@@ -851,10 +857,10 @@
                     For each parameter of the envelope (levels, durations and shapes), values are polled
                     every time a new segment starts.
                 </text>
+                <see>ugen.EnvGen</see>
+                <see>EnvShape</see>
+                <see>DoneAction</see>
             </doc>
-            <see>ugen.EnvGen</see>
-            <see>EnvShape</see>
-            <see>DoneAction</see>
         </ugen>
         <ugen name="Dseries" indiv="true">
             <rate name="demand" implied="true" method="apply"/>
@@ -1110,11 +1116,11 @@
 
                     If the speed is too high, the UGen will not execute, posting a warning.
                 </text>
+                <see>Buffer#cue</see>
+                <see>ugen.DiskIn</see>
+                <see>ugen.DiskOut</see>
+                <see>ugen.PlayBuf</see>
             </doc>
-            <see>Buffer#cue</see>
-            <see>ugen.DiskIn</see>
-            <see>ugen.DiskOut</see>
-            <see>ugen.PlayBuf</see>
         </ugen>
     </file>
 
