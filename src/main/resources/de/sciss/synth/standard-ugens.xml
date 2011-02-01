@@ -2415,6 +2415,20 @@
                 </doc>
             </arg>
             <arg name="time" default="1"/>
+            <doc>
+                <text>
+                    An integrator UGen with exponential decay of past values. This is essentially the same
+                    as `Integrator` except that instead of supplying the coefficient directly, it is calculated
+                    from a 60 dB decay time. This is the time required for the integrator to lose 99.9 % of its
+                    value or -60dB.
+
+                    Note: This should not be confused with `Lag` which does not overshoot due to integration,
+                    but asymptotically follows the input signal.
+                </text>
+                <see>ugen.Integrator</see>
+                <see>ugen.Decay2</see>
+                <see>ugen.Lag</see>
+            </doc>
         </ugen>
         <ugen name="Decay2">
             <rate name="control"/>
@@ -2426,6 +2440,22 @@
             </arg>
             <arg name="attack" default="0.01"/>
             <arg name="release" default="1"/>
+            <doc>
+                <text>
+                    A integrator UGen with controllable attack and release times.
+                    While `Decay` has a very sharp attack and can produce clicks, `Decay2` rounds off the attack by
+                    subtracting one Decay from another. It can be seen as equivalent to
+                    {{{
+                    Decay.ar(in, release) - Decay.ar(in, attack)
+                    }}}
+
+                    Note: This should not be confused with `LagUD` which does not overshoot due to integration,
+                    but asymptotically follows the input signal.
+                </text>
+                <see>ugen.Decay</see>
+                <see>ugen.Integrator</see>
+                <see>ugen.LagUD</see>
+            </doc>
         </ugen>
         <!-- this should exist according to plugin sources...
         <ugen name="Flip"/>
