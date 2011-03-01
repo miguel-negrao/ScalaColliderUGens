@@ -177,3 +177,21 @@ case class PlayBuf(rate: Rate, numChannels: Int, buf: AnyGE, speed: AnyGE, trig:
 }
 case class PlayBufUGen(rate: Rate, numChannels: Int, buf: UGenIn, speed: UGenIn, trig: UGenIn, startPos: UGenIn, loop: UGenIn, doneAction: UGenIn)
 extends MultiOutUGen(IIdxSeq.fill(numChannels)(rate), IIdxSeq(buf, speed, trig, startPos, loop, doneAction)) with HasSideEffect with HasDoneFlag
+
+///////////////////////////////////
+
+Synthetic3
+idea: Add the HasDoneFlag annotation to the rate parameter of GE (possible?)
+
+better: consider case of PlayBuf -- this is a multi-out ugen, but in no case do we want do mce the Done. 
+hence, instead of annotating the PlayBufUGen, just annotate PlayBuf, and Done will look like this:
+
+object Done { def kr( g: AnyGE with HasDoneFlag ) ... }
+case class Done( ... ) {
+   def expand = {
+      src.expand.headOption match {
+         case Some( srch ) => IIdxSeq( new SingleOutUGen( "Done", control, IIdxSeq( srch ))
+         case None => IIdxSeq.empty  // or throw runtime error?? or print warning??
+      }
+   }
+}
