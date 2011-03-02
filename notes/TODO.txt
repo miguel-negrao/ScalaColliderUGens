@@ -195,3 +195,87 @@ case class Done( ... ) {
       }
    }
 }
+
+alternative:
+
+   protected def expandUGens = {
+      val _src: IIdxSeq[UGenIn] = src.expand
+      _src.headOption match {
+         case Some( _src_ch ) => IIdxSeq( new SingleOutUGen("Done", control, IIdxSeq( _src_ch )))
+         case None => Console.err.println( "Warning: Done omitted due to zero-outputs input" ); IIdxSeq.empty
+      }
+   }
+
+/////
+
+- final case class ?
+
+/////
+
+this is from manual craft:
+
+case class Lag[ R <: Rate ](/*rate: R,*/ in: GE[ R ], time: AnyGE) extends SingleOutUGenSource[R] {
+   protected def expandUGens = {
+      val _in: IIdxSeq[UGenIn] = in.expand
+      val _time: IIdxSeq[UGenIn] = time.expand
+      val _sz_in = _in.size
+      val _sz_time = _time.size
+      val _exp_ = maxInt(_sz_in, _sz_time)
+      IIdxSeq.tabulate(_exp_)(i => { val __in = _in(i.%(_sz_in)); new SingleOutUGen("Lag", __in.rate, IIdxSeq( __in, _time(i.%(_sz_time))))})
+   }
+}
+
+open question to whether it's more elegant to leave away the rate arg or not.
+
+vs.
+
+case class Lag[R <: Rate](rate: R, in: AnyGE, time: AnyGE) extends SingleOutUGenSource[R] {
+// ---> at least the rate of in should be "fixed"
+
+; the advantage of the rate argument might be that def rate: R could be added to Single/MultiZeroOutUGenSource ?
+; other advantage lies in tree rewriting : this would make the different ugen sources more homogeneous, e.g.
+
+    { case LPF[_]( rate, in, freq ) => HPF( rate, in, freq )}
+?
+// on the other hand -- BinaryOp and UnaryOp already have no more rate args ....
+
+/////
+
+object WhiteNoise {
+   def kr: WhiteNoise[control, scalar, control] = kr()
+   def kr[S <: Rate, T <: Rate](mul: GE[S] = 1.0f)(implicit rateOrder: RateOrder[control, S, T]) = apply[control, S, T](rateOrder.out, mul)(rateOrder)
+   def ar: WhiteNoise[audio, scalar, audio] = ar()
+   def ar[S <: Rate, T <: Rate](mul: GE[S] = 1.0f)(implicit rateOrder: RateOrder[audio, S, T]) = apply[audio, S, T](rateOrder.out, mul)(rateOrder)
+}
+case class WhiteNoise[R <: Rate, S <: Rate, T <: Rate](rate: T, mul: GE[S])( implicit rateOrder: RateOrder[R, S, T]) extends SingleOutUGenSource[T] with UsesRandSeed
+
+--> an alternative would be
+
+object WhiteNoise {
+   def kr: WhiteNoise[control, scalar] = kr()
+   def kr[S <: Rate](mul: GE[S] = 1.0f)(implicit rateOrder: Rate.>=[control, S) = apply[control, S, T](control, mul)(rateOrder)
+   def ar: WhiteNoise[audio, scalar, audio] = ar()
+   def ar[S <: Rate](mul: GE[S] = 1.0f)(implicit rateOrder: Rate.>=[audio, S]) = apply[audio, S, T](audio, mul)(rateOrder)
+}
+case class WhiteNoise[R <: Rate, S <: Rate](rate: R, mul: GE[S])( implicit rateOrder: Rate.>=[R, S]) extends SingleOutUGenSource[T] with UsesRandSeed
+
+// which has the advantage that it actually works :) because rateOrder.out is not effective anymore
+// on the other hand -- BinaryOp and UnaryOp already have no more rate args ....
+// a major disadvantage : you can't get Rate.>= for an unknown rate mul argument !
+
+// workaround: rate should still be R ! i.e. the rate of the WhiteNoise itself, we'll need it in the SingleOutUGen !!
+
+result:
+
+object WhiteNoise {
+   def kr: WhiteNoise[control, scalar, control] = kr()
+   def kr[S <: Rate, T <: Rate](mul: GE[S] = 1.0f)(implicit rateOrder: RateOrder[control, S, T]) = apply[control, S, T](control, mul)(rateOrder)
+   def ar: WhiteNoise[audio, scalar, audio] = ar()
+   def ar[S <: Rate, T <: Rate](mul: GE[S] = 1.0f)(implicit rateOrder: RateOrder[audio, S, T]) = apply[audio, S, T](audio, mul)(rateOrder)
+}
+case class WhiteNoise[R <: Rate, S <: Rate, T <: Rate](rate: R, mul: GE[S])( implicit rateOrder: RateOrder[R, S, T]) extends SingleOutUGenSource[T] with UsesRandSeed {
+   protected def expandUGens = {
+      val _mul = mul.expand
+      IIdxSeq.tabulate(_mul.size)(i => BinaryOp.Times.make1(new SingleOutUGen("WhiteNoise", rate, IIdxSeq.empty), _mul(i)))
+   }
+}

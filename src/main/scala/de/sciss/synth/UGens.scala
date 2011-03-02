@@ -28,20 +28,20 @@
 
 package de.sciss.synth
 
-import xml.{ Node, XML }
-import java.io.{FileOutputStream, BufferedWriter, OutputStreamWriter, File}
+import xml.XML
+import java.io.File
 
 object UGens {
-   val version = 0.10
+   val version = 0.11
    def versionString = (version.toString + "0").substring( 0, 4 )
 
    def main( args: Array[ String ]) {
       require( args.size == 2 && args( 0 ) == "-d" )
       val dir  = new File( args( 1 ))
       val xml  = XML.load( UGens.getClass.getResourceAsStream( "standard-ugens.xml" ))
-      val synth= new CodeSynthesizer
+      val synth= new CodeSynthesizer2
 //      synth.perform( xml, dir )
-      synth.perform( xml, dir ) // , (f, u) => f == "DemandUGens" )
+      synth.perform( xml, dir ) // , (f, u) => f == "TriggerUGens" )
       System.exit( 0 )
    }
 }
