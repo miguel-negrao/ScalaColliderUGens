@@ -1,0 +1,18 @@
+
+trait A[ +B ]
+
+trait B; trait C extends B
+
+def test1( a: A[ B ]) { }
+def test2( a: A[ C ]) { test1( a )}  // we can use audio-rate where Rate is asked
+def test3( a: A[ C ]) : A[ B ] = a   // we can return Rate where audio is given
+
+def seq1( a: Seq[ A[ C ]]) : Seq[ A[ B ]] = a  // same with seqs
+
+
+///////////
+
+the problem is Nothing
+
+///////////
+
