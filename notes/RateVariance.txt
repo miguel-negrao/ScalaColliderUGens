@@ -16,3 +16,26 @@ the problem is Nothing
 
 ///////////
 
+
+sealed trait C; sealed trait C1 extends C; case object C1 extends C1; sealed trait C2 extends C; case object C2 extends C2
+case class B[ X <: C ]( c: X )
+
+def wrongType( b: B[ _ ]) = b match {
+   case B( c @ C1 ) => B( c )
+   case _ => error( "No way jose" )
+}
+
+val x: B[ C1 ] = wrongType( B( C1 ))  // NO
+
+
+def good( b: B[ _ ]) = b match {
+   case B( c @ C1 ) => B[ C1 ]( c )
+   case _ => error( "No way jose" )
+}
+
+val x: B[ C1 ] = good( B( C1 )) // YES
+
+def notPossible( b: B[ _ ]) = b match {
+   case B( c @ C1 ) => B[ C2 ]( c )  // NO
+   case _ => error( "No way jose" )
+}

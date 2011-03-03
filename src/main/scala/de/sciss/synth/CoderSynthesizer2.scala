@@ -190,7 +190,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       val typExpandBin     = TypeDef( NoMods, "S", Nil, EmptyTree ) :: TypeDef( NoMods, "T", Nil, EmptyTree ) :: Nil
 //      val argIndiv         = SyntheticUGenArgInfo( "_indiv", ArgInfo( TypeInfo( ("Int", Nil) :: Nil ), None, None ))
       val identApply        = Ident( "apply" )
-      val strRateOrder      = "Rate.Order"
+      val strRateOrder      = "Rate.Ord"
       val identRateOrder    = Ident( "rateOrder" )
       val identRateOrderClass = Ident( strRateOrder )
       val identRate        = Ident( "rate" )
@@ -779,7 +779,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                Import( Ident( "Float" ), ImportSelector( "PositiveInfinity", -1, "inf", -1 ) :: Nil ) :: Nil
             } else Nil
             val imports1 = Import( Select( Ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, identIIdxSeq.name, -1 ) :: Nil ) ::
-                  Import( Select( Ident( "util" ), "UGenHelper" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) :: imports0
+                  Import( Select( Ident( "aux" ), "UGenHelper" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) :: imports0
             val packageDef = PackageDef( Select( Select( Ident( "de" ), "sciss" ), "synth" ),
                PackageDef( Ident( "ugen" ), imports1 ::: ugens ) :: Nil )
             println( "Writing " + fileName )
