@@ -4428,10 +4428,20 @@
             <arg name="width" default="0.5"/>
         </ugen>
 
-        <!-- XXX TODO:
-        <ugen name="Klang"/>
-        <ugen name="Klank"/>
-        -->
+        <ugen name="Klang">
+            <rate name="audio" implied="true"/>
+            <arg name="freqScale" default="1" pos="1"/>
+            <arg name="freqOffset" default="0" pos="2"/>
+            <arg name="specs" multi="true" pos="0"/>
+        </ugen>
+        <ugen name="Klank">
+            <rate name="audio" implied="true"/>
+            <arg name="in" pos="1"/>
+            <arg name="freqScale" default="1" pos="2"/>
+            <arg name="freqOffset" default="0" pos="3"/>
+            <arg name="decayScale" default="1" pos="4"/>
+            <arg name="specs" multi="true" pos="0"/>
+        </ugen>
     </file>
 
     <file name="PanUGens">
