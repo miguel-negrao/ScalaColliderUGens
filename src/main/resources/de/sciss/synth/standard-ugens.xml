@@ -4828,42 +4828,104 @@
         <ugen name="SendTrig" sideeffect="true">
             <rate name="audio"/>
             <rate name="control"/>
-            <arg name="trig">
+            <arg name="trig" pos="0" rate="ugen">
                 <doc>
                     the trigger signal causing the value to be read and sent. A trigger occurs
                     when passing from non-positive to positive.
                 </doc>
             </arg>
-            <arg name="value" default="0">
+            <arg name="value" default="0" pos="2">
                 <doc>
                     a changing signal or constant that will be polled at the time of trigger,
                     and its value passed with the trigger message
                 </doc>
             </arg>
-            <arg name="id" default="0">
+            <arg name="id" default="0" pos="1">
                 <doc>
                     an arbitrary integer that will be sent along with the `"/tr"` message.
                     This is useful to distinguish between several SendTrig instances per SynthDef.
                 </doc>
             </arg>
-            <doc>
+            <doc warnpos="true">
                 <text>
                     A UGen that sends a value from the server to all notified clients upon receiving triggers.
                     The message sent is `OSCMessage( "/tr", &lt;(Int) nodeID&gt;, &lt;(Int) trigID&gt;, &lt;(Float) value&gt; )`.
 
                     For sending an array of values, or using an arbitrary reply command, see `SendReply`.
-
-                    '''Warning''': We have changed the argument order. While in sclang, `id` precedes `value`,
-                    we are using them in reverse order here!
                 </text>
                 <see>ugen.SendReply</see>
             </doc>
         </ugen>
 
-        <!-- XXX TODO
         <ugen name="SendReply" sideeffect="true">
+            <rate name="control"/>
+            <rate name="audio"/>
+            <arg name="trig" pos="0" rate="ugen">
+                <doc>
+                    a non-positive to positive transition triggers a message
+                </doc>
+            </arg>
+            <arg name="id" default="0" pos="3">
+                <doc>
+                    an integer identifier which is contained in the reply message. While you can
+                    distinguish different `SendReply` instances from the same Synth by choosing different
+                    OSCMessage names, depending on the application you may use the same message name but
+                    different ids (similar to `SendTrig`).
+                </doc>
+            </arg>
+            <arg name="msgName" type="String" default="/reply" pos="2">
+                <doc>
+                    a string specifying the OSCMessage's name. by convention, this should
+                    start with a forward slash and contain only 7-bit ascii characters.
+                </doc>
+            </arg>
+            <arg name="values" multi="true" pos="1">
+                <doc>
+                    a graph element comprising the signal channels to be polled
+                </doc>
+            </arg>
+            <doc warnpos="true">
+                <text>
+                    A UGen which sends an sequence of values from the server to all notified clients upon receiving triggers.
+                    The message sent is `OSCMessage( &lt;(String) msgName&gt;, &lt;(Int) nodeID&gt;, &lt;(Int) replyID&gt;, &lt;(Float) values&gt;* )`.
+
+                    For sending a single value, `SendTrig` provides an alternative.
+                </text>
+                <see>ugen.SendTrig</see>
+            </doc>
+        </ugen>
+
         <ugen name="Poll" sideeffect="true">
-        -->
+            <rate name="audio"/>
+            <rate name="control"/>
+            <arg name="trig" pos="0" rate="ugen">
+                <doc>
+                    a non-positive to positive transition telling Poll to return a value
+                </doc>
+            </arg>
+            <arg name="in" pos="1">
+                <doc>
+                    the signal you want to poll
+                </doc>
+            </arg>
+            <arg name="trigID" pos="3">
+                <doc>
+                    if greater then 0, a `"/tr"` OSC message is sent back to the client
+                    (similar to `SendTrig`)
+                </doc>
+            </arg>
+            <arg name="label" type="String" pos="2">
+                <doc>
+                    a string or symbol to be printed with the polled value
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen for printing the current output value of its input to the console.
+                </text>
+                <see>ugen.SendTrig</see>
+            </doc>
+        </ugen>
 
         <ugen name="ToggleFF">
             <rate name="control"/>

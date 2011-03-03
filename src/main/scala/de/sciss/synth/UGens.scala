@@ -41,7 +41,7 @@ object UGens {
       val xml  = XML.load( UGens.getClass.getResourceAsStream( "standard-ugens.xml" ))
       val synth= new CodeSynthesizer2
 //      synth.perform( xml, dir )
-      synth.perform( xml, dir ) // , (f, u) => f == "TriggerUGens" )
+      synth.perform( xml, dir, (f, u) => f == "TriggerUGens" )
       System.exit( 0 )
    }
 }

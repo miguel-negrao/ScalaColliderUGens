@@ -279,3 +279,29 @@ case class WhiteNoise[R <: Rate, S <: Rate, T <: Rate](rate: R, mul: GE[S])( imp
       IIdxSeq.tabulate(_mul.size)(i => BinaryOp.Times.make1(new SingleOutUGen("WhiteNoise", rate, IIdxSeq.empty), _mul(i)))
    }
 }
+
+///////////// from manual craft
+
+object Out {
+   object RateCons {
+      implicit val ar: RateCons[ audio, audio ]             = new RateCons[ audio, audio ]
+      implicit def kr[ S <: Rate ]: RateCons[ control, S ]  = new RateCons[ control, S ]
+      implicit def ir[ S <: Rate ]: RateCons[ scalar, S ]   = new RateCons[ scalar, S ]
+   }
+   sealed class RateCons[ R <: Rate, S <: Rate ]
+
+   def ar(bus: AnyGE, in: Multi[GE[audio]]) = apply[audio, audio](audio, bus, in)
+   def kr[ S <: Rate ](bus: AnyGE, in: Multi[GE[S]]) = apply[control, S](control, bus, in)
+   def ir[ S <: Rate ](bus: AnyGE, in: Multi[GE[S]]) = apply[scalar, S](scalar, bus, in)
+}
+final case class Out[R <: Rate, S <: Rate](rate: R, bus: AnyGE, in: Multi[GE[S]])( implicit rateCons: Out.RateCons[ R, S ])
+extends ZeroOutUGenSource[R] with WritesBus {
+   protected def expandUGens = {
+      val _bus = bus.expand
+      val _in = in.mexpand
+      val _sz_bus = _bus.size
+      val _sz_in = _in.size
+      val _exp_ = maxInt(_sz_bus, _sz_in)
+      IIdxSeq.tabulate(_exp_)(i => new ZeroOutUGen("Out", rate, IIdxSeq(_bus(i.%(_sz_bus))).++(_in(i.%(_sz_in)).expand)))
+   }
+}

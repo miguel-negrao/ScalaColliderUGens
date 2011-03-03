@@ -118,17 +118,18 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 // XXX indentation funzt im moment eh nicht richtig bei scala-refactoring. besser ganz weglassen
 //         val ind     = Seq.fill( indent )( "   " ).mkString
          val txt0    = trimDoc( docText )
-         val txt1    = if( methodDocs.isEmpty ) txt0 else ensureEmptyTrail( txt0 ) ++ methodDocs.flatMap( tup => {
+         val txt1    = if( !docWarnPos ) txt0 else ensureEmptyTrail( txt0 ) :+ "'''Warning''': The argument order is different from its sclang counterpart."
+         val txt2    = if( methodDocs.isEmpty ) txt1 else ensureEmptyTrail( txt1 ) ++ methodDocs.flatMap( tup => {
             trimDoc( tup._2 ).zipWithIndex.map( tup2 => {
                val (ln, idx) = tup2
                (if( idx == 0 ) ("@param " + tup._1 + "              ").take( 21 ) + "  " else "                       ") + ln
             })
          })
-         val txt2    = if( sees.isEmpty ) txt1 else ensureEmptyTrail( txt1 ) ++ sees.map( "@see [[de.sciss.synth." + _ + "]]" )
+         val txt3    = if( sees.isEmpty ) txt2 else ensureEmptyTrail( txt2 ) ++ sees.map( "@see [[de.sciss.synth." + _ + "]]" )
          // note: @warn is not recognized by scaladoc. we use @note instead
          // fucking scaladoc just ignores @note
 //         val txt3    = if( !docWarnPos ) txt2 else ensureEmptyTrail( txt2 ) :+ "@note  The argument order is different from its sclang counterpart."
-         val txt3    = if( !docWarnPos ) txt2 else ensureEmptyTrail( txt2 ) :+ "'''Warning''': The argument order is different from its sclang counterpart."
+//         val txt3    = if( !docWarnPos ) txt2 else ensureEmptyTrail( txt2 ) :+ "'''Warning''': The argument order is different from its sclang counterpart."
 
          DocDef( DocComment(
 //            txt3.mkString( "\n" + ind + "/**\n" + ind + " * ", "\n" + ind + " * ", "\n" + ind + " */\n" ), NoPosition ),
@@ -335,7 +336,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //            val argsPoss   = args0.map( _._2 )
             val numArgsIn  = argsTup.size
 //            require( numArgsIn == argsPoss.toSet.size, "Wrong argument positions (" + name + ")" )
-            val argsOut    = argsTup.map( _._1 ).filter( _.isGE )
+            val argsOut    = argsTup.map( _._1 ).filter( a => a.isGE || a.isString )
             val argsIn     = List.tabulate( numArgsIn )(
                idx => argsTup.find( _._2 == idx ).getOrElse( Predef.error( "Wrong argument positions (" + name + ")" ))._1 )
 //            val argsInS    = if( indiv ) {
@@ -499,16 +500,25 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //               val multiE  = multi.expand
 //               val numExp  = math.max( bufE.size, multiE.size )
 //               IIdxSeq.tabulate( numExp )( i => DiskOutUGen( bufE( i % numExp ), multiE( i % numExp ).expand ))
-               val moreThanZeroArgOut = argsOut.size > 0
-               val moreThanOneArgOut  = argsOut.size > 1
+               val argsExpOut          = argsOut.filter( _.isGE )
+               val moreThanZeroArgOut  = argsExpOut.size > 0
+               val moreThanOneArgOut   = argsExpOut.size > 1
                val methodBody : Tree = {
                   val stat =
 //                  (expArgs.map( a => ValDef( NoMods, "_" + a.arg.name, TypeTree( NoType ), Select( Ident( a.arg.name ), "expand" )))
                   // XXX dirty
-                  (argsOut.map( a => ValDef( NoMods, "_" + a.name /* + ": IIdxSeq[" + a.deriveGE( false ) + "]" */, TypeTree( NoType ),
-                     Select( Ident( a.name ), if( a.multi ) "mexpand" else "expand" ))) ++
+                  (argsOut.map( a => ValDef( NoMods, "_" + a.name /* + ": IIdxSeq[" + a.deriveGE( false ) + "]" */, TypeTree( NoType ), {
+                     if( a.isGE ) {
+                        Select( Ident( a.name ), if( a.multi ) "mexpand" else "expand" )
+                     } else if( a.isString ) {
+                        Apply( Ident( "stringArg" ), Ident( a.name ) :: Nil )
+                     } else {
+                        error( "What arg is this? " + a )
+                        EmptyTree // why isn't error: Nothing sufficient?
+                     }
+                  })) ++
                    (if( moreThanOneArgOut ) {
-                      argsOut.map( a => ValDef( NoMods, "_sz_" + a.name, TypeTree( NoType ), Select( Ident( "_" + a.name ), "size" )))
+                      argsExpOut.map( a => ValDef( NoMods, "_sz_" + a.name, TypeTree( NoType ), Select( Ident( "_" + a.name ), "size" )))
                    } else {
                       Nil
                    }) ++ {
@@ -547,7 +557,11 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                                     }
                                  } :: Nil )
                                  if( a.multi ) Select( apply, "expand" ) else apply
-                              } else Ident( a.name )
+                              } else if( a.isGE ) {
+                                 Ident( "_" + a.name )
+                              } else {
+                                 Ident( a.name )
+                              }
                            })
                            val (preBody, preArgs, argsApp1) = outputs match {
                               case m: MultiOutputLike =>
@@ -605,12 +619,12 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                         }
                      }
                      if( moreThanZeroArgOut ) {
-                        val numId = if( moreThanOneArgOut ) Ident( "_exp_" ) else Select( Ident( "_" + argsOut.head.name ), "size" )
+                        val numId = if( moreThanOneArgOut ) Ident( "_exp_" ) else Select( Ident( "_" + argsExpOut.head.name ), "size" )
                         val app0 = Apply( Apply( Select( identIIdxSeq, "tabulate" ), numId :: Nil ),
                            Function( ValDef( Modifiers( Flags.PARAM ), "i", TypeTree( NoType ), EmptyTree ) :: Nil, funBody ) :: Nil
                         ) :: Nil
                         if( moreThanOneArgOut ) {
-                           ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "maxInt" ), argsOut.map( a => Ident( "_sz_" + a.name )))) :: app0
+                           ValDef( NoMods, "_exp_", TypeTree( NoType ), Apply( Ident( "maxInt" ), argsExpOut.map( a => Ident( "_sz_" + a.name )))) :: app0
                         } else app0
                      } else {
                         Apply( identIIdxSeq, funBody :: Nil ) :: Nil
@@ -856,6 +870,9 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          case _                        => false
       }
 
+      def isInt      = argDefault.typ.tuples == List( ("Int", Nil) )
+      def isString   = argDefault.typ.tuples == List( ("String", Nil) )
+
       def isExpands = argDefault.typ.tuples.headOption match {
          case Some( (`strMulti`, _ ) ) => true
          case _ => false
@@ -893,7 +910,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          } catch {
             case e: NumberFormatException => Ident( s )
          }
-      } else Ident( s )).getOrElse( EmptyTree )
+      } else if( isString ) Literal( Constant( s )) else Ident( s )).getOrElse( EmptyTree )
    }
 
    private case class UGenArgInfo( name: String, argDefault: ArgInfo, argMap: Map[ RateInfo, ArgInfo ], multi: Boolean, expandBin: Option[ String ])
