@@ -544,7 +544,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
                         val (preBody, outUGenArgs) = {
                            val args0         = argsOut.filterNot( _.expandBin.isDefined )
-                           val hasLastMulti  = args0.lastOption.map( _.multi ).getOrElse( false )
+//                           val hasLastMulti  = args0.lastOption.map( _.multi ).getOrElse( false )
 //                           val args1         = if( hasLastMulti ) args0.dropRight( 1 ) else args0
                            val argsApp       = args0.map( a => {
                               if( a.isGE ) {
@@ -581,22 +581,51 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                                   argsApp0)
                               case _ => (None, Nil, argsApp)
                            }
-                           val args3 = preArgs :+ (if( hasLastMulti ) {
-                              val a       = argsApp1.last
-                              val sel     = a // Select( a, "expand" ) // Ident( a.name ) // already expanded to IIdxSeq!
-                              val argsRem = argsApp1.dropRight( 1 )
-                              (if( argsRem.nonEmpty ) {
-                                 Apply( Select( Apply( identIIdxSeq, /* TypeApply( identIIdxSeq, Ident( "UGenIn" ) :: Nil ), */
-                                    argsRem),
-                                    "++" ), sel :: Nil )
-                              } else sel)
-                           } else {
-                              (if( args0.nonEmpty ) {
-                                 Apply( identIIdxSeq, argsApp1 )
-                              } else {
-                                 Select( identIIdxSeq, "empty" )
-                              })
-                           })
+
+                           def split(as: IIdxSeq[UGenArgInfo], ts: IIdxSeq[Tree]): IIdxSeq[Tree] = {
+                              require( as.size == ts.size )
+                              var from = 0
+                              var keep = false
+                              var res  = IIdxSeq.empty[Tree]
+                              while( from < as.size ) {
+                                 val n = as.segmentLength( u => (u.isExpands || u.isString) == keep, from )
+                                 if( n > 0 ) {
+                                    val slice = ts.slice( from, from + n )
+                                    res = if( keep ) res ++ slice else res :+ Apply( identIIdxSeq, slice.toList )
+                                    from += n
+                                 }
+                                 keep = !keep
+                              }
+                              res
+                           }
+
+                           val argsApp2 = split( args0.toIndexedSeq, argsApp1.toIndexedSeq )
+                           val argsTree = argsApp2.lastOption match {
+                              case None => Select( identIIdxSeq, "empty" )
+                              case Some( l ) => argsApp2.init.foldRight( l )( (a, t) => Apply( Select( a, "++" ), t :: Nil ))
+                           }
+//                           val argsTree = argsApp2.headOption match {
+//                              case None => Select( identIIdxSeq, "empty" )
+//                              case Some( h ) => argsApp2.init.foldLeft( h )( (a, t) => Apply( Select( t, "++" ), a :: Nil ))
+//                           }
+
+                           val args3 = preArgs :+ argsTree
+//                           val args3 = preArgs :+ (if( hasLastMulti ) {
+//                              val a       = argsApp1.last
+//                              val sel     = a // Select( a, "expand" ) // Ident( a.name ) // already expanded to IIdxSeq!
+//                              val argsRem = argsApp1.dropRight( 1 )
+//                              (if( argsRem.nonEmpty ) {
+//                                 Apply( Select( Apply( identIIdxSeq, /* TypeApply( identIIdxSeq, Ident( "UGenIn" ) :: Nil ), */
+//                                    argsRem),
+//                                    "++" ), sel :: Nil )
+//                              } else sel)
+//                           } else {
+//                              (if( args0.nonEmpty ) {
+//                                 Apply( identIIdxSeq, argsApp1 )
+//                              } else {
+//                                 Select( identIIdxSeq, "empty" )
+//                              })
+//                           })
                            val args4 = Literal( Constant( name )) :: Ident( impliedRate.map( _.typ ).getOrElse( "rate" )) :: args3
                            (preBody, args4 :: Nil) // no currying
                         }

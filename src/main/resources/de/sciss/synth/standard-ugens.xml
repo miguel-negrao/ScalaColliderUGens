@@ -4908,13 +4908,13 @@
                     the signal you want to poll
                 </doc>
             </arg>
-            <arg name="trigID" pos="3">
+            <arg name="trigID" default="-1" pos="3">
                 <doc>
                     if greater then 0, a `"/tr"` OSC message is sent back to the client
                     (similar to `SendTrig`)
                 </doc>
             </arg>
-            <arg name="label" type="String" pos="2">
+            <arg name="label" type="String" default="poll" pos="2">
                 <doc>
                     a string or symbol to be printed with the polled value
                 </doc>
