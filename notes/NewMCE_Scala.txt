@@ -1,0 +1,124 @@
+import collection.immutable.{IndexedSeq=>IIdxSeq, List=>$}
+import collection.breakOut
+
+sealed trait UGenInSource { 
+   def dig( i: Int ) : UGenInSource 
+   def mexpand: IIdxSeq[ UGenInSource ]
+}
+
+object GE {
+    implicit def fromInt( i: Int ) : GE = Constant( i )
+    implicit def fromIntSeq( is: Seq[ Int ]) : GE = GESeq( is.map( Constant( _ ))( breakOut ))
+    implicit def fromGESeq( is: Seq[ GE ]) : GE = GESeq( is.toIndexedSeq )
+}
+trait GE {
+   def expand: UGenInSource
+}
+case class GESeq( xs: IIdxSeq[ GE ]) extends GE {
+    def expand: UGenInSource = WrapMultiUGenIn( xs.map( _.expand ))
+}
+sealed trait UGenIn extends UGenInSource { 
+    def dig( i: Int ) : UGenInSource = this
+    def mexpand: IIdxSeq[ UGenInSource ] = IIdxSeq( this )
+}
+case class Constant( i: Int ) extends GE with UGenIn {
+   def expand: UGenInSource = this
+   override def toString = i.toString
+}
+sealed trait MultiUGenIn extends UGenInSource {
+//   def mexpand: UGenInSource
+   def numOuts: Int
+//   def dig( i: Int ) : UGenInSource
+}
+
+sealed trait UGen extends UGenInSource
+case class SingleOutUGen( name: String, args: IIdxSeq[ UGenIn ]) extends UGen with UGenIn {
+    override def toString = name + args.mkString( "(", ", ", ")" )
+}
+case class UGenOutProxy( src: UGen, idx: Int ) extends UGenIn {
+    override def toString = src.toString + "{" + idx +"}"
+}
+case class MultiOutUGen( name: String, num: Int, args: IIdxSeq[ UGenIn ]) extends UGen with MultiUGenIn {
+    def mexpand: IIdxSeq[ UGenInSource ] = /* WrapMultiUGenIn( */ proxies /* ) */
+    def proxies =  IIdxSeq.tabulate(num)(UGenOutProxy(this,_))
+    def dig( i: Int ) : UGenInSource = proxies( i % proxies.size )
+    def numOuts = num
+    override def toString = name + args.mkString( "(<" + num + ">, " , ", ", ")" )
+}
+
+case class WrapMultiUGenIn( xs: IIdxSeq[ UGenInSource ]) extends MultiUGenIn {
+   def mexpand: IIdxSeq[ UGenInSource ] = xs
+   def dig( i : Int ) = xs( i % xs.size )
+   def numOuts = xs.size
+   override def toString = xs.mkString( "[", ", ", "]" )
+}
+
+trait BasicGE extends GE {
+    protected def make1( args: IIdxSeq[ UGenIn ]) : UGenInSource
+    protected def mexpand1( args: IIdxSeq[ UGenInSource ]) : UGenInSource = {
+       val numArgs = args.size
+       var uins    = new Array[ UGenIn ]( numArgs )
+       var numUIns = 0
+       var exp     = 0
+       args.foreach {
+          case u: UGenIn => 
+             uins( numUIns ) = u
+             numUIns += 1
+          case g: MultiUGenIn =>
+             exp = math.max( exp, g.numOuts )
+        }
+        if( numUIns == numArgs ) {
+           make1( uins.toIndexedSeq )
+        } else {
+           WrapMultiUGenIn( IIdxSeq.tabulate(exp)( i => {
+               mexpand1( args.map( _.dig( i )))
+           }))
+        }
+    }
+}
+
+case class SinOsc( freq: GE, phase: GE = Constant( 0 )) extends BasicGE {
+    def expand: UGenInSource = {
+        mexpand1( IIdxSeq( freq.expand, phase.expand ))
+    }
+    protected def make1( args: IIdxSeq[ UGenIn ]) : UGenInSource =
+       new SingleOutUGen( "SinOsc", args )
+}
+
+case class DiskOut( buf: GE, sig: GE ) extends BasicGE {
+    def expand: UGenInSource = {
+        mexpand1( IIdxSeq( buf.expand ) ++ sig.expand.mexpand )
+    }
+    protected def make1( args: IIdxSeq[ UGenIn ]) : UGenInSource =
+       new SingleOutUGen( "DiskOut", args )
+}
+
+case class Out( bus: GE, sig: GE ) extends BasicGE {
+    def expand: UGenInSource = {
+        mexpand1( IIdxSeq( bus.expand ) ++ sig.expand.mexpand )
+    }
+    protected def make1( args: IIdxSeq[ UGenIn ]) : UGenInSource =
+       new SingleOutUGen( "Out", args )
+}
+
+case class Pan2( in: GE, pos: GE ) extends BasicGE {
+    def expand: UGenInSource = {
+        mexpand1( IIdxSeq( in.expand, pos.expand ))
+    }
+    protected def make1( args: IIdxSeq[ UGenIn ]) : UGenInSource =
+       new MultiOutUGen( "Pan2", 2, args )
+}
+
+SinOsc( 123 ).expand
+SinOsc( $(123, 456) ).expand
+SinOsc( $($(11,22):GE,$(33,44):GE)).expand
+SinOsc( $($($(11,22):GE,$(33,44):GE):GE)).expand
+
+DiskOut( 0, SinOsc( 123 )).expand
+DiskOut( 0, SinOsc( $(123, 456) )).expand
+DiskOut( $(5,6), SinOsc($($(11,22):GE,$(33,44):GE):GE)).expand
+DiskOut( $(5,6), SinOsc($(11,22,33,44))).expand
+DiskOut( $(5,6), SinOsc($($(11,22,33,44):GE))).expand
+Out( $(7,8), DiskOut( $(5,6), SinOsc($($($(11,22):GE,$(33,44):GE):GE):GE))).expand
+
+Out($(7,8), DiskOut($(5,6), Pan2( SinOsc($($($(11):GE,22:GE):GE):GE), $(9,10)))).expand
