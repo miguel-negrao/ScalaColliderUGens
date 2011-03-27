@@ -148,3 +148,10 @@ die frage ist: machen Seq[UGenIn] Sinn, deren rates verschieden sind?
 --> denn overloading funktioniert nicht mit default args
 --> in den beispielen kommt das praktisch nicht vor ; auch problematisch fuer
   visuelle repraesentation
+
+////////////////////////////////////////////////////////////
+
+http://michid.wordpress.com/2008/10/29/meta-programming-with-scala-conditional-compilation-and-loop-unrolling/
+--> hmm.... "This means that things like type sets (which would be a useful construct) are virtually impossible to create in Scala."
+http://apocalisp.wordpress.com/2010/06/13/type-level-programming-in-scala-part-3-boolean/
+http://jnordenberg.blogspot.com/2009/09/type-lists-and-heterogeneously-typed.html
