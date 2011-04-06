@@ -305,3 +305,9 @@ extends ZeroOutUGenSource[R] with WritesBus {
       IIdxSeq.tabulate(_exp_)(i => new ZeroOutUGen("Out", rate, IIdxSeq(_bus(i.%(_sz_bus))).++(_in(i.%(_sz_in)).expand)))
    }
 }
+
+///////////////
+
+[error] /Users/hhrutz/Documents/devel/ScalaCollider/src/main/scala/de/sciss/synth/ugen/FFT_UGens.scala:20: overloaded method apply needs result type
+[error]    def apply(chain: GE, winType: GE = 0.0f, winSize: GE = 0.0f) = apply(audio, chain, winType, winSize)
+[error]                                                                        ^

@@ -39,7 +39,7 @@ object UGens {
       require( args.size == 2 && args( 0 ) == "-d" )
       val dir  = new File( args( 1 ))
       val xml  = XML.load( UGens.getClass.getResourceAsStream( "standard-ugens.xml" ))
-      val synth= new CodeSynthesizer3
+      val synth= new CodeSynthesizer4
 //      synth.perform( xml, dir )
       synth.perform( xml, dir ) // , (f, u) => f == "TriggerUGens" )
       System.exit( 0 )
