@@ -47,6 +47,9 @@ class CodeSynthesizer4 extends Refactoring
 with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with TreeFactory {
    val docs          = true
    val ugenClass     = false
+   val ratedTrait    = true
+   val maybeRates    = true
+   val displayName   = true
 
    override val defaultIndentationStep = "   "
 
@@ -123,11 +126,16 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
       val strGE            = "GE"
       val strAnyGE         = strGE // no distinction any more
       val strRatePlaceholder="Rate" // "R"
+      val strMaybeRate     = "MaybeRate"
+      val strMaybeResolve  = "?|"
 
-      val identApply        = Ident( "apply" )
+      val identApply       = Ident( "apply" )
+      val identName        = Ident( "name" )
 
-      val strRate          = "rate"
-      val identRate        = Ident( strRate )
+      val strRateArg       = "rate"
+      val strRateMethod    = "rate"
+      val identRateArg     = Ident( strRateArg )
+      val identRateType    = Ident( "Rate" )
       val dateString       = new java.util.Date().toString
 
       (xml \ "file") foreach { node =>
@@ -201,45 +209,57 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                if( multi ) require( !doneFlagArg, "Multi arguments cannot have done flag (" + name + ")" )
 
                def createInfo( rateNode: Option[ Node ], rateInfo: Option[ RateInfo ]) : ArgInfo = {
-                  def getEitherNode( name: String ) : Option[ Node ] = {
-                     (n \ name).headOption.orElse( rateNode.flatMap( n => (n \ name).headOption ))
+                  def getAttr( name: String ) : Option[ String ] = (n \ ("@" + name)).headOption.map( _.text )
+                  def getEitherNode( name: String ) : Option[ String ] = {
+                     (n \ name).headOption.orElse( rateNode.flatMap( n => (n \ name).headOption )).map( _.text )
                   }
-                  def getEitherAttr( name: String ) : Option[ Node ] = getEitherNode( "@" + name )
-                  val typInfo    = getEitherAttr( "type" ).map( n => TypeInfo( (n.text -> Nil) :: Nil ))
+                  def getEitherAttr( name: String ) : Option[ String ] = getEitherNode( "@" + name )
+                  val (typInfo, rateCons) = getEitherAttr( "type" ).map( s => (TypeInfo( (s -> Nil) :: Nil ), None) )
                      .getOrElse({
-                        val rateAttr = getEitherAttr( "rate" ).map( _.text ) // (n \ "@rate").text
-                        def r0 = if( doneFlagArg || expandBin.isDefined ) {
-                           val par0 = strAnyGE -> Nil // if( expandBin.isDefined ) ...
-                           val par1 = if( doneFlagArg ) par0 :: ("HasDoneFlag" -> Nil) :: Nil else par0 :: Nil
-                           TypeInfo( par1, None )
-                        } else {
-                           TypeInfo( (strAnyGE -> Nil) :: Nil )
+                        val rateAttr = getEitherAttr( "rate" ) // (n \ "@rate").text
+//                        def r0 = if( doneFlagArg || expandBin.isDefined ) {
+//                           val par0 = strAnyGE -> Nil // if( expandBin.isDefined ) ...
+//                           val par1 = if( doneFlagArg ) par0 :: ("HasDoneFlag" -> Nil) :: Nil else par0 :: Nil
+//                           TypeInfo( par1, None )
+//                        } else {
+//                           TypeInfo( (strAnyGE -> Nil) :: Nil )
+//                        }
+//                        def r1( rateName: String ) = {
+//                           val t0   = Nil // TypeInfo( (rateName -> Nil) :: Nil ) :: Nil
+//                           val par0 = strGE -> t0
+//                           val par1 = if( doneFlagArg ) par0 :: ("HasDoneFlag" -> Nil) :: Nil else par0 :: Nil
+//                           TypeInfo( par1, None )
+//                        }
+//                        (rateAttr, rateInfo) match {
+//                           case (None, _)                            => r0
+//                           case (Some( "ugen" ), None)               => r0
+//                           case (_, _) if( expandBin.isDefined )     => r0
+//                           case (Some( "ugen" ), Some( info ))       => r1( info.name )
+//                           case (Some( rateName ), _)                => r1( rateName )
+//                        }
+                        val par0 = strGE -> Nil
+                        val par1 = if( doneFlagArg ) par0 :: ("HasDoneFlag" -> Nil) :: Nil else par0 :: Nil
+                        val typ = TypeInfo( par1, None )
+
+                        val cons = getAttr( "rate" ).map {
+                           case "ugen"   =>
+//                              println( "--UGen for" + name )
+                              RateCons.UGen
+                           case rateName => RateCons.Name( rateName )
                         }
-                        def r1( rateName: String ) = {
-                           val t0   = Nil // TypeInfo( (rateName -> Nil) :: Nil ) :: Nil
-                           val par0 = strGE -> t0
-                           val par1 = if( doneFlagArg ) par0 :: ("HasDoneFlag" -> Nil) :: Nil else par0 :: Nil
-                           TypeInfo( par1, None )
-                        }
-                        (rateAttr, rateInfo) match {
-                           case (None, _)                            => r0
-                           case (Some( "ugen" ), None)               => r0
-                           case (_, _) if( expandBin.isDefined )     => r0
-                           case (Some( "ugen" ), Some( info ))       => r1( info.name )
-                           case (Some( rateName ), _)                => r1( rateName )
-                        }
+                        (typ, cons)
                      })
-                  val default    = getEitherAttr( "default" ).map( _.text )
+                  val default    = getEitherAttr( "default" )
                   if( default == Some( "inf" ) || default == Some( "-inf" )) {
                      importFloat = true
                   }
-                  val doc        = getEitherNode( "doc" ).map( _.text )
-                  ArgInfo( typInfo, default, doc )
+                  val doc        = getEitherNode( "doc" )
+                  ArgInfo( typInfo, default, doc, rateCons )
                }
 
                val argDefault = createInfo( None, None )
                val argMap: Map[ RateInfo, ArgInfo ] = rates.map( rateInfo => {
-                  val rateNode   = (rateInfo.xml \ "arg").find( n => (n \ "@name").text == aname )
+                  val rateNode = (rateInfo.xml \ "arg").find( n => (n \ "@name").text == aname )
                   rateInfo -> createInfo( rateNode, Some( rateInfo ))
                })( breakOut )
                UGenArgInfo( aname, argDefault, argMap, multi, expandBin ) -> idx
@@ -256,6 +276,13 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                case Nil => None
                case _ => Predef.error( "Can only have one expandBin (" + name + ")" )
             }
+
+//            {
+//               val test = argsIn.filter( _.argDefault.rateCons == Some( RateCons.UGen ))
+//               if( test.nonEmpty ) println( "JO : for " + name + " got ugen cons : " + test )
+//            }
+            val maybeRate  = if( maybeRates && impliedRate.isEmpty ) argsIn.find( _.argDefault.rateCons == Some( RateCons.UGen )) else None
+//if( maybeRate.isDefined ) println( "JO. Maybe rate for " + name )
 
             val outputs       = (node \ "outputs").headOption match {
                case Some( n ) => (n \ "@num").text match {
@@ -318,7 +345,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      mName,
                      Nil, // if( expandBin.isDefined ) typExpandBinDf else Nil,        // tparams
                      objectMethodArgs,    // vparamss
-                     /* if( rateTypes || mName != "apply" ) */ EmptyTree /* else TypeDef( NoMods, name, Nil, EmptyTree ) */, // TypeTree( NoType ), // tpt -- empty for testing
+                     if( mName != "apply" ) EmptyTree else TypeDef( NoMods, name, Nil, EmptyTree ),
                      methodBody // rhs
                   )
                   wrapDoc( df, 1, methodDocs = mdocs )
@@ -371,7 +398,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   } else typ0
                }) }
                if( impliedRate.isDefined ) args0 else {
-                  (NoMods, strRate + ": " + (/*if( rateTypes ) (*/ /* if( expandBin.isDefined ) "T" else */ strRatePlaceholder /*) else "Rate" */), EmptyTree) :: args0
+                  (NoMods, strRateArg + ": " + (/*if( rateTypes ) (*/ /* if( expandBin.isDefined ) "T" else */
+                     if( maybeRate.isDefined ) strMaybeRate else strRatePlaceholder /*) else "Rate" */), EmptyTree) :: args0
                }
             }
 
@@ -393,8 +421,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val p5 = if( writesFFT )            (traitWritesFFT :: p4)     else p4
                val p6 = if( indiv && !indIndiv )   (traitIndiv :: p5)         else p5
 //               val p6 = if( sideEffect && !indSideEffect ) ...
-//               impliedRate.map( r => TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: p6 ).getOrElse( p6 )
-               p6
+               if( ratedTrait ) impliedRate.map( r => TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: p6 ).getOrElse( p6 ) else p6
+//               p6
             }
 
             val argsExpOut          = argsOut.filter( _.isGE )
@@ -457,6 +485,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val caseClassMakeDef = {
                val methodBody : Tree = {
                   val (preBody: Option[ Tree ], outUGenArgs) = {
+                     val strResolvedRateArg = if( maybeRate.isDefined ) "_rate" else strRateArg
                      val preArgs = outputs match {
                         case m: MultiOutputLike =>
                            val tree = m match {
@@ -469,25 +498,29 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                               } else am.tree
                            }
                            Apply( Apply( Select( identIIdxSeq, "fill" ), tree :: Nil ),
-                              Ident( impliedRate.map( _.typ ).getOrElse( strRate )) :: Nil ) :: Nil
+                              Ident( impliedRate.map( _.typ ).getOrElse( strResolvedRateArg )) :: Nil ) :: Nil
                         case _ => Nil
                      }
                      val args3 = preArgs :+ identUArgs
-                     val args4 = Literal( Constant( name )) :: Ident( impliedRate.map( _.typ ).getOrElse( strRate )) :: args3
-                     (None, args4 :: Nil) // no currying
+                     val args4 = identName /* Literal( Constant( name )) */ :: Ident( impliedRate.map( _.typ ).getOrElse( strResolvedRateArg )) :: args3
+
+                     val preBody = maybeRate.map( ua => {
+                        val aPos = argsOut.indexOf( ua )
+                        require( argsOut.take( aPos ).forall( a => a.isGE && !a.multi ), "Cannot resolve MaybeRate ref after multi args" )
+                        // val _rate = rate |? _args(<pos>).rate
+                        ValDef(
+                           NoMods,
+                           strResolvedRateArg,
+                           EmptyTree,
+                           Apply( Select( identRateArg, strMaybeResolve ), Select( Apply( identUArgs, Literal( Constant( aPos )) :: Nil ), strRateMethod ) :: Nil)
+                        )
+                     })
+
+                     (preBody, args4 :: Nil) // no currying
                   }
                   val app1 = New( Ident( outputs.typ ), outUGenArgs )
                   val app2 = expandBin.map( binSel => { // XXX should call make1 to collapse multiplication with one
                      val a = argsInS.find( _.expandBin.isDefined ).get
-//                           val u = /* if( rateTypes ) */ TypeApply( identBinOpUGen, Ident( "T" ) :: Nil ) // else identBinOpUGen
-//                           val r = /* if( rateTypes ) */ Select( identRateOrder, "out" ) // else identRate
-//                     Apply( Select( Select( Ident( "BinaryOp" ), binSel ), "make1" ), app1 :: Apply( Ident( "_" + a.name ), {
-//                           if( moreThanOneArgOut ) {
-//                              Apply( Select( Ident( "i" ), "%" ), Ident( "_sz_" + a.name ) :: Nil )
-//                           } else {
-//                              Ident( "i" )
-//                           }
-//                        } :: Nil ) :: Nil )
                      require( !argsOut.exists( a => a.multi || a.isString ), "Mixing binop with multi args is not yet supported" )
                      val aPos = argsOut.indexOf( a )
                      assert( aPos >= 0 )
@@ -516,12 +549,21 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                )
             }
 
-            val caseClassMethods =
+            val caseClassMethods = {
 //            if( indiv ) {
 //               caseClassExpandDef :: methodOverrideEquals :: methodOverrideHashCode :: Nil
 //            } else {
-               caseClassExpandDef :: caseClassMakeDef :: Nil
-//            }
+               val m1 = caseClassExpandDef :: caseClassMakeDef :: Nil
+//               if( ratedTrait ) impliedRate.map( r => {
+//                  ValDef(
+//                     NoMods,
+//                     strRate,
+//                     identRateType,
+//                     Ident( r.name )
+//                  ) :: m1
+//               }).getOrElse( m1 ) else
+               m1
+            }
 
             val caseClassDef0 = mkCaseClass(
 //               NoMods,
@@ -539,14 +581,15 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //               } else
                      Nil),
                caseClassMethods,
-               {
+               { // parents
                   val p4 = if( sideEffect && !indSideEffect ) (traitSideEffect :: caseCommonParents) else caseCommonParents
                   TypeDef( NoMods, outputs.sourceName, {
                      /* TypeDef( NoMods, (if( expandBin.isDefined ) "T" else impliedRate.map( _.typ ).getOrElse( "R" )): String,
                         Nil, EmptyTree ) :: */ Nil
                   }, EmptyTree ) :: p4
 
-               }
+               },
+               Literal( Constant( name )) :: Nil  // super args
             )
             val caseClassDef = wrapDoc( caseClassDef0, 0, docText, docSees, docWarnPos, collectMethodDocs( argsIn ))
 
@@ -558,7 +601,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      (NoMods, uArgInfo.name + ": " + uArgInfo.deriveGE( true ), EmptyTree)
                   }
                   if( impliedRate.isDefined ) args0 else {
-                     (NoMods, strRate + ": " + (/*if( rateTypes ) */ strRatePlaceholder /* else "Rate" */), EmptyTree) :: args0
+                     (NoMods, strRateArg + ": " + (/*if( rateTypes ) */ strRatePlaceholder /* else "Rate" */), EmptyTree) :: args0
                   }
                }
 
@@ -605,7 +648,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      val args1 = outputs match {
                         case m: MultiOutputLike =>
                            Apply( Apply( Select( identIIdxSeq, "fill" ), m.tree :: Nil ),
-                              Ident( impliedRate.map( _.typ ).getOrElse( strRate )) :: Nil ) :: args0
+                              Ident( impliedRate.map( _.typ ).getOrElse( strRateArg )) :: Nil ) :: args0
                         case _ => args0
                      }
                      Literal( Constant( ugenName )) :: /* Ident( if( expandBin.isDefined ) "T" else impliedRate.map( _.typ ).getOrElse( "R" )) :: */ args1
@@ -657,6 +700,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //      def typ = name + ".type"
       def typ = name // + ".type"
       def traitTyp = name.capitalize + "Rated"
+//      def traitTyp = name + ".rated"
    }
 
    // XXX remove in favour of TypeDef
@@ -669,7 +713,14 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
          exist.map( tup => s0 + " forSome { type " + tup._1 + " " + tup._2 + " }" ).getOrElse( s0 )
       }
    }
-   private case class ArgInfo( typ: TypeInfo, default: Option[ String ], doc: Option[ String ])
+
+   object RateCons {
+      final case object UGen extends RateCons
+      final case class Name( name: String ) extends RateCons
+   }
+   sealed trait RateCons
+
+   private case class ArgInfo( typ: TypeInfo, default: Option[ String ], doc: Option[ String ], rateCons: Option[ RateCons ])
    private trait UGenArgInfoLike {
       def name : String
       def argDefault : ArgInfo

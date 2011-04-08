@@ -3610,21 +3610,71 @@
             <rate name="scalar"/>
             <rate name="control"/>
             <rate name="audio"/>
-            <arg name="in"/>
-            <arg name="srcLo" default="0"/>
-            <arg name="srcHi" default="1"/>
-            <arg name="dstLo" default="1"/>
-            <arg name="dstHi" default="2"/>
+            <arg name="in" rate="ugen">
+                The input signal to convert.
+            </arg>
+            <arg name="srcLo" default="0">
+                The lower limit of input range.
+            </arg>
+            <arg name="srcHi" default="1">
+                The upper limit of input range.
+            </arg>
+            <arg name="dstLo" default="1">
+                The lower limit of output range.
+            </arg>
+            <arg name="dstHi" default="2">
+                The upper limit of output range.
+            </arg>
+            <doc>
+                <text>
+                    A UGen which maps a linear range to an exponential range.
+                    The equivalent formula is `(dstHi / dstLo).pow((in - srcLo) / (srcHi - srcLo)) * dstLo`.
+
+                    '''Note''': No clipping is performed. If the input signal exceeds the input range, the output will also exceed its range.
+                </text>
+                <see>ugen.LinExp</see>
+                <see>ugen.Clip</see>
+            </doc>
         </ugen>
         <ugen name="LinLin">
             <rate name="scalar"/>
             <rate name="control"/>
             <rate name="audio"/>
-            <arg name="in"/>
-            <arg name="srcLo" default="0"/>
-            <arg name="srcHi" default="1"/>
-            <arg name="dstLo" default="0"/>
-            <arg name="dstHi" default="1"/>
+            <arg name="in" rate="ugen">
+                <doc>
+                    The input signal to convert.
+                </doc>
+            </arg>
+            <arg name="srcLo" default="0">
+                <doc>
+                    The lower limit of input range.
+                </doc>
+            </arg>
+            <arg name="srcHi" default="1">
+                <doc>
+                    The upper limit of input range.
+                </doc>
+            </arg>
+            <arg name="dstLo" default="0">
+                <doc>
+                    The lower limit of output range.
+                </doc>
+            </arg>
+            <arg name="dstHi" default="1">
+                <doc>
+                    The upper limit of output range.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen which maps a linear range to another linear range.
+                    The equivalent formula is `(in - srcLo) / (srcHi - srcLo) * (dstHi - dstLo) + dstLo`.
+
+                    '''Note''': No clipping is performed. If the input signal exceeds the input range, the output will also exceed its range.
+                </text>
+                <see>ugen.LinExp</see>
+                <see>ugen.Clip</see>
+            </doc>
         </ugen>
         <ugen name="EnvGen">
             <rate name="control"/>

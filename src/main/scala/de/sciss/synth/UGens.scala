@@ -2,7 +2,7 @@
  *  UGens.scala
  *  (ScalaCollider-UGens)
  *
- *  Copyright (c) 2008-2010 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2008-2011 Hanns Holger Rutz. All rights reserved.
  *
  *  This software is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -32,7 +32,7 @@ import xml.XML
 import java.io.File
 
 object UGens {
-   val version = 0.11
+   val version = 0.12
    def versionString = (version.toString + "0").substring( 0, 4 )
 
    def main( args: Array[ String ]) {
@@ -41,7 +41,7 @@ object UGens {
       val xml  = XML.load( UGens.getClass.getResourceAsStream( "standard-ugens.xml" ))
       val synth= new CodeSynthesizer4
 //      synth.perform( xml, dir )
-      synth.perform( xml, dir ) // , (f, u) => f == "TriggerUGens" )
+      synth.perform( xml, dir ) //, (f, u) => f == "TriggerUGens" || f == "FilterUGens" )
       System.exit( 0 )
    }
 }
