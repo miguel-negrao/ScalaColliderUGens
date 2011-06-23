@@ -36,12 +36,12 @@ object UGens {
    def versionString = (version.toString + "0").substring( 0, 4 )
 
    def main( args: Array[ String ]) {
-      require( args.size == 2 && args( 0 ) == "-d" )
+      require( args.size == 2 && args( 0 ) == "-d", args.toList )
       val dir  = new File( args( 1 ))
       val xml  = XML.load( UGens.getClass.getResourceAsStream( "standard-ugens.xml" ))
       val synth= new CodeSynthesizer4
 //      synth.perform( xml, dir )
       synth.perform( xml, dir ) //, (f, u) => f == "TriggerUGens" || f == "FilterUGens" )
-      System.exit( 0 )
+//      System.exit( 0 )
    }
 }

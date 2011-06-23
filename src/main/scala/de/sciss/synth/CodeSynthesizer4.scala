@@ -34,28 +34,35 @@ import tools.refactoring.util.CompilerProvider
 import xml.Node
 import collection.breakOut
 import collection.immutable.{ IndexedSeq => IIdxSeq }
-import net.virtualvoid.string.MyNodePrinter
+//import net.virtualvoid.string.MyNodePrinter
 import tools.refactoring.transformation.TreeFactory
 import tools.refactoring.common.{CompilerAccess, Tracing, Change}
 import tools.nsc.io.AbstractFile
 import java.io.{FileOutputStream, OutputStreamWriter, FileWriter, File}
+import sys.{error => err}
 
 /**
  * Again with rate type removed
  */
 class CodeSynthesizer4 extends Refactoring
-with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with TreeFactory {
+with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess with TreeFactory {
    val docs          = true
    val ugenClass     = false
    val ratedTrait    = true
    val maybeRates    = true
    val displayName   = true
+   val multiOutArg   = true   // whether UGenSource.MultiOut has an explicit argument for the number of outputs
 
    override val defaultIndentationStep = "   "
 
 //   val strMulti         = "Multi"
 
    import global._
+
+   // fix 2.8.1 --> 2.9.0
+   def typeName( name: String ) = newTypeName( name )
+//   def trmName( name: String ) = newTermName( name )
+   def ident( name: String ) = new Ident( newTermName( name ))
 
    def compilationUnitOfFile( f: AbstractFile ) = global.unitOfFile.get( f )
 
@@ -70,7 +77,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
    private def wrapDoc( tree: Tree, indent: Int, docText: String = "", sees: Seq[ String ] = Nil, docWarnPos: Boolean = false,
                          methodDocs: Seq[ (String, String) ] = Nil ) : Tree = {
-      val hasAny = docs && (docText.nonEmpty || sees.nonEmpty || docWarnPos || methodDocs.nonEmpty )
+      val hasAny = docs && (docText != "" || sees.nonEmpty || docWarnPos || methodDocs.nonEmpty )
       if( hasAny ) {
 // XXX indentation funzt im moment eh nicht richtig bei scala-refactoring. besser ganz weglassen
 //         val ind     = Seq.fill( indent )( "   " ).mkString
@@ -100,42 +107,42 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
    // filter gets applied with filename (without extension) and ugen name
    def perform( xml: Node, dir: File, filter: (String, String) => Boolean = (_, _) => true ) {
-
 //      val traitGE = TypeDef( Modifiers( Flags.TRAIT ), "GE", Nil, EmptyTree )
-      val traitSideEffect  = TypeDef( Modifiers( Flags.TRAIT ), "HasSideEffect", Nil, EmptyTree )
-      val traitDoneFlag    = TypeDef( Modifiers( Flags.TRAIT ), "HasDoneFlag",   Nil, EmptyTree )
-      val traitRandom      = TypeDef( Modifiers( Flags.TRAIT ), "UsesRandSeed",  Nil, EmptyTree )
-      val traitIndiv       = TypeDef( Modifiers( Flags.TRAIT ), "IsIndividual",  Nil, EmptyTree )
+      val traitSideEffect  = TypeDef( Modifiers( Flags.TRAIT ), typeName( "HasSideEffect" ), Nil, EmptyTree )
+      val traitDoneFlag    = TypeDef( Modifiers( Flags.TRAIT ), typeName( "HasDoneFlag" ),   Nil, EmptyTree )
+      val traitRandom      = TypeDef( Modifiers( Flags.TRAIT ), typeName( "UsesRandSeed" ),  Nil, EmptyTree )
+      val traitIndiv       = TypeDef( Modifiers( Flags.TRAIT ), typeName( "IsIndividual" ),  Nil, EmptyTree )
 //      val traitReadsFFT    = TypeDef( Modifiers( Flags.TRAIT ), "ReadsFFT",      Nil, EmptyTree )
-      val traitWritesBuffer= TypeDef( Modifiers( Flags.TRAIT ), "WritesBuffer",  Nil, EmptyTree )
-      val traitWritesFFT   = TypeDef( Modifiers( Flags.TRAIT ), "WritesFFT",     Nil, EmptyTree )
-      val traitWritesBus   = TypeDef( Modifiers( Flags.TRAIT ), "WritesBus",     Nil, EmptyTree )
+      val traitWritesBuffer= TypeDef( Modifiers( Flags.TRAIT ), typeName( "WritesBuffer" ),  Nil, EmptyTree )
+      val traitWritesFFT   = TypeDef( Modifiers( Flags.TRAIT ), typeName( "WritesFFT" ),     Nil, EmptyTree )
+      val traitWritesBus   = TypeDef( Modifiers( Flags.TRAIT ), typeName( "WritesBus" ),     Nil, EmptyTree )
       val strIIdxSeq       = "IIdxSeq"
-      val identIIdxSeq     = Ident( strIIdxSeq )
-      val identBinOpUGen   = Ident( "BinaryOpUGen" )
+//      val identIIdxSeq     = Ident( strIIdxSeq )
+      val identIIdxSeq     = ident( strIIdxSeq )
+      val identBinOpUGen   = ident( "BinaryOpUGen" )
       val strMakeUGens     = "makeUGens"
-      val identMakeUGens   = Ident( strMakeUGens )
+      val identMakeUGens   = ident( strMakeUGens )
       val strMakeUGen      = "makeUGen"
-      val identMakeUGen    = Ident( strMakeUGen )
+      val identMakeUGen    = ident( strMakeUGen )
       val strExpand        = "expand"
-      val identExpand      = Ident( strExpand )
+      val identExpand      = ident( strExpand )
       val strUGenInLike    = "UGenInLike"
       val strUArgs         = "_args"
-      val identUArgs       = Ident( strUArgs )
-      val identUnwrap      = Ident( "unwrap")
+      val identUArgs       = ident( strUArgs )
+      val identUnwrap      = ident( "unwrap")
       val strGE            = "GE"
       val strAnyGE         = strGE // no distinction any more
       val strRatePlaceholder="Rate" // "R"
       val strMaybeRate     = "MaybeRate"
       val strMaybeResolve  = "?|"
 
-      val identApply       = Ident( "apply" )
-      val identName        = Ident( "name" )
+      val identApply       = ident( "apply" )
+      val identName        = ident( "name" )
 
       val strRateArg       = "rate"
       val strRateMethod    = "rate"
-      val identRateArg     = Ident( strRateArg )
-      val identRateType    = Ident( "Rate" )
+      val identRateArg     = ident( strRateArg )
+      val identRateType    = ident( "Rate" )
       val dateString       = new java.util.Date().toString
 
       (xml \ "file") foreach { node =>
@@ -181,7 +188,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 //            if( name == "Out" ) println( "for Out, rates = " + rates0 )
 
             val impliedRate   = rates0.find( _.implied )
-            val (rates: List[ RateInfo ], caseDefaults: Boolean) = impliedRate.map( irate => {
+            val (rates, caseDefaults) = impliedRate.map( irate => {
                require( rates0.size == 1, "Can only have one implied rate (" + name + ")" )
                val rateInfo   = rates0.head
                val hasApply   = rateInfo.methodNames.contains( "apply" )
@@ -204,7 +211,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val expandBin  = (n \ "@expandbin").text match {
                   case ""  => None
                   case "*" => Some( "Times" )
-                  case x   => Predef.error( "Illegal expandbin value '" + x + "' (" + name + ")" )
+                  case x   => err( "Illegal expandbin value '" + x + "' (" + name + ")" )
                }
                if( multi ) require( !doneFlagArg, "Multi arguments cannot have done flag (" + name + ")" )
 
@@ -268,13 +275,13 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
             val numArgsIn  = argsTup.size
             val argsOut    = argsTup.map( _._1 ).filter( a => a.isGE || a.isString )
             val argsIn     = List.tabulate( numArgsIn )(
-               idx => argsTup.find( _._2 == idx ).getOrElse( Predef.error( "Wrong argument positions (" + name + ")" ))._1 )
+               idx => argsTup.find( _._2 == idx ).getOrElse( err( "Wrong argument positions (" + name + ")" ))._1 )
             val argsInS = argsIn  // no exceptions at the moment
 
             val expandBin = argsIn.map( _.expandBin ).collect { case Some( exp ) => exp } match {
                case exp :: Nil => Some( exp )
                case Nil => None
-               case _ => Predef.error( "Can only have one expandBin (" + name + ")" )
+               case _ => err( "Can only have one expandBin (" + name + ")" )
             }
 
 //            {
@@ -298,7 +305,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   ValDef(
                      Modifiers( Flags.PARAM ),
                      uArgInfo.name,
-                     Ident( argInfo.typ.toString ),
+                     ident( argInfo.typ.toString ),
                      uArgInfo.defaultTree( argInfo )
                   )
                })
@@ -345,7 +352,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      mName,
                      Nil, // if( expandBin.isDefined ) typExpandBinDf else Nil,        // tparams
                      objectMethodArgs,    // vparamss
-                     if( mName != "apply" ) EmptyTree else TypeDef( NoMods, name, Nil, EmptyTree ),
+                     if( mName != "apply" ) EmptyTree else TypeDef( NoMods, typeName( name ), Nil, EmptyTree ),
                      methodBody // rhs
                   )
                   wrapDoc( df, 1, methodDocs = mdocs )
@@ -361,7 +368,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                      mName,
                      Nil,        // tparams
                      Nil,        // vparams
-                     TypeDef( NoMods, name, {
+                     TypeDef( NoMods, typeName( name ), {
 //                        val typ0 = TypeDef( NoMods, rateInfo.typ, Nil, EmptyTree )
 //                        val typ1 = if( expandBin.isDefined ) {
 //                           TypeDef( NoMods, "scalar", Nil, EmptyTree ) :: typ0 :: Nil
@@ -421,7 +428,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val p5 = if( writesFFT )            (traitWritesFFT :: p4)     else p4
                val p6 = if( indiv && !indIndiv )   (traitIndiv :: p5)         else p5
 //               val p6 = if( sideEffect && !indSideEffect ) ...
-               if( ratedTrait ) impliedRate.map( r => TypeDef( NoMods, r.traitTyp, Nil, EmptyTree ) :: p6 ).getOrElse( p6 ) else p6
+               if( ratedTrait ) impliedRate.map( r => TypeDef( NoMods, typeName( r.traitTyp ), Nil, EmptyTree ) :: p6 ).getOrElse( p6 ) else p6
 //               p6
             }
 
@@ -477,25 +484,29 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   strMakeUGens,
                   Nil, // tparams
                   Nil,        // vparamss
-                  TypeDef( NoMods, outputs.resName, Nil, EmptyTree ), // TypeTree( NoType ), // tpt -- empty for testing
+                  TypeDef( NoMods, typeName( outputs.resName ), Nil, EmptyTree ), // TypeTree( NoType ), // tpt -- empty for testing
                   methodBody // rhs
                )
             }
 
             val caseClassMakeDef = {
                val methodBody : Tree = {
-                  val (preBody: Option[ Tree ], outUGenArgs) = {
+                  val (preBody, outUGenArgs) = {
                      val strResolvedRateArg = if( maybeRate.isDefined ) "_rate" else strRateArg
                      val preArgs = outputs match {
                         case m: MultiOutputLike =>
-                           val tree = m match {
-                              case fm: FixedMultiOutput => fm.tree
-                              case am @ ArgMultiOutput( a ) => if( a.isGE ) {
-                                 require( !argsOut.exists( _.isString ), "Currently strings not supported for arg-multioutput" )
-                                 val numFixedArgs  = argsOut.size - 1
-                                 val selSz = Select( identUArgs, "size" )
-                                 if( numFixedArgs == 0 ) selSz else Apply( Select( selSz, "-" ), Literal( Constant( numFixedArgs )) :: Nil )
-                              } else am.tree
+                           val tree = if( multiOutArg ) {
+                              Ident( "numOutputs" )
+                           } else {
+                              m match {
+                                 case fm: FixedMultiOutput => fm.tree
+                                 case am @ ArgMultiOutput( a ) => if( a.isGE ) {
+                                    require( !argsOut.exists( _.isString ), "Currently strings not supported for arg-multioutput" )
+                                    val numFixedArgs  = argsOut.size - 1
+                                    val selSz = Select( identUArgs, "size" )
+                                    if( numFixedArgs == 0 ) selSz else Apply( Select( selSz, "-" ), Literal( Constant( numFixedArgs )) :: Nil )
+                                 } else am.tree
+                              }
                            }
                            Apply( Apply( Select( identIIdxSeq, "fill" ), tree :: Nil ),
                               Ident( impliedRate.map( _.typ ).getOrElse( strResolvedRateArg )) :: Nil ) :: Nil
@@ -535,7 +546,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val methodArgs = List( List( ValDef(
                   Modifiers( Flags.PARAM ),
                   strUArgs,
-                  TypeDef( NoMods, strIIdxSeq, TypeDef( NoMods, "UGenIn", Nil, EmptyTree ) :: Nil, EmptyTree ),
+                  TypeDef( NoMods, typeName( strIIdxSeq ), TypeDef( NoMods, typeName( "UGenIn" ), Nil, EmptyTree ) :: Nil, EmptyTree ),
                   EmptyTree
                )))
 
@@ -544,7 +555,7 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                   strMakeUGen,
                   Nil, // tparams
                   methodArgs,        // vparamss
-                  TypeDef( NoMods, outputs.resName, Nil, EmptyTree ), // TypeTree( NoType ), // tpt -- empty for testing
+                  TypeDef( NoMods, typeName( outputs.resName ), Nil, EmptyTree ), // TypeTree( NoType ), // tpt -- empty for testing
                   methodBody // rhs
                )
             }
@@ -565,6 +576,24 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                m1
             }
 
+            val caseClassSuperArgs = if( multiOutArg ) {
+               outputs match {
+                  case m: MultiOutputLike =>
+                     val tree = m match {
+                        case fm: FixedMultiOutput => fm.tree
+                        case am @ ArgMultiOutput( a ) => if( a.isGE ) {
+                           require( !argsOut.exists( _.isString ), "Currently strings not supported for arg-multioutput" )
+//                           val numFixedArgs  = argsOut.size - 1
+//                           val selSz = Select( identUArgs, "size" )
+//                           if( numFixedArgs == 0 ) selSz else Apply( Select( selSz, "-" ), Literal( Constant( numFixedArgs )) :: Nil )
+                           Select( ident( a.name ), "numOutputs" )
+                        } else am.tree
+                     }
+                     tree :: Nil
+                  case _ => Nil
+               }
+            } else Nil
+
             val caseClassDef0 = mkCaseClass(
 //               NoMods,
                NoMods withPosition (Flags.FINAL, NoPosition),
@@ -583,13 +612,13 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                caseClassMethods,
                { // parents
                   val p4 = if( sideEffect && !indSideEffect ) (traitSideEffect :: caseCommonParents) else caseCommonParents
-                  TypeDef( NoMods, outputs.sourceName, {
+                  TypeDef( NoMods, typeName( outputs.sourceName ), {
                      /* TypeDef( NoMods, (if( expandBin.isDefined ) "T" else impliedRate.map( _.typ ).getOrElse( "R" )): String,
                         Nil, EmptyTree ) :: */ Nil
                   }, EmptyTree ) :: p4
 
                },
-               Literal( Constant( name )) :: Nil  // super args
+               Literal( Constant( name )) :: caseClassSuperArgs  // super args
             )
             val caseClassDef = wrapDoc( caseClassDef0, 0, docText, docSees, docWarnPos, collectMethodDocs( argsIn ))
 
@@ -608,8 +637,8 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
                val ugenCaseClassParents: List[ TypeDef ] = {
                   // note: ZeroOutUGen already extends HasSideEffect
                   val p4 = if( sideEffect && !indSideEffect && (outputs != ZeroOutputs) ) (traitSideEffect :: caseCommonParents) else caseCommonParents
-                  TypeDef( NoMods, outputs.typ, if( outputs == ZeroOutputs ) Nil else {
-                     TypeDef( NoMods, impliedRate.map( _.typ ).getOrElse( "R" ): String, Nil, EmptyTree ) :: Nil
+                  TypeDef( NoMods, typeName( outputs.typ ), if( outputs == ZeroOutputs ) Nil else {
+                     TypeDef( NoMods, typeName( impliedRate.map( _.typ ).getOrElse( "R" ): String ), Nil, EmptyTree ) :: Nil
                   }, EmptyTree ) :: p4
                }
 //            val ugenCaseClassParents: List[ TypeDef ] = impliedRate.map( r =>
@@ -665,11 +694,11 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
          if( ugens.nonEmpty ) {
             val imports0 = if( importFloat ) {
-               Import( Ident( "Float" ), ImportSelector( "PositiveInfinity", -1, "inf", -1 ) :: Nil ) :: Nil
+               Import( ident( "Float" ), ImportSelector( "PositiveInfinity", -1, "inf", -1 ) :: Nil ) :: Nil
             } else Nil
-            val imports1 = Import( Select( Ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, identIIdxSeq.name, -1 ) :: Nil ) ::
-                  Import( Select( Ident( "aux" ), "UGenHelper" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) :: imports0
-            val packageDef = PackageDef( Select( Select( Ident( "de" ), "sciss" ), "synth" ),
+            val imports1 = Import( Select( ident( "collection" ), "immutable" ), ImportSelector( "IndexedSeq", -1, identIIdxSeq.name, -1 ) :: Nil ) ::
+                  Import( Select( ident( "aux" ), "UGenHelper" ), ImportSelector( nme.WILDCARD, -1, nme.WILDCARD, -1 ) :: Nil ) :: imports0
+            val packageDef = PackageDef( Select( Select( ident( "de" ), "sciss" ), "synth" ),
                PackageDef( Ident( "ugen" ), imports1 ::: ugens ) :: Nil )
             println( "Writing " + fileName )
             val osw = new OutputStreamWriter( new FileOutputStream( new File( dir, fileName )), "UTF-8" )
@@ -763,16 +792,16 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
 
       def defaultTree( arg: ArgInfo = argDefault ): Tree = arg.default.map( s => if( isGE ) {
          try {
-            Ident( s.toFloat.toString + "f" )  // XXX workaround for scala-refactoring bug of missing f
+            ident( s.toFloat.toString + "f" )  // XXX workaround for scala-refactoring bug of missing f
          } catch {
-            case e: NumberFormatException => Ident( s )
+            case e: NumberFormatException => ident( s )
          }
       } else if( isString ) Literal( Constant( s )) else Ident( s )).getOrElse( EmptyTree )
    }
 
    private case class UGenArgInfo( name: String, argDefault: ArgInfo, argMap: Map[ RateInfo, ArgInfo ], multi: Boolean, expandBin: Option[ String ])
    extends UGenArgInfoLike {
-      def arg( rate: RateInfo ) : ArgInfo = argMap.getOrElse( rate, Predef.error( "Accessing illegal rate " + rate.name + " (" + name + ")" ))
+      def arg( rate: RateInfo ) : ArgInfo = argMap.getOrElse( rate, err( "Accessing illegal rate " + rate.name + " (" + name + ")" ))
    }
 
    private case class SyntheticUGenArgInfo( name: String, argDefault: ArgInfo )
@@ -809,12 +838,12 @@ with Tracing with CompilerProvider with MyNodePrinter with CompilerAccess with T
    private case class ArgMultiOutput( arg: UGenArgInfoLike ) extends MultiOutputLike {
       def tree = if( arg.isGE ) {
          if( arg.multi /* isExpands */) {
-            Select( Ident( arg.name ), "size" )
+            Select( ident( arg.name ), "size" )
          } else {
-            Predef.error( "Not yet supported ("+ arg.name + ")" )
+            err( "Not yet supported ("+ arg.name + ")" )
          }
       } else {
-         Ident( arg.name )
+         ident( arg.name )
       }
    }
 }
