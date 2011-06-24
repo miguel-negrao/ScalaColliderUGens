@@ -42,6 +42,6 @@ object UGens {
       val synth= new CodeSynthesizer4
 //      synth.perform( xml, dir )
       synth.perform( xml, dir ) //, (f, u) => f == "TriggerUGens" || f == "FilterUGens" )
-//      System.exit( 0 )
+      sys.exit()
    }
 }

@@ -454,16 +454,105 @@
         <ugen name="Pitch">
             <rate name="control"/>
             <outputs num="2"/>
-            <arg name="in"/>
-            <arg name="initFreq" default="440"/>
-            <arg name="minFreq" default="60"/>
-            <arg name="maxFreq" default="4000"/>
-            <arg name="execFreq" default="100"/>
-            <arg name="binsPerOct" default="16"/>
-            <arg name="median" default="1"/>
-            <arg name="ampThresh" default="0.01"/>
-            <arg name="peakThresh" default="0.5"/>
-            <arg name="downSample" default="1"/>
+            <arg name="in">
+                <doc>
+                    The signal to be analyzed.
+                </doc>
+            </arg>
+            <arg name="initFreq" default="440">
+                <doc>
+                    The initial value of the `freq` output, until the first valid pitch is found.
+                </doc>
+            </arg>
+            <arg name="minFreq" default="60">
+                <doc>
+                    The minimum frequency in Hertz to be considered for reporting.
+                    (This parameter is scalar only?)
+                </doc>
+            </arg>
+            <arg name="maxFreq" default="4000">
+                <doc>
+                    The maximum frequency in Hertz to be considered for reporting.
+                    (This parameter is scalar only?)
+                </doc>
+            </arg>
+            <arg name="execFreq" default="100">
+                <doc>
+                    The frequency at which the pitch is estimated. This will be
+                    automatically clipped to be between `minFreq` and `maxFreq`.
+                    This parameter is scalar only.
+                </doc>
+            </arg>
+            <arg name="binsPerOct" default="16">
+                <doc>
+                    A value which guides the search for the peak frequency in the first
+                    coarse step. Its setting does *not* affect the final pitch resolution;
+                    setting it larger will cause the coarse search to take longer, and setting
+                    it smaller will cause the fine search to take longer.
+                    This parameter is scalar only.
+                </doc>
+            </arg>
+            <arg name="median" default="1">
+                <doc>
+                    This specifies the length of a median filter applied to the frequency output
+                    estimation. With the default value of `1` the filter is defeated. Median filtering
+                    can help eliminating single spikes and jitter. This will however add latency to
+                    the output.
+                    This parameter is scalar only.
+                </doc>
+            </arg>
+            <arg name="ampThresh" default="0.01">
+                <doc>
+                    The minimum amplitude threshold above which the pitch follower
+                    operates. An input signal below this threshold is not analyzed.
+                    (This parameter is scalar only?)
+                </doc>
+            </arg>
+            <arg name="peakThresh" default="0.5">
+                <doc>
+                    This is a threshold used to find the first peak in the autocorrelation signal which
+                    gives the reported frequency. It is a factor of the energy of the signal
+                    (autocorrelation coefficient at zero). Set this value higher (e.g. to `1`) to
+                    eliminate false frequencies corresponding to overtones.
+                    (This parameter is scalar only?)
+                </doc>
+            </arg>
+            <arg name="downSample" default="1">
+                <doc>
+                    An integer factor by which the input signal is down sampled to reduce CPU overhead.
+                    This will also reduce the pitch resolution. The default value of `1` means that
+                    the input signal is not down sampled.
+                    This parameter is scalar only.
+                </doc>
+            </arg>
+            <arg name="clarity" default="0">
+                <doc>
+                    If the `clarity` argument is greater than zero (it is zero by default) then the `hasFreq`
+                    output is given additional detail. Rather than simply being 1 when a pitch is detected,
+                    it is a "clarity" measure in the range between zero and one. (Technically, it's the height
+                    of the autocorrelation peak normalised by the height of the zero-lag peak.) It therefore
+                    gives a kind of measure of "purity" of the pitched signal.
+                    This parameter is scalar only.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    An autocorrelation based pitch following UGen. It is more accurate than `ZeroCrossing`, but
+                    more also more CPU costly. For most purposes the default settings can be used and only `in`
+                    needs to be supplied.
+
+                    The UGen has two outputs: The first output is the frequency estimate in Hertz, the second
+                    output is a toggle `hasFreq`, which tells whether a pitch was found (1) or not (0). If
+                    the `clarify` argument is used, `hasFreq` has more fine grained information.
+
+                    The pitch follower executes periodically at the rate specified by `execFreq` in cps.
+                    First it detects whether the input peak to peak amplitude is above the `ampThresh`.
+                    If it is not then no pitch estimation is performed, the `hasFreq` output is set to zero
+                    and the `freq` output is held at its previous value. Otherwise, the autocorrelation is
+                    calculated, and the first peak after the peak around the lag of zero that is
+                    above `peakThresh` times the amplitude of the peak at lag zero is reported.
+                </text>
+            </doc>
         </ugen>
 
         <ugen name="BufDelayN" readsbuf="true" writesbuf="true">
@@ -2150,7 +2239,7 @@
                     the input signal to sum up
                 </doc>
             </arg>
-            <arg name="winSize" default="440">
+            <arg name="length" default="440">
                 <doc>
                     the length of the sliding window over the input signal.
                     these are the number of audio sample-frames for audio-rate calculation,

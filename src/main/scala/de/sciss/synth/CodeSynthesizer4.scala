@@ -283,6 +283,10 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
                case Nil => None
                case _ => err( "Can only have one expandBin (" + name + ")" )
             }
+            // this is to ensure for makeUGen that when expandBin is defined, we simply do not pass in
+            // _args to the UGen constructor, simplifying the process of filtering out the argument
+            // which corresponds to expandBin!
+            require( expandBin.isEmpty || argsIn.size == 1, "Currently when using expandBin, there cannot be other input args" )
 
 //            {
 //               val test = argsIn.filter( _.argDefault.rateCons == Some( RateCons.UGen ))
@@ -436,7 +440,10 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
             val moreThanZeroArgOut  = argsExpOut.size > 0
             val moreThanOneArgOut   = argsExpOut.size > 1
 
-            val caseClassExpandDef = {
+            /*
+             * `protected def makeUGens: UGenInLike = ...`
+             */
+            val makeUGensDef = {
 //               val bufE    = buf.expand
 //               val multiE  = multi.expand
 //               val numExp  = math.max( bufE.size, multiE.size )
@@ -489,7 +496,10 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
                )
             }
 
-            val caseClassMakeDef = {
+            /*
+             * `protected def makeUGen(_args: IIdxSeq[UGenIn]): UGenInLike = ...`
+             */
+            val makeUGenDef = {
                val methodBody : Tree = {
                   val (preBody, outUGenArgs) = {
                      val strResolvedRateArg = if( maybeRate.isDefined ) "_rate" else strRateArg
@@ -512,7 +522,8 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
                               Ident( impliedRate.map( _.typ ).getOrElse( strResolvedRateArg )) :: Nil ) :: Nil
                         case _ => Nil
                      }
-                     val args3 = preArgs :+ identUArgs
+                     // might need some more intelligent filtering eventually
+                     val args3 = preArgs :+ (if( expandBin.isDefined ) Select( identIIdxSeq, "empty" ) else identUArgs)
                      val args4 = identName /* Literal( Constant( name )) */ :: Ident( impliedRate.map( _.typ ).getOrElse( strResolvedRateArg )) :: args3
 
                      val preBody = maybeRate.map( ua => {
@@ -530,7 +541,7 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
                      (preBody, args4 :: Nil) // no currying
                   }
                   val app1 = New( Ident( outputs.typ ), outUGenArgs )
-                  val app2 = expandBin.map( binSel => { // XXX should call make1 to collapse multiplication with one
+                  val app2 = expandBin.map( binSel => {
                      val a = argsInS.find( _.expandBin.isDefined ).get
                      require( !argsOut.exists( a => a.multi || a.isString ), "Mixing binop with multi args is not yet supported" )
                      val aPos = argsOut.indexOf( a )
@@ -564,7 +575,7 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
 //            if( indiv ) {
 //               caseClassExpandDef :: methodOverrideEquals :: methodOverrideHashCode :: Nil
 //            } else {
-               val m1 = caseClassExpandDef :: caseClassMakeDef :: Nil
+               val m1 = makeUGensDef :: makeUGenDef :: Nil
 //               if( ratedTrait ) impliedRate.map( r => {
 //                  ValDef(
 //                     NoMods,
@@ -708,7 +719,7 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
  *
  * This is a synthetically generated file.
  * Created: """ + dateString + """
- * ScalaCollider-UGen version: """ + UGens.versionString + """
+ * ScalaCollider-UGens version: """ + UGens.versionString + """
  */
 
 """ )
