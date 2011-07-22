@@ -1318,12 +1318,64 @@
     <file name="FFT_UGens">
         <ugen name="FFT" writesfft="true">
             <rate name="control" implied="true" method="apply"/>
-            <arg name="buf"/>
-            <arg name="in"/>
-            <arg name="hop" default="0.5"/>
-            <arg name="winType" default="0"/>
-            <arg name="active" default="1"/>
-            <arg name="winSize" default="0"/>
+            <arg name="buf">
+                <doc>
+                    The buffer to use for writing the FFT to. The size must be a power of two.
+                    Since `FFT` operates at control rate (also being a power of two),
+                    the buffer should probably be at least as long as the control block size.
+                </doc>
+            </arg>
+            <arg name="in">
+                <doc>
+                    The time domain signal to be transformed into the spectral domain.
+                </doc>
+            </arg>
+            <arg name="hop" default="0.5">
+                A factor determining the step size between successive FFTs. That is, FFTs are performed
+                every fftSize * hop sample frames. The default of 0.5 means thus a 50% overlap, while
+                a hope of 1.0 means no overlapping. Choosing 0.0 will most likely crash the server!
+            </arg>
+            <arg name="winType" default="0">
+                <doc>
+                    The window function applied before each FFT is taken. The default of 0 is a
+                    sine window which is good for phase vocoder applications (using the `PV_...` UGens).
+                    For analysis applications, you may want to use -1 which is a rectangle window
+                    (effectively no windowing) or 1 which is a Hann window. A Hann window gives
+                    perfect overlap-add reconstruction for a hope size of 0.5 (or 0.25 etc.)
+                </doc>
+            </arg>
+            <arg name="active" default="1">
+                <doc>
+                    This parameter can be temporarily set to &lt;= 0 to pause the FFT operation.
+                </doc>
+            </arg>
+            <arg name="winSize" default="0">
+                <doc>
+                    With the default value of zero, the window size equals the fft size. If you wish to
+                    perform zero padding, an explicit window size can be specified.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A UGen performing short-time forward fourier transformations. In order to properly link
+                    the spectral ugens (`PV_...`), you should begin by using the output of each UGen
+                    (which is just the fft buffer identifier), and use that as buffer input of the next UGen.
+                    That way, the UGen graph is correctly sorted. E.g. `IFFT( PV_...( FFT( buf, in )))`.
+
+                    The UGen will initially output zero until the first FFT can be performed. This is the
+                    case after `hop * fftSize`. Thus for a default fft buffer size of 1024 and a `hop` of
+                    0.5, and for a default control block size of 64, for the first 1024*0.5/64 = 8
+                    control blocks the UGen will output zero. This also implies that the first FFT in this
+                    case if performed on the first 512 samples of the `in` signal (prepended by 512 zeros).
+                    In other words, the first 'full' FFT of the input happens after fftSize/controlBlockSize
+                    cycles, no matter what hop size was chosen.
+
+                    If you use FFT for performing signal analysis and not phase vocoding effects, make sure
+                    you change the window type accordingly.
+                </text>
+                <see>ugen.IFFT</see>
+                <see>ugen.FFTTrigger</see>
+            </doc>
         </ugen>
         <ugen name="IFFT" readsfft="true">
             <rate name="control"/>
