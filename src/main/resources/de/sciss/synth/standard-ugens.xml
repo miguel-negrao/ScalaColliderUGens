@@ -5203,12 +5203,58 @@
         <ugen name="Stepper">
             <rate name="control"/>
             <rate name="audio"/>
-            <arg name="trig"/>
-            <arg name="reset" default="0"/>
-            <arg name="lo" default="0"/>
-            <arg name="hi" default="7"/>
-            <arg name="step" default="1"/>
+            <arg name="trig">
+                <doc>
+                    The trigger signal which increments the counter. A trigger happens when the signal
+                    changes from non-positive to positive. Note that if the UGen is created with the
+                    trigger initially high, the counter will also be incremented immediately. Thus
+                    a `Stepper.kr(Impulse.kr(1))` will begin by outputting `1`. If you want to avoid this,
+                    you could their subtract `Impulse.kr(0)` from the trigger input, or set `resetVal`
+                    to `hi`. E.g. `Stepper.kr(Impulse.kr(1), lo = 0, hi = 4, resetVal = 4)` will produce
+                    the sequence 0, 1, 2, 4, 0, ...
+                </doc>
+            </arg>
+            <arg name="reset" default="0">
+                <doc>
+                    A trigger which resets the counter to `resetVal` immediately.
+                </doc>
+            </arg>
+            <arg name="lo" default="0">
+                <doc>
+                    The minimum value output. For a decremental `step` value, the counter jumps
+                    to `hi` after having output the `lo` value (so the interval is inclusive).
+                </doc>
+            </arg>
+            <arg name="hi" default="7">
+                <doc>
+                    The maximum value output. For an incremental `step` value, the counter jumps
+                    to `lo` after having output the `hi` value (so the interval is inclusive).
+                </doc>
+            </arg>
+            <arg name="step" default="1">
+                <doc>
+                    The amount by which the counter increases or decreases upon receiving triggers.
+                    Note that if you use a decremental counter, still `lo` must be the minimum and
+                    `hi` must be the maximum value output. If `lo` > `hi`, the UGen behaves wrongly.
+                    In the case of decremental counter, set `resetVal` to `hi`. E.g. to count
+                    from 4 down to 0, use `Stepper.kr(trig, lo = 0, hi = 4, step = -1, resetVal = 4)`, or,
+                    if you want to ignore an initial high trigger, you could do
+                    `Stepper.kr(Impulse.kr(1), lo = 0, hi = 4, step = -1, resetVal = 0)` --
+                    so `resetVal` is `lo` but due to the initial trigger from `Impulse`
+                    the `Stepper` will in fact start outputting from `4`.
+                </doc>
+            </arg>
             <arg name="resetVal" default="0"/>
+            <doc>
+                <text>
+                    A pulse counting UGen. Each trigger increments a counter which is output as a signal.
+                    The counter wraps inside the interval from `lo` to `hi` (inclusive). That if you
+                    use a `lo` other than zero, you might want to adjust `resetVal` as well. `Stepper`
+                    always starts with the value in `resetVal`, no matter what `min` is or whether
+                    the `reset` trigger is high or not.
+                </text>
+                <see>ugen.PulseCount</see>
+            </doc>
         </ugen>
         <ugen name="TDelay">
             <rate name="control"/>
