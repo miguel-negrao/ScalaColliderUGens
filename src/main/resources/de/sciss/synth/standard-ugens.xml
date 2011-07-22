@@ -5222,13 +5222,13 @@
             <arg name="lo" default="0">
                 <doc>
                     The minimum value output. For a decremental `step` value, the counter jumps
-                    to `hi` after having output the `lo` value (so the interval is inclusive).
+                    to `hi` if it were to fall below `lo`.
                 </doc>
             </arg>
             <arg name="hi" default="7">
                 <doc>
                     The maximum value output. For an incremental `step` value, the counter jumps
-                    to `lo` after having output the `hi` value (so the interval is inclusive).
+                    to `lo` if it were to rise beyond `hi`.
                 </doc>
             </arg>
             <arg name="step" default="1">
@@ -5250,7 +5250,7 @@
                     A pulse counting UGen. Each trigger increments a counter which is output as a signal.
                     The counter wraps inside the interval from `lo` to `hi` (inclusive). That if you
                     use a `lo` other than zero, you might want to adjust `resetVal` as well. `Stepper`
-                    always starts with the value in `resetVal`, no matter what `min` is or whether
+                    always starts with the value in `resetVal`, no matter what `lo` is or whether
                     the `reset` trigger is high or not.
                 </text>
                 <see>ugen.PulseCount</see>
