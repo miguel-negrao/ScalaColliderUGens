@@ -32,7 +32,7 @@ import xml.XML
 import java.io.File
 
 object UGens {
-   val version = 0.12
+   val version = 0.14
    def versionString = (version.toString + "0").substring( 0, 4 )
 
    def main( args: Array[ String ]) {
