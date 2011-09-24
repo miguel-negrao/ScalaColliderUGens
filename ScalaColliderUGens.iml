@@ -23,14 +23,22 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib_managed/scala_2.9.0/compile/org.scala-refactoring.library-0.3.0-SNAPSHOT.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib_managed/jars/org.scala-refactoring/org.scala-refactoring.library/org.scala-refactoring.library-0.3.0-SNAPSHOT.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="scala-compiler-2.9.0" level="application" />
-    <orderEntry type="library" name="scala-library-2.9.0" level="application" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib_managed/jars/com.github.scopt/scopt_2.9.1/scopt_2.9.1-1.1.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="scala-compiler-2.9.1" level="application" />
   </component>
 </module>
 

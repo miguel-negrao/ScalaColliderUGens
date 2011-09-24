@@ -1,0 +1,45 @@
+<ugens>
+    <file name="TJUGens"> <!-- http://jeremah.co.uk/dfm1ugen.html -->
+        <ugen name="DFM1">
+            <rate name="audio"/>
+            <arg name="in">
+                <doc>
+                    Input signal to filter.
+                </doc>
+            </arg>
+            <arg name="freq" default="440">
+                <doc>
+                    Cutoff frequency in Hertz.
+                </doc>
+            </arg>
+            <arg name="res" default="0.1">
+                <doc>
+                    Resonance of the filter. Resonance is minimal at `0.0` and high at `1.0`,
+                    above which the filter starts overdrive and sound saturated (e.g. `1.2`).
+                </doc>
+            </arg>
+            <arg name="gain" default="1.0">
+                <doc>
+                    Linear gain applied to the input signal.
+                </doc>
+            </arg>
+            <arg name="mode" default="0">
+                <doc>
+                    The filter can be used in lowpass (`0`) or highpass (`1`) mode.
+                </doc>
+            </arg>
+            <arg name="noise" default="0.0003">
+                <doc>
+                    Amount (amplitude) of noise added to the model.
+                </doc>
+            </arg>
+            <doc>
+                <text>
+                    A digital filter UGen which aims at accurately modeling an analog filter.
+                    It provides low-pass and high-pass modes, and the filter can be overdriven and will
+                    self-oscillate at high resonances.
+                </text>
+            </doc>
+        </ugen>
+    </file>
+</ugens>

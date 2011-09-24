@@ -8,4 +8,21 @@ Big thanks to Mirko Stocker for the "Scala-Refactoring Library":http://scala-ref
 
 h3. compilation
 
-to compile run @sbt update compile@. in order to keep up with the scala-refactoring snapshots, you may need to wipe the Ivy2 cache before updating: @rm -r ~/.ivy2/cache/org.scala-refactoring@
+ScalaCollider-UGens builds with xsbt (sbt 0.10) against Scala 2.9.1. to compile run @xsbt update compile@. in order to keep up with the scala-refactoring snapshots, you may need to wipe the Ivy2 cache before updating: @rm -r ~/.ivy2/cache/org.scala-refactoring@
+
+h3. running
+
+The UGen descriptions reside in XML files. The project already comes with a file for the standard UGens included with a plain SuperCollider installation. You will need to create additional XML files if you wish to compile sources for third party UGens.
+
+To synthesize the source code for a given UGen description XML file, run as follows:
+
+pre. $ xsbt
+> run -d path/to/scala/source/output path/to/descriptions.xml
+
+(Note that currently xsbt seems to exit with an @InterruptedException@ -- you can ignore this).
+
+The generated source files then need to be compiled against ScalaCollider (as of this writing, you need to use the @Synthetic4@ branch). In the future, we might provide a minimum stub instead for the compilation.
+
+h3. format
+
+The format yet needs to be documented, but if you take a close look at @standard-ugens.xml@ you can figure out the nesting structure and the arguments allowed.

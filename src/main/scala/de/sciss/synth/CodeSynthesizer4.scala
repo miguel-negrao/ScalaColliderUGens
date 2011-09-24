@@ -36,17 +36,17 @@ import collection.breakOut
 import collection.immutable.{ IndexedSeq => IIdxSeq }
 //import net.virtualvoid.string.MyNodePrinter
 import tools.refactoring.transformation.TreeFactory
-import tools.refactoring.common.{CompilerAccess, Tracing, Change}
+import tools.refactoring.common.{CompilerAccess, Tracing}
 import tools.nsc.io.AbstractFile
-import java.io.{FileOutputStream, OutputStreamWriter, FileWriter, File}
+import java.io.{FileOutputStream, OutputStreamWriter, File}
 import sys.{error => err}
 
 /**
  * Again with rate type removed
  */
-class CodeSynthesizer4 extends Refactoring
+class CodeSynthesizer4( docs: Boolean ) extends Refactoring
 with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess with TreeFactory {
-   val docs          = true
+//   val docs          = true
    val ugenClass     = false
    val ratedTrait    = true
    val maybeRates    = true
@@ -119,19 +119,19 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
       val strIIdxSeq       = "IIdxSeq"
 //      val identIIdxSeq     = Ident( strIIdxSeq )
       val identIIdxSeq     = ident( strIIdxSeq )
-      val identBinOpUGen   = ident( "BinaryOpUGen" )
+//      val identBinOpUGen   = ident( "BinaryOpUGen" )
       val strMakeUGens     = "makeUGens"
-      val identMakeUGens   = ident( strMakeUGens )
+//      val identMakeUGens   = ident( strMakeUGens )
       val strMakeUGen      = "makeUGen"
       val identMakeUGen    = ident( strMakeUGen )
       val strExpand        = "expand"
-      val identExpand      = ident( strExpand )
-      val strUGenInLike    = "UGenInLike"
+//      val identExpand      = ident( strExpand )
+//      val strUGenInLike    = "UGenInLike"
       val strUArgs         = "_args"
       val identUArgs       = ident( strUArgs )
       val identUnwrap      = ident( "unwrap")
       val strGE            = "GE"
-      val strAnyGE         = strGE // no distinction any more
+//      val strAnyGE         = strGE // no distinction any more
       val strRatePlaceholder="Rate" // "R"
       val strMaybeRate     = "MaybeRate"
       val strMaybeResolve  = "?|"
@@ -142,13 +142,13 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
       val strRateArg       = "rate"
       val strRateMethod    = "rate"
       val identRateArg     = ident( strRateArg )
-      val identRateType    = ident( "Rate" )
+//      val identRateType    = ident( "Rate" )
       val dateString       = new java.util.Date().toString
 
       (xml \ "file") foreach { node =>
          val name       = (node \ "@name").text
          val fileName   = name + ".scala"
-         val ast        = treeFrom( "package de.sciss.synth.ugen\n" )
+//         val ast        = treeFrom( "package de.sciss.synth.ugen\n" )
          val fltNode    = (node \ "ugen").filter( node => filter( name, (node \ "@name").text ))
          var importFloat = false
          val ugens: List[ Tree ] = fltNode.flatMap( node => {
@@ -223,7 +223,7 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
                   def getEitherAttr( name: String ) : Option[ String ] = getEitherNode( "@" + name )
                   val (typInfo, rateCons) = getEitherAttr( "type" ).map( s => (TypeInfo( (s -> Nil) :: Nil ), None) )
                      .getOrElse({
-                        val rateAttr = getEitherAttr( "rate" ) // (n \ "@rate").text
+//                        val rateAttr = getEitherAttr( "rate" ) // (n \ "@rate").text
 //                        def r0 = if( doneFlagArg || expandBin.isDefined ) {
 //                           val par0 = strAnyGE -> Nil // if( expandBin.isDefined ) ...
 //                           val par1 = if( doneFlagArg ) par0 :: ("HasDoneFlag" -> Nil) :: Nil else par0 :: Nil
@@ -436,9 +436,9 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
 //               p6
             }
 
-            val argsExpOut          = argsOut.filter( _.isGE )
-            val moreThanZeroArgOut  = argsExpOut.size > 0
-            val moreThanOneArgOut   = argsExpOut.size > 1
+//            val argsExpOut          = argsOut.filter( _.isGE )
+//            val moreThanZeroArgOut  = argsExpOut.size > 0
+//            val moreThanOneArgOut   = argsExpOut.size > 1
 
             /*
              * `protected def makeUGens: UGenInLike = ...`
@@ -755,7 +755,7 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
    }
 
    object RateCons {
-      final case object UGen extends RateCons
+      case object UGen extends RateCons
       final case class Name( name: String ) extends RateCons
    }
    sealed trait RateCons
