@@ -379,7 +379,7 @@
         </ugen>
         <!-- <ugen name="SimpleLoopBuf">
         </ugen> -->
-        <ugen name="RecordBuf" writesbuf="true">
+        <ugen name="RecordBuf" writesbuf="true" doneflag="true">
             <rate name="control"/>
             <rate name="audio"/>
             <arg name="buf" pos="1"/>
