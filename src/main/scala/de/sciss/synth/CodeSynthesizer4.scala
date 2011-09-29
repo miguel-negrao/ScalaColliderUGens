@@ -51,7 +51,7 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
    val ratedTrait    = true
    val maybeRates    = true
    val displayName   = true
-   val multiOutArg   = true   // whether UGenSource.MultiOut has an explicit argument for the number of outputs
+   val multiOutArg   = false // true   // whether UGenSource.MultiOut has an explicit argument for the number of outputs
 
    override val defaultIndentationStep = "   "
 
