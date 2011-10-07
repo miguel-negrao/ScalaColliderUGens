@@ -260,8 +260,9 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
                   if( default == Some( "inf" ) || default == Some( "-inf" )) {
                      importFloat = true
                   }
+                  val ugenin     = getEitherAttr( "ugenin" ).map( _.toBoolean ) == Some( true )
                   val doc        = getEitherNode( "doc" )
-                  ArgInfo( typInfo, default, doc, rateCons )
+                  ArgInfo( typInfo, default, doc, rateCons, ugenin )
                }
 
                val argDefault = createInfo( None, None )
@@ -273,7 +274,8 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
             })( breakOut )
 
             val numArgsIn  = argsTup.size
-            val argsOut    = argsTup.map( _._1 ).filter( a => a.isGE || a.isString )
+//            val argsOut    = argsTup.map( _._1 ).filter( a => a.isGE || a.isString )
+            val argsOut    = argsTup.map( _._1 ).filter( _.isUGenIn )
             val argsIn     = List.tabulate( numArgsIn )(
                idx => argsTup.find( _._2 == idx ).getOrElse( err( "Wrong argument positions (" + name + ")" ))._1 )
             val argsInS = argsIn  // no exceptions at the moment
@@ -457,6 +459,8 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
                         if( a.multi ) Select( sel, "outputs" ) else sel
                      } else if( a.isString ) {
                         Apply( Ident( "stringArg" ), id :: Nil )
+                     } else if( a.isInt ) {
+                        Apply( Ident( "Constant" ), id :: Nil )   // e.g. MFCC numCoeffs
                      } else id
                   })
 
@@ -760,7 +764,8 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
    }
    sealed trait RateCons
 
-   private case class ArgInfo( typ: TypeInfo, default: Option[ String ], doc: Option[ String ], rateCons: Option[ RateCons ])
+   private case class ArgInfo( typ: TypeInfo, default: Option[ String ], doc: Option[ String ],
+                               rateCons: Option[ RateCons ], ugenin: Boolean )
    private trait UGenArgInfoLike {
       def name : String
       def argDefault : ArgInfo
@@ -780,6 +785,8 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
 //         case Some( ("MultiGE", _) )   => true
          case _                        => false
       }
+
+      def isUGenIn   = isGE || isString || argDefault.ugenin
 
       def isInt      = argDefault.typ.tuples == List( ("Int", Nil) )
       def isString   = argDefault.typ.tuples == List( ("String", Nil) )
