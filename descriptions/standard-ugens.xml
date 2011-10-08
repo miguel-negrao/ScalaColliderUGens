@@ -392,7 +392,7 @@
             <arg name="doneAction" default="doNothing" pos="8"/>
             <arg name="in" multi="true" pos="0"/>
         </ugen>
-        <ugen name="BufRd" readsbuf="true">
+        <ugen name="BufRd" readsbuf="true" doneflag="true">
             <rate name="control"/>
             <rate name="audio"/>
             <outputs num="numChannels"/>
@@ -443,7 +443,7 @@
                 <see>ugen.BufRateScale</see>
             </doc>
         </ugen>
-        <ugen name="BufWr" writesbuf="true">
+        <ugen name="BufWr" writesbuf="true" doneflag="true">
             <rate name="control"/>
             <rate name="audio"/>
             <arg name="buf" pos="1"/>
@@ -555,6 +555,7 @@
             </doc>
         </ugen>
 
+        <!-- do these set the done flag? XXX -->
         <ugen name="BufDelayN" readsbuf="true" writesbuf="true">
             <rate name="audio"/>
             <arg name="buf"/>
@@ -1014,7 +1015,7 @@
             <arg name="repeats" default="1" pos="1"/>
             <arg name="seq" multi="true" pos="0"/>
         </ugen>
-        <ugen name="Dbufrd" indiv="true" readsbuf="true">
+        <ugen name="Dbufrd" indiv="true" readsbuf="true" doneflag="true">
             <rate name="demand" implied="true" method="apply"/>
             <arg name="buf">
                 <doc>
@@ -3844,7 +3845,7 @@
                 <see>ugen.Clip</see>
             </doc>
         </ugen>
-        <ugen name="EnvGen">
+        <ugen name="EnvGen" sideeffect="true" doneflag="true">
             <rate name="control"/>
             <rate name="audio"/>
             <arg name="gate" default="1" pos="1"/>
@@ -3854,7 +3855,7 @@
             <arg name="doneAction" default="doNothing" pos="5"/>
             <arg name="envelope" multi="true" pos="0"/>
         </ugen>
-        <ugen name="Linen">
+        <ugen name="Linen" sideeffect="true" doneflag="true">
             <rate name="control"/>
             <rate name="audio"/>
             <arg name="gate" default="1"/>
