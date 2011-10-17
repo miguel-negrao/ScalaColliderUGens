@@ -3346,9 +3346,10 @@
             <arg name="buf" pos="0"/>
             <arg name="speed" default="1" pos="4"/>
             <arg name="pos" default="0" pos="5"/>
-            <arg name="pan" default="0" pos="6"/>
-            <arg name="envBuf" default="-1" pos="7"/>
-            <arg name="maxGrains" default="512" pos="8"/>
+            <arg name="interp" default="2" pos="6"/>
+            <arg name="pan" default="0" pos="7"/>
+            <arg name="envBuf" default="-1" pos="8"/>
+            <arg name="maxGrains" default="512" pos="9"/>
             <doc warnpos="true"/>
         </ugen>
         <ugen name="Warp1" readsbuf="true">  <!-- accepts demand rate -->
