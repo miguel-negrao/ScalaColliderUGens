@@ -52,6 +52,7 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
    val maybeRates    = true
    val displayName   = true
    val multiOutArg   = false // true   // whether UGenSource.MultiOut has an explicit argument for the number of outputs
+   val indivUGenArgs = true
 
    override val defaultIndentationStep = "   "
 
@@ -149,6 +150,10 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
          val name       = (node \ "@name").text
          val fileName   = name + ".scala"
 //         val ast        = treeFrom( "package de.sciss.synth.ugen\n" )
+
+//         val ast = treeFrom( "object N { new Test( 33 ) with Gaga }" ).asInstanceOf[PackageDef]
+//         val ch  = ast.children
+
          val fltNode    = (node \ "ugen").filter( node => filter( name, (node \ "@name").text ))
          var importFloat = false
          val ugens: List[ Tree ] = fltNode.flatMap( node => {
@@ -507,7 +512,19 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
                val methodBody : Tree = {
                   val (preBody, outUGenArgs) = {
                      val strResolvedRateArg = if( maybeRate.isDefined ) "_rate" else strRateArg
-                     val preArgs = outputs match {
+                     val args1 = if( indivUGenArgs ) {
+                        val args0 = if( (sideEffect || indSideEffect) && (outputs != ZeroOutputs) ) {
+                           Literal( true ) :: Nil
+                        } else Nil
+
+                        if( indiv || indIndiv ) {
+                           Literal( true ) :: args0
+                        } else if( args0.nonEmpty ) {
+                           Literal( false ) :: args0
+                        } else args0
+                     } else Nil
+
+                     val args2 = outputs match {
                         case m: MultiOutputLike =>
                            val tree = if( multiOutArg ) {
                               Ident( "numOutputs" )
@@ -527,7 +544,7 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
                         case _ => Nil
                      }
                      // might need some more intelligent filtering eventually
-                     val args3 = preArgs :+ (if( expandBin.isDefined ) Select( identIIdxSeq, "empty" ) else identUArgs)
+                     val args3 = (args2 :+ (if( expandBin.isDefined ) Select( identIIdxSeq, "empty" ) else identUArgs)) ++ args1
                      val args4 = identName /* Literal( Constant( name )) */ :: Ident( impliedRate.map( _.typ ).getOrElse( strResolvedRateArg )) :: args3
 
                      val preBody = maybeRate.map( ua => {
@@ -544,7 +561,21 @@ with Tracing with CompilerProvider /* with MyNodePrinter */ with CompilerAccess 
 
                      (preBody, args4 :: Nil) // no currying
                   }
-                  val app1 = New( Ident( outputs.typ ), outUGenArgs )
+                  // add IsIndivdual if necessary (ZeroOutputs has that already!)
+//                  val app0a = TypeDef( NoMods, typeName( outputs.typ ), Nil, EmptyTree )
+//                  val app0  = if( sideEffect && !indSideEffect && (outputs != ZeroOutputs) ) {
+//println( "INDIV! " + name )
+//                     Template( app0a :: traitIndiv :: Nil, emptyValDef, Nil )
+//                  } else app0a
+//                  val app1 = New( app0, outUGenArgs )
+                  val app0a = TypeDef( NoMods, typeName( outputs.typ ), Nil, EmptyTree )
+//                  val app0  = New( app0a, outUGenArgs )
+//                  val app1  = if( sideEffect && !indSideEffect && (outputs != ZeroOutputs) ) {
+//println( "INDIV! " + name )
+//                     Template( app0a :: traitIndiv :: Nil, emptyValDef, Nil )
+//                  } else app0
+                  val app1  = New( app0a, outUGenArgs )
+
                   val app2 = expandBin.map( binSel => {
                      val a = argsInS.find( _.expandBin.isDefined ).get
                      require( !argsOut.exists( a => a.multi || a.isString ), "Mixing binop with multi args is not yet supported" )

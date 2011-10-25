@@ -754,7 +754,7 @@
     </file>
 
     <file name="DemandUGens">
-        <ugen name="Demand">
+        <ugen name="Demand"> <!-- note: might get a Done flag some day -->
             <rate name="control"/>
             <rate name="audio"/>
             <outputs num="in"/>
@@ -765,7 +765,7 @@
             </arg>
             <arg name="reset" default="0" pos="2">
                 <doc>
-                    trigger. Resets the list of ugens (`multi`) when triggered.
+                    trigger. Resets the list of ugens (`in`) when triggered.
                 </doc>
             </arg>
             <arg name="in" multi="true" pos="1">
