@@ -19,6 +19,10 @@ To synthesize the source code for a given UGen description XML file, run as foll
 pre. $ xsbt
 > run -d path/to/scala/source/output path/to/descriptions.xml
 
+Thus if ScalaCollider-UGens and ScalaCollider reside in the same parent directory, to re-create the standard UGens' class files:
+
+> run -d ../ScalaCollider/ descriptions/standard-ugens.xml
+
 (Note that currently xsbt seems to exit with an @InterruptedException@ -- you can ignore this).
 
 The generated source files then need to be compiled against ScalaCollider (as of this writing, you need to use the @Synthetic4@ branch). In the future, we might provide a minimum stub instead for the compilation.

@@ -11,24 +11,24 @@
                 </text>
             </doc>
             <arg name="freq" default="SampleRate.ir * 0.5">
-            <doc>
-                Iteration frequency in Hertz
-            </doc>
+                <doc>
+                    Iteration frequency in Hertz
+                </doc>
             </arg>
             <arg name="a" default="1">
-            <doc>
-                Equation variable
-            </doc>
+                <doc>
+                    Equation variable
+                </doc>
             </arg>
             <arg name="b" default="1.9">
-            <doc>
-                Equation variable
-            </doc>
+                <doc>
+                    Equation variable
+                </doc>
             </arg>
             <arg name="xi" default="0">
-            <doc>
-                Initial value of x
-            </doc>
+                <doc>
+                    Initial value of x
+                </doc>
             </arg>
         </ugen>
         <ugen name="CuspL">
@@ -42,24 +42,24 @@
                 </text>
             </doc>
             <arg name="freq" default="SampleRate.ir * 0.5">
-            <doc>
-                Iteration frequency in Hertz
-            </doc>
+                <doc>
+                    Iteration frequency in Hertz
+                </doc>
             </arg>
             <arg name="a" default="1">
-            <doc>
-                Equation variable
-            </doc>
+                <doc>
+                    Equation variable
+                </doc>
             </arg>
             <arg name="b" default="1.9">
-            <doc>
-                Equation variable
-            </doc>
+                <doc>
+                    Equation variable
+                </doc>
             </arg>
             <arg name="xi" default="0">
-            <doc>
-                Initial value of x
-            </doc>
+                <doc>
+                    Initial value of x
+                </doc>
             </arg>
         </ugen>
         <ugen name="FBSineN">
@@ -75,39 +75,39 @@
                 </text>
             </doc>
             <arg name="freq" default="SampleRate.ir * 0.5">
-            <doc>
-                Iteration frequency in Hertz
-            </doc>
+                <doc>
+                    Iteration frequency in Hertz
+                </doc>
             </arg>
             <arg name="im" default="1">
-            <doc>
-                Index multiplier amount
-            </doc>
+                <doc>
+                    Index multiplier amount
+                </doc>
             </arg>
             <arg name="fb" default="0.1">
-            <doc>
-                Feedback amount
-            </doc>
+                <doc>
+                    Feedback amount
+                </doc>
             </arg>
             <arg name="a" default="1.1">
-            <doc>
-                Phase multiplier amount
-            </doc>
+                <doc>
+                    Phase multiplier amount
+                </doc>
             </arg>
             <arg name="c" default="0.5">
-            <doc>
-                Phase increment amount
-            </doc>
+                <doc>
+                    Phase increment amount
+                </doc>
             </arg>
             <arg name="xi" default="0.1">
-            <doc>
-                Initial value of x
-            </doc>
+                <doc>
+                    Initial value of x
+                </doc>
             </arg>
             <arg name="yi" default="0.1">
-            <doc>
-                Initial value of y
-            </doc>
+                <doc>
+                    Initial value of y
+                </doc>
             </arg>
         </ugen>
         <ugen name="FBSineL">
@@ -123,33 +123,34 @@
                 </text>
             </doc>
             <arg name="freq" default="SampleRate.ir * 0.5">
-            <doc>
-                Iteration frequency in Hertz
-            </doc>
+                <doc>
+                    Iteration frequency in Hertz
+                </doc>
+            </arg>
             <arg name="im" default="1">
-            <doc>
-                Index multiplier amount
-            </doc>
+                <doc>
+                    Index multiplier amount
+                </doc>
             </arg>
             <arg name="fb" default="0.1">
-            <doc>
-                Feedback amount
-            </doc>
+                <doc>
+                    Feedback amount
+                </doc>
             </arg>
             <arg name="a" default="1.1">
-            <doc>
-                Phase multiplier amount
-            </doc>
+                <doc>
+                    Phase multiplier amount
+                </doc>
             </arg>
             <arg name="c" default="0.5">
-            <doc>
-                Phase increment amount
-            </doc>
+                <doc>
+                    Phase increment amount
+                </doc>
             </arg>
             <arg name="xi" default="0.1">
-            <doc>
-                Initial value of x
-            </doc>
+                <doc>
+                    Initial value of x
+                </doc>
             </arg>
             <arg name="yi" default="0.1">
             <doc>
@@ -170,39 +171,39 @@
                 </text>
             </doc>
             <arg name="freq" default="SampleRate.ir * 0.5">
-            <doc>
-                Iteration frequency in Hertz
-            </doc>
+                <doc>
+                    Iteration frequency in Hertz
+                </doc>
             </arg>
             <arg name="im" default="1">
-            <doc>
-                Index multiplier amount
-            </doc>
+                <doc>
+                    Index multiplier amount
+                </doc>
             </arg>
             <arg name="fb" default="0.1">
-            <doc>
-                Feedback amount
-            </doc>
+                <doc>
+                    Feedback amount
+                </doc>
             </arg>
             <arg name="a" default="1.1">
-            <doc>
-                Phase multiplier amount
-            </doc>
+                <doc>
+                    Phase multiplier amount
+                </doc>
             </arg>
             <arg name="c" default="0.5">
-            <doc>
-                Phase increment amount
-            </doc>
+                <doc>
+                    Phase increment amount
+                </doc>
             </arg>
             <arg name="xi" default="0.1">
-            <doc>
-                Initial value of x
-            </doc>
+                <doc>
+                    Initial value of x
+                </doc>
             </arg>
             <arg name="yi" default="0.1">
-            <doc>
-                Initial value of y
-            </doc>
+                <doc>
+                    Initial value of y
+                </doc>
             </arg>
         </ugen>
         <ugen name="GbmanN">
